@@ -54,9 +54,9 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using Metagrams
-            DocMeta.setdocmeta!(Metagrams, :DocTestSetup, :(using Metagrams); recursive=true)
-            doctest(Metagrams)'
+            using Yuan
+            DocMeta.setdocmeta!(Yuan, :DocTestSetup, :(using Yuan); recursive=true)
+            doctest(Yuan)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

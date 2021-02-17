@@ -1,12 +1,12 @@
 ```@meta
-CurrentModule = Metagrams
+CurrentModule = Yuan
 ```
 
-# Metagrams
+# Yuan
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [Metagrams]
+Modules = [Yuan]
 ```

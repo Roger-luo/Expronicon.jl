@@ -1,6 +1,6 @@
-using Metagrams
+using Yuan
 using Test
 
-@testset "Metagrams.jl" begin
+@testset "Yuan.jl" begin
     # Write your tests here.
 end

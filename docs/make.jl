@@ -1,16 +1,16 @@
-using Metagrams
+using Yuan
 using Documenter
 
-DocMeta.setdocmeta!(Metagrams, :DocTestSetup, :(using Metagrams); recursive=true)
+DocMeta.setdocmeta!(Yuan, :DocTestSetup, :(using Yuan); recursive=true)
 
 makedocs(;
-    modules=[Metagrams],
+    modules=[Yuan],
     authors="Roger-luo <rogerluo.rl18@gmail.com> and contributors",
-    repo="https://github.com/Roger-luo/Metagrams.jl/blob/{commit}{path}#{line}",
-    sitename="Metagrams.jl",
+    repo="https://github.com/Roger-luo/Yuan.jl/blob/{commit}{path}#{line}",
+    sitename="Yuan.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://Roger-luo.github.io/Metagrams.jl",
+        canonical="https://Roger-luo.github.io/Yuan.jl",
         assets=String[],
     ),
     pages=[
@@ -19,5 +19,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/Roger-luo/Metagrams.jl",
+    repo="github.com/Roger-luo/Yuan.jl",
 )
