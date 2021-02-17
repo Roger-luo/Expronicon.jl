@@ -1,6 +1,39 @@
 module Transform
 
-export prettify, rm_lineinfo, flatten_blocks
+export prettify, rm_lineinfo, flatten_blocks, name_only
+
+"""
+    name_only(ex)
+
+Remove everything else leaving just names, currently supports
+function calls, type with type variables, subtype operator `<:`
+and type annotation `::`.
+
+# Example
+
+```jldoctest
+julia> name_only(:(sin(2)))
+:sin
+
+julia> name_only(:(Foo{Int}))
+:Foo
+
+julia> name_only(:(Foo{Int} <: Real))
+:Foo
+
+julia> name_only(:(x::Int))
+:x
+```
+"""
+function name_only(@nospecialize(ex))
+    ex isa Expr || return ex
+    ex.head === :call && return name_only(ex.args[1])
+    ex.head === :curly && return name_only(ex.args[1])
+    ex.head === :(<:) && return name_only(ex.args[1])
+    ex.head === :(::) && return name_only(ex.args[1])
+    ex.head === :where && return name_only(ex.args[1])
+    error("unsupported expression $ex")
+end
 
 """
     rm_lineinfo(ex)

@@ -1,6 +1,10 @@
 using Yuan
 using Test
 
-@testset "Yuan.jl" begin
-    # Write your tests here.
+@testset "analysis" begin
+    include("analysis.jl")
+end
+
+@testset "transform" begin
+    include("transform.jl")
 end

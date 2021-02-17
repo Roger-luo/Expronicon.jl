@@ -2,7 +2,7 @@ module Analysis
 
 using MLStyle
 using ..Types
-export is_kw_fn, name_only, split_function, split_call, split_struct, split_struct_name, annotations
+export is_kw_fn, split_function, split_call, split_struct, split_struct_name, annotations
 
 """
     is_kw_fn(def)
@@ -14,39 +14,12 @@ is_kw_fn(def::JLFunction) = isnothing(def.kwargs)
 
 function is_kw_fn(def::Expr)
     _, call, _ = split_function(def)
-    call.args[1] isa Expr && call.args[1].head === :parameters
-end
-
-"""
-    name_only(ex)
-
-Remove everything else leaving just names, currently supports
-function calls, type with type variables, subtype operator `<:`
-and type annotation `::`.
-
-# Example
-
-```jldoctest
-julia> name_only(:(sin(2)))
-:sin
-
-julia> name_only(:(Foo{Int}))
-:Foo
-
-julia> name_only(:(Foo{Int} <: Real))
-:Foo
-
-julia> name_only(:(x::Int))
-:x
-```
-"""
-function name_only(@nospecialize(ex))
-    ex isa Expr || return ex
-    ex.head === :call && return name_only(ex.args[1])
-    ex.head === :curly && return name_only(ex.args[1])
-    ex.head === :(<:) && return name_only(ex.args[1])
-    ex.head === :(::) && return name_only(ex.args[1])
-    error("unsupported expression $ex")
+    @match call begin
+        Expr(:tuple, Expr(:parameters, _...), _...) => true
+        Expr(:call, _, Expr(:parameters, _...), _...) => true
+        Expr(:block, _, ::LineNumberNode, _) => true
+        _ => false
+    end
 end
 
 """
@@ -74,6 +47,8 @@ function split_call(ex::Expr; nothrow::Bool=false)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing)
         Expr(:call, Expr(:parameters, kw...), name, args...) => (name, args, kw, nothing)
         Expr(:call, name, args...) => (name, args, nothing, nothing)
+        Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing)
+        Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing)
         Expr(:where, call, whereparams...) => begin
             name, args, kw, _ = split_call(call)
             (name, args, kw, whereparams)
