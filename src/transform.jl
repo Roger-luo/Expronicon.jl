@@ -70,7 +70,8 @@ end
 
 Remove hierachical expression blocks.
 """
-function flatten_blocks(ex::Expr)
+function flatten_blocks(ex)
+    ex isa Expr || return ex
     ex.head === :block || return Expr(ex.head, map(_flatten_blocks, ex.args)...)
     has_block = any(ex.args) do x
         x isa Expr && x.head === :block
@@ -82,7 +83,8 @@ function flatten_blocks(ex::Expr)
     return Expr(ex.head, map(flatten_blocks, ex.args)...)
 end
 
-function _flatten_blocks(ex::Expr)
+function _flatten_blocks(ex)
+    ex isa Expr || return ex
     ex.head === :block || return Expr(ex.head, map(flatten_blocks, ex.args)...)
 
     args = []

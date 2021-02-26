@@ -216,6 +216,40 @@ function print_ast(io::IO, def::JLFunction)
 end
 
 function print_ast(io::IO, def::JLStruct)
+    print_ast_struct_head(io, def)
+    for each in def.fields
+        println(no_indent(io))
+        print_ast(indent(io), each)
+    end
+    println(no_indent(io))
+    print(io, Color.kw("end"))
+end
+
+function print_ast(io::IO, def::JLKwStruct)
+    print_ast_struct_head(io, def)
+    for each in def.fields
+        println(no_indent(io))
+        print_ast(indent(io), each)
+    end
+    println(no_indent(io))
+    print(io, Color.kw("end"))
+end
+
+function print_ast(io::IO, def::JLField)
+    print_ast_struct_field(io, def)
+end
+
+function print_ast(io::IO, def::JLKwField)
+    print_ast_struct_field(io, def)
+    def.default === no_default || print(no_indent(io), " = ", def.default)
+end
+
+function print_ast_struct_field(io::IO, def)
+    print(io, def.name)
+    def.type === Any || print(no_indent(io), "::", Color.type(def.type))
+end
+
+function print_ast_struct_head(io::IO, def)
     tab = get(io, :tab, " ")
     def.ismutable && print(io, Color.kw("mutable"), tab)
     print(io, Color.kw("struct"))
@@ -228,21 +262,9 @@ function print_ast(io::IO, def::JLStruct)
     if !isnothing(def.supertype)
         print(no_indent(io), tab, "<:", tab, Color.type(def.supertype))
     end
-
-    for each in def.fields
-        println(no_indent(io))
-        print_ast(indent(io), each)
-    end
-    println(no_indent(io))
-    print(io, Color.kw("end"))
 end
 
-function print_ast(io::IO, def::JLField)
-    print(io, def.name)
-    def.type === Any || print(no_indent(io), "::", Color.type(def.type))
-end
-
-print_ast(::IO, ::JLExpr) = error("Printings.print_ast is not defined for JLExpr")
+print_ast(::IO, def::JLExpr) = error("Printings.print_ast is not defined for $(typeof(def))")
 Base.show(io::IO, def::JLExpr) = print_ast(io, def)
 
 end

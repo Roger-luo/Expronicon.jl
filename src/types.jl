@@ -1,6 +1,7 @@
 module Types
 
-export NoDefault, JLExpr, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct
+export NoDefault, JLExpr, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
+    no_default
 
 const Maybe{T} = Union{Nothing, T}
 
@@ -26,14 +27,22 @@ abstract type JLExpr end
 
 Type describes a Julia function declaration expression.
 """
-struct JLFunction <: JLExpr
-    head::Maybe{Symbol}
-    name::Maybe{Symbol}
+mutable struct JLFunction <: JLExpr
+    head::Symbol # function def must have a head
+    name::Any # name can be nothing, Symbol, Expr
     args::Vector{Any}
     kwargs::Maybe{Vector{Any}}
     whereparams::Maybe{Vector{Any}}
     body::Any
 end
+
+function JLFunction(;head::Symbol=:function,
+        name=nothing, args=[],
+        kwargs=nothing, whereparams=nothing,
+        body=Expr(:block))
+    JLFunction(head, name, args, kwargs, whereparams, body)
+end
+
 
 """
     JLField <: JLExpr
@@ -41,7 +50,7 @@ end
 
 Type describes a Julia field in a Julia struct.
 """
-struct JLField <: JLExpr
+mutable struct JLField <: JLExpr
     name::Symbol
     type::Any
     line::Maybe{LineNumberNode}
@@ -53,7 +62,7 @@ end
 
 Type describes a Julia field that can have a default value in a Julia struct.
 """
-struct JLKwField <: JLExpr
+mutable struct JLKwField <: JLExpr
     name::Symbol
     type::Any
     line::Maybe{LineNumberNode}
@@ -67,7 +76,7 @@ JLKwField(name, type, line) = JLKwField(name, type, line, no_default)
 
 Type describes a Julia struct.
 """
-struct JLStruct <: JLExpr
+mutable struct JLStruct <: JLExpr
     name::Symbol
     ismutable::Bool
     typevars::Vector{Any}
@@ -81,7 +90,7 @@ end
 
 Type describes a Julia struct that allows keyword definition of defaults.
 """
-struct JLKwStruct <: JLExpr
+mutable struct JLKwStruct <: JLExpr
     name::Symbol
     ismutable::Bool
     typevars::Vector{Any}
