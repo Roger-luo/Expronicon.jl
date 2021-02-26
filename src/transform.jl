@@ -11,7 +11,9 @@ and type annotation `::`.
 
 # Example
 
-```jldoctest
+```julia
+julia> using Yuan.Transform
+
 julia> name_only(:(sin(2)))
 :sin
 

@@ -1,4 +1,5 @@
 using Yuan
+using Documenter
 using Test
 
 @testset "analysis" begin
@@ -8,3 +9,5 @@ end
 @testset "transform" begin
     include("transform.jl")
 end
+
+doctest(Yuan)

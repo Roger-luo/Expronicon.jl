@@ -69,7 +69,9 @@ Generate the struct name with curly if it is parameterized.
 
 # Example
 
-```jldoctest
+```julia
+julia> using Yuan.Types, Yuan.CodeGen
+
 julia> def = JLStruct(:(struct Foo{T} end))
 struct Foo{T}
 end
@@ -93,7 +95,9 @@ Generate the struct head.
 
 # Example
 
-```jldoctest
+```julia
+julia> using Yuan.Types, Yuan.CodeGen
+
 julia> def = JLStruct(:(struct Foo{T} end))
 struct Foo{T}
 end

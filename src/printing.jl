@@ -57,10 +57,10 @@ Print with parathesis. See also [`with_marks`](@ref),
 
 # Example
 
-```jldoctest
+```julia
 julia> with_parathesis(stdout) do
-    print(1, ", ", 2)
-end
+        print(1, ", ", 2)
+    end
 (1, 2)
 ```
 """
