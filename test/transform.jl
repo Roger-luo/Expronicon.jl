@@ -28,3 +28,19 @@ end
     
     @test rm_lineinfo(flatten_blocks(ex)) == Expr(:block, :(1+1), :(2+2))        
 end
+
+@testset "rm_annotations" begin
+    ex = quote
+        x :: Int
+        begin
+            y::Float64
+        end
+    end
+    
+    @test rm_lineinfo(rm_annotations(ex)) == quote
+        x
+        begin
+            y
+        end
+    end|>rm_lineinfo    
+end

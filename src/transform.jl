@@ -1,6 +1,6 @@
 module Transform
 
-export prettify, rm_lineinfo, flatten_blocks, name_only
+export prettify, rm_lineinfo, flatten_blocks, name_only, rm_annotations
 
 """
     name_only(ex)
@@ -118,7 +118,7 @@ function rm_annotations(x)
     elseif x.head in [:(=), :kw] # default values
         return rm_annotations(x.args[1])
     else
-        return x
+        return Expr(x.head, map(rm_annotations, x.args)...)
     end
 end
 
