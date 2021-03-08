@@ -44,7 +44,7 @@ end
     end)
 
     jlfn = JLFunction(ex)
-    print(jlfn)
+    println(jlfn)
     @test jlfn.head === :function
     @test jlfn.args == [:x, :y]
     @test jlfn.name === nothing
@@ -56,7 +56,7 @@ end
     end)
 
     jlfn = JLFunction(ex)
-    print(jlfn)
+    println(jlfn)
     @test jlfn.head === :function
     @test jlfn.args == Any[:x, :y]
     @test jlfn.kwargs == Any[Expr(:kw, :kw, 2)]
@@ -66,7 +66,7 @@ end
     ex = :((x, y)->sin(x))
 
     jlfn = JLFunction(ex)
-    print(jlfn)
+    println(jlfn)
     @test jlfn.head === :(->)
     @test jlfn.args == Any[:x, :y]
     @test jlfn.kwargs === nothing
@@ -76,7 +76,7 @@ end
     # canonicalize head when it's a block
     ex = :(function (x::Int; kw=1) end)
     jlfn = JLFunction(ex)
-    print(jlfn)
+    println(jlfn)
     @test jlfn.head === :function
     @test jlfn.args == Any[:(x::Int)]
     @test jlfn.kwargs == Any[Expr(:kw, :kw, 1)]
@@ -89,7 +89,7 @@ end
     end)
 
     jlstruct = JLStruct(ex)
-    print(jlstruct)
+    println(jlstruct)
     @test jlstruct.name === :Foo
     @test jlstruct.ismutable === false
     @test length(jlstruct.fields) == 1
@@ -107,7 +107,7 @@ end
     end)
 
     jlstruct = JLStruct(ex)
-    print(jlstruct)
+    println(jlstruct)
     @test jlstruct.ismutable == true
     @test jlstruct.name === :Foo
     @test jlstruct.typevars == Any[:T, :(S <: Real)]
@@ -122,7 +122,7 @@ end
     end)
 
     def = JLKwStruct(ex)
-    print(def)
+    println(def)
 
     @test rm_lineinfo(codegen_ast(def)) == rm_lineinfo(quote
         struct Foo{N, T}

@@ -7,6 +7,7 @@ using Expronicon.Transform
     @test name_only(:(T <: Int)) == :T
     @test name_only(:(Foo{T} where T)) == :Foo
     @test name_only(:(Foo{T})) == :Foo
+    @test_throws ErrorException name_only(Expr(:fake))
 end
 
 @testset "rm_lineinfo" begin
@@ -42,7 +43,15 @@ end
         begin
             y
         end
-    end|>rm_lineinfo    
+    end|>rm_lineinfo
+    
+    ex = :(sin(::Float64; x::Int=2))
+    ex = rm_annotations(ex)
+    @test ex.head === :call
+    @test ex.args[1] === :sin
+    @test ex.args[2].head === :parameters
+    @test ex.args[2].args[1] === :x
+    @test ex.args[3] isa Symbol
 end
 
 @testset "prettify" begin

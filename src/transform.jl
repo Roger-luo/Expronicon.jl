@@ -114,7 +114,7 @@ function rm_annotations(x)
     x isa Expr || return x
     if x.head == :(::)
         if length(x.args) == 1 # anonymous
-            return
+            return gensym("::$(x.args[1])")
         else
             return x.args[1]
         end
