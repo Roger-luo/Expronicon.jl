@@ -5,7 +5,7 @@
 [![Build Status](https://github.com/Roger-luo/Exmonicon.jl/workflows/CI/badge.svg)](https://github.com/Roger-luo/Exmonicon.jl/actions)
 [![Coverage](https://codecov.io/gh/Roger-luo/Exmonicon.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Roger-luo/Exmonicon.jl)
 
-Collective tools for meta programming on Julia Expr.
+Collective tools for metaprogramming on Julia Expr.
 
 ## Installation
 
