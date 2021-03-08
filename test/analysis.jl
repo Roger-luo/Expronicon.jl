@@ -133,3 +133,19 @@ end
         end
     end)
 end
+
+@testset "codegen_match" begin
+    ex = codegen_match(:x) do
+        quote
+            1 => true
+            2 => false
+            _ => nothing
+        end
+    end
+
+    eval(codegen_ast(JLFunction(;name=:test_match, args=[:x], body=ex)))
+
+    @test test_match(1) == true
+    @test test_match(2) == false
+    @test test_match(3) === nothing
+end

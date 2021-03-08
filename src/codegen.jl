@@ -6,11 +6,14 @@ module CodeGen
 using ..Types
 using ..Transform
 using ..Analysis
+using MLStyle.MatchImpl
+using MLStyle.AbstractPatterns
 export codegen_ast,
     codegen_ast_struct,
     codegen_ast_struct_curly,
     codegen_ast_struct_head,
-    codegen_ast_struct_body
+    codegen_ast_struct_body,
+    codegen_match
 
 function codegen_ast(fn::JLFunction)
     fn_def = Expr(fn.head)
@@ -205,6 +208,28 @@ function codegen_ast(def::Union{JLField, JLKwField})
     else
         :($(def.name)::$(def.type))
     end
+end
+
+"""
+    codegen_match(f, x[, line::LineNumberNode=LineNumberNode(0), mod::Module=Main])
+
+Generate a zero dependency match expression using MLStyle code generator,
+the syntax is identical to MLStyle.
+
+# Example
+
+```julia
+codegen_match(:x) do
+    quote
+        1 => true
+        2 => false
+        _ => nothing
+    end
+end
+```
+"""
+function codegen_match(f, x, line::LineNumberNode=LineNumberNode(0), mod::Module=Main)
+    return init_cfg(gen_match(x, f(), line, mod))
 end
 
 end
