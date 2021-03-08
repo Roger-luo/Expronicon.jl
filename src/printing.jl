@@ -177,16 +177,16 @@ function print_ast(io::IO, def::JLFunction)
     def.head === :function && print(io, Color.kw("function"), tab)
 
     # print calls
-    isnothing(def.name) || print(io, Color.fn(def.name))
+    def.name === nothing || print(io, Color.fn(def.name))
     with_parathesis(no_indent(io)) do
         print_collection(no_indent(io), def.args)
-        if !isnothing(def.kwargs)
+        if def.kwargs !== nothing
             print(io, "; ")
             print_collection(no_indent(io), def.kwargs)
         end
     end
 
-    if !isnothing(def.whereparams)
+    if def.whereparams !== nothing
         print(no_indent(io), tab, Color.kw("where"), tab)
         with_curly(no_indent(io)) do
             print_collection(no_indent(io), def.whereparams)    
@@ -259,7 +259,7 @@ function print_ast_struct_head(io::IO, def)
         print_collection(no_indent(io), def.typevars)
     end
 
-    if !isnothing(def.supertype)
+    if def.supertype !== nothing
         print(no_indent(io), tab, "<:", tab, Color.type(def.supertype))
     end
 end
