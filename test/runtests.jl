@@ -1,4 +1,4 @@
-using Yuan
+using YuanExpr
 using Documenter
 using Test
 
@@ -10,4 +10,4 @@ end
     include("transform.jl")
 end
 
-doctest(Yuan)
+doctest(YuanExpr)

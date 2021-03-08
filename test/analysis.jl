@@ -1,9 +1,9 @@
 using Test
-using Yuan
-using Yuan.Types
-using Yuan.Analysis
-using Yuan.CodeGen
-using Yuan.Transform
+using YuanExpr
+using YuanExpr.Types
+using YuanExpr.Analysis
+using YuanExpr.CodeGen
+using YuanExpr.Transform
 
 @testset "is_kw_fn" begin
     @test is_kw_fn(:(

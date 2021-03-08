@@ -1,4 +1,4 @@
-module Yuan
+module YuanExpr
 
 include("types.jl")
 include("transform.jl")
