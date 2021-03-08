@@ -62,9 +62,9 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using YuanExpr
-            DocMeta.setdocmeta!(YuanExpr, :DocTestSetup, :(using YuanExpr); recursive=true)
-            doctest(YuanExpr)'
+            using Exmonicon
+            DocMeta.setdocmeta!(Exmonicon, :DocTestSetup, :(using Exmonicon); recursive=true)
+            doctest(Exmonicon)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

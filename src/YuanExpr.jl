@@ -1,4 +1,4 @@
-module YuanExpr
+module Exmonicon
 
 include("types.jl")
 include("transform.jl")

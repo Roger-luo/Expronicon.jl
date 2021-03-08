@@ -1,4 +1,4 @@
-using YuanExpr
+using Exmonicon
 using Documenter
 using Test
 
@@ -10,4 +10,4 @@ end
     include("transform.jl")
 end
 
-doctest(YuanExpr)
+doctest(Exmonicon)

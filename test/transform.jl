@@ -1,6 +1,6 @@
 using Test
-using YuanExpr
-using YuanExpr.Transform
+using Exmonicon
+using Exmonicon.Transform
 
 @testset "name_only" begin
     @test name_only(:(x::Int)) == :x

@@ -1,16 +1,16 @@
-using YuanExpr
+using Exmonicon
 using Documenter
 
-DocMeta.setdocmeta!(YuanExpr, :DocTestSetup, :(using YuanExpr); recursive=true)
+DocMeta.setdocmeta!(Exmonicon, :DocTestSetup, :(using Exmonicon); recursive=true)
 
 makedocs(;
-    modules=[YuanExpr],
+    modules=[Exmonicon],
     authors="Roger-luo <rogerluo.rl18@gmail.com> and contributors",
-    repo="https://github.com/Roger-luo/YuanExpr.jl/blob/{commit}{path}#{line}",
-    sitename="YuanExpr.jl",
+    repo="https://github.com/Roger-luo/Exmonicon.jl/blob/{commit}{path}#{line}",
+    sitename="Exmonicon.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://Roger-luo.github.io/YuanExpr.jl",
+        canonical="https://Roger-luo.github.io/Exmonicon.jl",
         assets=String[],
     ),
     pages=[
@@ -19,5 +19,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/Roger-luo/YuanExpr.jl",
+    repo="github.com/Roger-luo/Exmonicon.jl",
 )
