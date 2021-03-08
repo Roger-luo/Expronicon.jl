@@ -1,3 +1,6 @@
+"""
+transform functions for Julia Expr.
+"""
 module Transform
 
 export prettify, rm_lineinfo, flatten_blocks, name_only, rm_annotations

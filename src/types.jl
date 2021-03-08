@@ -1,3 +1,6 @@
+"""
+intermediate types for Julia expression objects.
+"""
 module Types
 
 export NoDefault, JLExpr, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,

@@ -1,3 +1,6 @@
+"""
+collection of code generators.
+"""
 module CodeGen
 
 using ..Types

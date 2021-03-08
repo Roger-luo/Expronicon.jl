@@ -1,3 +1,6 @@
+"""
+Expronicon type pretty printings.
+"""
 module Printings
 
 export with_marks, with_parathesis, with_curly, with_brackets, with_begin_end
