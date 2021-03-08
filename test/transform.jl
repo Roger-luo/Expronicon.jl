@@ -44,3 +44,17 @@ end
         end
     end|>rm_lineinfo    
 end
+
+@testset "prettify" begin
+    ex = quote
+        x :: Int
+        begin
+            y::Float64
+        end
+    end
+
+    @test prettify(ex) == quote
+        x::Int
+        y::Float64
+    end|>rm_lineinfo
+end
