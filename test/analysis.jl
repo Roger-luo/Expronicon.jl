@@ -13,6 +13,7 @@ using Expronicon.Transform
 
     ex = :(function (x::Int; kw=1) end)
     @test is_kw_fn(ex)
+    @test !is_kw_fn(true)
 
     @test !is_kw_fn(:(
         function foo(x::Int)
@@ -38,6 +39,7 @@ end
     @test jlfn.whereparams == Any[:(T <: Real)]
     @test jlfn.body == ex.args[2]
     @test codegen_ast(jlfn) == ex
+    @test is_kw_fn(jlfn) == false
 
     ex = :(function (x, y)
         return 2
@@ -62,6 +64,7 @@ end
     @test jlfn.kwargs == Any[Expr(:kw, :kw, 2)]
     @test jlfn.name === nothing
     @test codegen_ast(jlfn) == ex
+    @test is_kw_fn(jlfn) == true
 
     ex = :((x, y)->sin(x))
 
@@ -130,6 +133,23 @@ end
         end
         function Foo{N}(; x::T = 1) where {N, T}
             Foo{N, T}(x)
+        end
+    end)
+
+    ex = :(struct Foo <: AbstractFoo
+        x = 1
+        y::Int
+    end)
+
+    def = JLKwStruct(ex)
+
+    @test rm_lineinfo(codegen_ast(def)) == rm_lineinfo(quote
+        struct Foo <: AbstractFoo
+            x
+            y::Int
+        end
+        function Foo(; x = 1, y::Int)
+            Foo(x, y)
         end
     end)
 end
