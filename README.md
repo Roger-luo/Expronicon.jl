@@ -5,7 +5,7 @@
 [![Build Status](https://github.com/Roger-luo/YuanExpr.jl/workflows/CI/badge.svg)](https://github.com/Roger-luo/YuanExpr.jl/actions)
 [![Coverage](https://codecov.io/gh/Roger-luo/YuanExpr.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Roger-luo/YuanExpr.jl)
 
-collective programs for Meta programming.
+Collective tools for meta programming on Julia Expr.
 
 ## Installation
 
