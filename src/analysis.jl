@@ -26,7 +26,7 @@ end
 Check if a given function definition supports keyword arguments.
 """
 is_kw_fn(def) = false
-is_kw_fn(def::JLFunction) = def.kwargs === nothing
+is_kw_fn(def::JLFunction) = def.kwargs !== nothing
 
 function is_kw_fn(def::Expr)
     _, call, _ = split_function(def)
