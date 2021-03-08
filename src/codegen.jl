@@ -227,6 +227,16 @@ codegen_match(:x) do
     end
 end
 ```
+
+This code generates the following corresponding MLStyle expression
+
+```julia
+@match x begin
+    1 => true
+    2 => false
+    _ => nothing
+end
+```
 """
 function codegen_match(f, x, line::LineNumberNode=LineNumberNode(0), mod::Module=Main)
     return init_cfg(gen_match(x, f(), line, mod))
