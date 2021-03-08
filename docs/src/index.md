@@ -1,12 +1,12 @@
 ```@meta
-CurrentModule = Exmonicon
+CurrentModule = Expronicon
 ```
 
-# Exmonicon
+# Expronicon
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [Exmonicon]
+Modules = [Expronicon]
 ```

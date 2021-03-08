@@ -1,4 +1,4 @@
-using Exmonicon
+using Expronicon
 using Documenter
 using Test
 
@@ -10,4 +10,4 @@ end
     include("transform.jl")
 end
 
-doctest(Exmonicon)
+doctest(Expronicon)

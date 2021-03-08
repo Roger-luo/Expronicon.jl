@@ -1,6 +1,6 @@
 using Test
-using Exmonicon
-using Exmonicon.Transform
+using Expronicon
+using Expronicon.Transform
 
 @testset "name_only" begin
     @test name_only(:(x::Int)) == :x

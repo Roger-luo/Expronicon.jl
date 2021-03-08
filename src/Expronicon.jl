@@ -1,4 +1,4 @@
-module Exmonicon
+module Expronicon
 
 include("types.jl")
 include("transform.jl")

@@ -1,9 +1,9 @@
 using Test
-using Exmonicon
-using Exmonicon.Types
-using Exmonicon.Analysis
-using Exmonicon.CodeGen
-using Exmonicon.Transform
+using Expronicon
+using Expronicon.Types
+using Expronicon.Analysis
+using Expronicon.CodeGen
+using Expronicon.Transform
 
 @testset "is_kw_fn" begin
     @test is_kw_fn(:(

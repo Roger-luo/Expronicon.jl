@@ -12,7 +12,7 @@ and type annotation `::`.
 # Example
 
 ```julia
-julia> using Exmonicon.Transform
+julia> using Expronicon.Transform
 
 julia> name_only(:(sin(2)))
 :sin
