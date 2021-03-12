@@ -21,7 +21,7 @@ Expronicon is a &nbsp;
 </p>
 
 ```julia
-pkg> add Expronicon#master
+pkg> add Expronicon
 ```
 
 ## License
