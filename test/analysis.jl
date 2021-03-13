@@ -151,6 +151,11 @@ end
     @test jlstruct.constructors[1].name === :Foo
     @test jlstruct.constructors[1].args[1] === :x
     @test jlstruct.misc[1] == :(1 + 1)
+    ast = codegen_ast(jlstruct)
+    @test ast.args[1] == GlobalRef(Core, Symbol("@doc"))
+    @test ast.args[3] == "Foo\n"
+    @test ast.args[4].head === :struct
+    @test is_fn(ast.args[4].args[end].args[end-1])
 end
 
 @testset "JLKwStruct" begin
