@@ -31,15 +31,24 @@ abstract type JLExpr end
 
 Type describes a Julia function declaration expression.
 """
-Base.@kwdef mutable struct JLFunction <: JLExpr
-    head::Symbol = :function # function def must have a head
-    name::Any = nothing # name can be nothing, Symbol, Expr
-    args::Vector{Any} = []
-    kwargs::Maybe{Vector{Any}} = nothing
-    whereparams::Maybe{Vector{Any}} = nothing
-    body::Any = Expr(:block)
-    line::Maybe{LineNumberNode} = nothing
-    doc::Maybe{String} = nothing
+mutable struct JLFunction <: JLExpr
+    head::Symbol  # function def must have a head
+    name::Any  # name can be nothing, Symbol, Expr
+    args::Vector{Any} 
+    kwargs::Maybe{Vector{Any}} 
+    whereparams::Maybe{Vector{Any}} 
+    body::Any
+    line::Maybe{LineNumberNode} 
+    doc::Maybe{String} 
+end
+
+function JLFunction(;
+        head=:function, name=nothing,
+        args=[], kwargs=nothing,
+        whereparams=nothing, body=Expr(:block),
+        line=nothing, doc=nothing
+    )
+    JLFunction(head, name, args, kwargs, whereparams, body, line, doc)
 end
 
 """
@@ -48,11 +57,15 @@ end
 
 Type describes a Julia field in a Julia struct.
 """
-Base.@kwdef mutable struct JLField <: JLExpr
+mutable struct JLField <: JLExpr
     name::Symbol
-    type::Any = Any
-    doc::Maybe{String} = nothing
-    line::Maybe{LineNumberNode} = nothing
+    type::Any
+    doc::Maybe{String}
+    line::Maybe{LineNumberNode}
+end
+
+function JLField(;name, type=Any, doc=nothing, line=nothing)
+    JLField(name, type, doc, line)
 end
 
 """
@@ -61,12 +74,16 @@ end
 
 Type describes a Julia field that can have a default value in a Julia struct.
 """
-Base.@kwdef mutable struct JLKwField <: JLExpr
+mutable struct JLKwField <: JLExpr
     name::Symbol
-    type::Any = Any
-    doc::Maybe{String} = nothing
-    line::Maybe{LineNumberNode} = nothing
-    default::Any = no_default
+    type::Any
+    doc::Maybe{String}
+    line::Maybe{LineNumberNode}
+    default::Any
+end
+
+function JLKwField(;name, type=Any, doc=nothing, line=nothing, default=no_default)
+    JLKwField(name, type, doc, line, default)
 end
 
 """
@@ -74,16 +91,24 @@ end
 
 Type describes a Julia struct.
 """
-Base.@kwdef mutable struct JLStruct <: JLExpr
+mutable struct JLStruct <: JLExpr
     name::Symbol
-    ismutable::Bool = false
-    typevars::Vector{Any} = []
-    supertype::Any = nothing
-    fields::Vector{JLField} = JLField[]
-    constructors::Vector{JLFunction} = JLFunction[]
-    line::Maybe{LineNumberNode} = nothing
-    doc::Maybe{String} = nothing
-    misc::Any = nothing
+    ismutable::Bool
+    typevars::Vector{Any}
+    supertype::Any
+    fields::Vector{JLField}
+    constructors::Vector{JLFunction}
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
+    misc::Any
+end
+
+function JLStruct(;
+    name, ismutable=false,
+    typevars=[], supertype=nothing,
+    fields=JLField[], constructors=JLFunction[],
+    line=nothing, doc=nothing, misc=nothing)
+    JLStruct(name, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
 """
@@ -91,17 +116,24 @@ end
 
 Type describes a Julia struct that allows keyword definition of defaults.
 """
-Base.@kwdef mutable struct JLKwStruct <: JLExpr
+mutable struct JLKwStruct <: JLExpr
     name::Symbol
-    typealias::Maybe{String} = nothing
-    ismutable::Bool = false
-    typevars::Vector{Any} = []
-    supertype::Any = nothing
-    fields::Vector{JLKwField} = JLKwField[]
-    constructors::Vector{JLFunction} = JLFunction[]
-    line::Maybe{LineNumberNode} = nothing
-    doc::Maybe{String} = nothing
-    misc::Any = nothing
+    typealias::Maybe{String}
+    ismutable::Bool
+    typevars::Vector{Any}
+    supertype::Any
+    fields::Vector{JLKwField}
+    constructors::Vector{JLFunction}
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
+    misc::Any
+end
+
+function JLKwStruct(;name, typealias=nothing,
+    ismutable=false, typevars=[], supertype=nothing,
+    fields=JLField[], constructors=JLFunction[],
+    line=nothing, doc=nothing, misc=nothing)
+    JLKwStruct(name, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
 end
