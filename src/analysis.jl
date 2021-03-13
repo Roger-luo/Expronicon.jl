@@ -6,7 +6,7 @@ module Analysis
 using MLStyle
 using ..Types
 using ..Transform
-export AnalysisError, is_fn, is_kw_fn, split_function, split_call, split_struct,
+export AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
     split_struct_name, annotations, uninferrable_typevars
 
 struct AnalysisError <: Exception
@@ -17,7 +17,7 @@ end
 anlys_error(expect, got) = throw(AnalysisError(expect, got))
 
 function Base.show(io::IO, e::AnalysisError)
-    print(io, "expect ", e.expect, " expression, got", e.got, ".")
+    print(io, "expect ", e.expect, " expression, got ", e.got, ".")
 end
 
 """
@@ -83,11 +83,11 @@ function split_function(ex::Expr)
 end
 
 """
-    split_call(ex::Expr) -> name, args, kw, whereparams
+    split_function_head(ex::Expr) -> name, args, kw, whereparams
 
-Split call name, arguments, keyword arguments and where parameters.
+Split function head to name, arguments, keyword arguments and where parameters.
 """
-function split_call(ex::Expr)
+function split_function_head(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing)
@@ -96,10 +96,10 @@ function split_call(ex::Expr)
         Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing)
         Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing)
         Expr(:where, call, whereparams...) => begin
-            name, args, kw, _ = split_call(call)
+            name, args, kw, _ = split_function_head(call)
             (name, args, kw, whereparams)
         end
-        _ => anlys_error("call", ex)
+        _ => anlys_error("function head expr", ex)
     end
 end
 
@@ -145,7 +145,7 @@ end
 function Types.JLFunction(ex::Expr)
     line, doc, expr = split_doc(ex)
     head, call, body = split_function(expr)
-    name, args, kw, whereparams = split_call(call)
+    name, args, kw, whereparams = split_function_head(call)
     JLFunction(head, name, args, kw, whereparams, body, line, doc)
 end
 

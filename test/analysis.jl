@@ -92,6 +92,11 @@ end
     @test jlfn.args == Any[:(x::Int)]
     @test jlfn.kwargs == Any[Expr(:kw, :kw, 1)]
     @test codegen_ast(jlfn) == Expr(:function, Expr(:tuple, Expr(:parameters, Expr(:kw, :kw, 1)), :(x::Int)), jlfn.body)
+
+    ex = :(struct Foo end)
+    @test_throws AnalysisError JLFunction(ex)
+    ex = :(@foo(2, 3))
+    @test_throws AnalysisError split_function_head(ex)
 end
 
 @testset "JLStruct(ex)" begin
@@ -157,6 +162,8 @@ end
     @test ast.args[4].head === :struct
     @test is_fn(ast.args[4].args[end].args[end-1])
     println(jlstruct)
+
+    @test_throws AnalysisError split_struct_name(:(function Foo end))
 end
 
 @testset "JLKwStruct" begin
