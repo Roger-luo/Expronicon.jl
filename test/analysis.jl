@@ -125,9 +125,7 @@ end
 
     ex = quote
         """
-            Foo
-
-        abc
+        Foo
         """
         struct Foo
             "xyz"
@@ -140,7 +138,7 @@ end
     end
     ex = ex.args[2]
     jlstruct = JLStruct(ex)
-    @test jlstruct.doc == "    Foo\nabc\n"
+    @test jlstruct.doc == "Foo\n"
     @test jlstruct.fields[1].doc == "xyz"
     @test jlstruct.fields[2].type === Any
     @test jlstruct.constructors[1].name === :Foo
