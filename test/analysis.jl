@@ -156,6 +156,7 @@ end
     @test ast.args[3] == "Foo\n"
     @test ast.args[4].head === :struct
     @test is_fn(ast.args[4].args[end].args[end-1])
+    println(jlstruct)
 end
 
 @testset "JLKwStruct" begin
@@ -216,6 +217,7 @@ end
     @test jlstruct.fields[2].name === :b
     @test jlstruct.constructors[1].name === :Foo
     @test jlstruct.misc[1] == :(1 + 1)
+    println(jlstruct)
 end
 
 @testset "codegen_match" begin
