@@ -242,3 +242,5 @@ end
     @test test_match(2) == false
     @test test_match(3) === nothing
 end
+
+@test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
