@@ -5,24 +5,10 @@ using Expronicon.Analysis
 using Expronicon.CodeGen
 using Expronicon.Transform
 
-# ex = quote
-#     """
-#         Foo
-
-#     # title
-#     paragraph
-#     """
-#     mutable struct Foo
-#         "abc"
-#         a::Int
-
-#         Foo(x) = new(x)
-#     end
-# end
-# ex = ex.args[2]
-# jl = JLKwStruct(ex)
-
-# codegen_ast(jl)
+@testset "is_fn" begin
+    @test is_fn(:(foo(x) = x))
+    @test is_fn(:(x -> 2x))
+end
 
 @testset "is_kw_fn" begin
     @test is_kw_fn(:(
@@ -136,6 +122,30 @@ end
     @test jlstruct.supertype == :AbstractArray
     @test jlstruct.misc[1] == ex.args[3].args[end]
     @test rm_lineinfo(codegen_ast(jlstruct)) == rm_lineinfo(ex)
+
+    ex = quote
+        """
+            Foo
+
+        abc
+        """
+        struct Foo
+            "xyz"
+            x::Int
+            y
+
+            Foo(x) = new(x)
+            1 + 1
+        end
+    end
+    ex = ex.args[2]
+    jlstruct = JLStruct(ex)
+    @test jlstruct.doc == "    Foo\nabc\n"
+    @test jlstruct.fields[1].doc == "xyz"
+    @test jlstruct.fields[2].type === Any
+    @test jlstruct.constructors[1].name === :Foo
+    @test jlstruct.constructors[1].args[1] === :x
+    @test jlstruct.misc[1] == :(1 + 1)
 end
 
 @testset "JLKwStruct" begin
@@ -171,6 +181,27 @@ end
             Foo(x, y)
         end
     end)
+
+    ex = quote
+        """
+        Foo
+        """
+        mutable struct Foo
+            "abc"
+            a::Int = 1
+            b
+
+            Foo(x) = new(x)
+            1 + 1
+        end
+    end
+    ex = ex.args[2]
+    jlstruct = JLKwStruct(ex)
+    @test jlstruct.doc == "Foo\n"
+    @test jlstruct.fields[1].doc == "abc"
+    @test jlstruct.fields[2].name === :b
+    @test jlstruct.constructors[1].name === :Foo
+    @test jlstruct.misc[1] == :(1 + 1)
 end
 
 @testset "codegen_match" begin

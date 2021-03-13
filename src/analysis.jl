@@ -6,7 +6,7 @@ module Analysis
 using MLStyle
 using ..Types
 using ..Transform
-export AnalysisError, is_kw_fn, split_function, split_call, split_struct,
+export AnalysisError, is_fn, is_kw_fn, split_function, split_call, split_struct,
     split_struct_name, annotations, uninferrable_typevars
 
 struct AnalysisError <: Exception
