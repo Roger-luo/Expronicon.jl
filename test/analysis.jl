@@ -5,6 +5,25 @@ using Expronicon.Analysis
 using Expronicon.CodeGen
 using Expronicon.Transform
 
+# ex = quote
+#     """
+#         Foo
+
+#     # title
+#     paragraph
+#     """
+#     mutable struct Foo
+#         "abc"
+#         a::Int
+
+#         Foo(x) = new(x)
+#     end
+# end
+# ex = ex.args[2]
+# jl = JLKwStruct(ex)
+
+# codegen_ast(jl)
+
 @testset "is_kw_fn" begin
     @test is_kw_fn(:(
         function foo(x::Int; kw=1)

@@ -35,7 +35,7 @@ function codegen_ast(fn::JLFunction)
 
     push!(fn_def.args, call)
     push!(fn_def.args, fn.body)
-    return fn_def
+    return codegen_ast_docstring(fn, fn_def)
 end
 
 function codegen_ast(def::JLStruct)
@@ -66,6 +66,11 @@ function codegen_ast(def::JLKwStruct)
         $(codegen_ast_struct(def))
         $(codegen_ast(kwfn_def))
     end
+end
+
+function codegen_ast_docstring(def, body)
+    def.doc === nothing && return body
+    Expr(:macrocall, GlobalRef(Core, Symbol("@doc")), def.line, def.doc, body)
 end
 
 """
@@ -160,8 +165,14 @@ function codegen_ast_struct_body(def)
     body = Expr(:block)
     for field in def.fields
         field.line === nothing || push!(body.args, field.line)
+        field.doc === nothing || push!(body.args, field.doc)
         push!(body.args, codegen_ast(field))
     end
+
+    for constructor in def.constructors
+        push!(body.args, codegen_ast(constructor))
+    end
+
     body = flatten_blocks(body)
     append!(body.args, def.misc)
     return body
@@ -199,7 +210,8 @@ julia> codegen_ast_struct(def)
 function codegen_ast_struct(def)
     head = codegen_ast_struct_head(def)
     body = codegen_ast_struct_body(def)
-    return Expr(:struct, def.ismutable, head, body)
+    ex = Expr(:struct, def.ismutable, head, body)
+    return codegen_ast_docstring(def, ex)
 end
 
 function codegen_ast(def::Union{JLField, JLKwField})

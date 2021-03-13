@@ -31,12 +31,9 @@ julia> name_only(:(x::Int))
 ```
 """
 function name_only(@nospecialize(ex))
-    ex isa Expr || return ex
-    ex.head === :call && return name_only(ex.args[1])
-    ex.head === :curly && return name_only(ex.args[1])
-    ex.head === :(<:) && return name_only(ex.args[1])
-    ex.head === :(::) && return name_only(ex.args[1])
-    ex.head === :where && return name_only(ex.args[1])
+    ex isa Symbol && return ex
+    ex isa Expr || error("unsupported expression $ex")
+    ex.head in [:call, :curly, :(<:), :(::), :where, :function, :(=), :(->)] && return name_only(ex.args[1])
     error("unsupported expression $ex")
 end
 
