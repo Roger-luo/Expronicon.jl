@@ -6,7 +6,6 @@ module Types
 export NoDefault, JLExpr, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     no_default
 
-using Markdown
 const Maybe{T} = Union{Nothing, T}
 
 """

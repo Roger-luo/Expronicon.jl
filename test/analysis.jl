@@ -32,6 +32,9 @@ end
 end
 
 @testset "JLFunction(ex)" begin
+    jlfn = JLFunction()
+    @test jlfn.name === nothing
+
     ex = :(function foo(x::Int, y::Type{T}) where {T <: Real}
         return x
     end)
@@ -92,6 +95,10 @@ end
 end
 
 @testset "JLStruct(ex)" begin
+    @test JLField(;name=:x).name === :x
+    @test JLField(;name=:x).type === Any
+    @test JLStruct(;name=:Foo).name === :Foo
+
     ex = :(struct Foo
         x::Int
     end)
@@ -147,6 +154,10 @@ end
 end
 
 @testset "JLKwStruct" begin
+    @test JLKwField(;name=:x).name === :x
+    @test JLKwField(;name=:x).type === Any
+    @test JLKwStruct(;name=:Foo).name === :Foo
+
     ex = :(struct Foo{N, T}
         x::T = 1
     end)
