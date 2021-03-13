@@ -5,6 +5,11 @@ using Expronicon.Analysis
 using Expronicon.CodeGen
 using Expronicon.Transform
 
+@testset "is_fn" begin
+    @test is_fn(:(foo(x) = x))
+    @test is_fn(:(x -> 2x))
+end
+
 @testset "is_kw_fn" begin
     @test is_kw_fn(:(
         function foo(x::Int; kw=1)
@@ -27,6 +32,9 @@ using Expronicon.Transform
 end
 
 @testset "JLFunction(ex)" begin
+    jlfn = JLFunction()
+    @test jlfn.name === nothing
+
     ex = :(function foo(x::Int, y::Type{T}) where {T <: Real}
         return x
     end)
@@ -84,9 +92,18 @@ end
     @test jlfn.args == Any[:(x::Int)]
     @test jlfn.kwargs == Any[Expr(:kw, :kw, 1)]
     @test codegen_ast(jlfn) == Expr(:function, Expr(:tuple, Expr(:parameters, Expr(:kw, :kw, 1)), :(x::Int)), jlfn.body)
+
+    ex = :(struct Foo end)
+    @test_throws AnalysisError JLFunction(ex)
+    ex = :(@foo(2, 3))
+    @test_throws AnalysisError split_function_head(ex)
 end
 
 @testset "JLStruct(ex)" begin
+    @test JLField(;name=:x).name === :x
+    @test JLField(;name=:x).type === Any
+    @test JLStruct(;name=:Foo).name === :Foo
+
     ex = :(struct Foo
         x::Int
     end)
@@ -117,9 +134,43 @@ end
     @test jlstruct.supertype == :AbstractArray
     @test jlstruct.misc[1] == ex.args[3].args[end]
     @test rm_lineinfo(codegen_ast(jlstruct)) == rm_lineinfo(ex)
+
+    ex = quote
+        """
+        Foo
+        """
+        struct Foo
+            "xyz"
+            x::Int
+            y
+
+            Foo(x) = new(x)
+            1 + 1
+        end
+    end
+    ex = ex.args[2]
+    jlstruct = JLStruct(ex)
+    @test jlstruct.doc == "Foo\n"
+    @test jlstruct.fields[1].doc == "xyz"
+    @test jlstruct.fields[2].type === Any
+    @test jlstruct.constructors[1].name === :Foo
+    @test jlstruct.constructors[1].args[1] === :x
+    @test jlstruct.misc[1] == :(1 + 1)
+    ast = codegen_ast(jlstruct)
+    @test ast.args[1] == GlobalRef(Core, Symbol("@doc"))
+    @test ast.args[3] == "Foo\n"
+    @test ast.args[4].head === :struct
+    @test is_fn(ast.args[4].args[end].args[end-1])
+    println(jlstruct)
+
+    @test_throws AnalysisError split_struct_name(:(function Foo end))
 end
 
 @testset "JLKwStruct" begin
+    @test JLKwField(;name=:x).name === :x
+    @test JLKwField(;name=:x).type === Any
+    @test JLKwStruct(;name=:Foo).name === :Foo
+
     ex = :(struct Foo{N, T}
         x::T = 1
     end)
@@ -152,6 +203,28 @@ end
             Foo(x, y)
         end
     end)
+
+    ex = quote
+        """
+        Foo
+        """
+        mutable struct Foo
+            "abc"
+            a::Int = 1
+            b
+
+            Foo(x) = new(x)
+            1 + 1
+        end
+    end
+    ex = ex.args[2]
+    jlstruct = JLKwStruct(ex)
+    @test jlstruct.doc == "Foo\n"
+    @test jlstruct.fields[1].doc == "abc"
+    @test jlstruct.fields[2].name === :b
+    @test jlstruct.constructors[1].name === :Foo
+    @test jlstruct.misc[1] == :(1 + 1)
+    println(jlstruct)
 end
 
 @testset "codegen_match" begin
@@ -169,3 +242,5 @@ end
     @test test_match(2) == false
     @test test_match(3) === nothing
 end
+
+@test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."

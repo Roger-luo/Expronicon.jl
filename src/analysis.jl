@@ -6,7 +6,7 @@ module Analysis
 using MLStyle
 using ..Types
 using ..Transform
-export AnalysisError, is_kw_fn, split_function, split_call, split_struct,
+export AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
     split_struct_name, annotations, uninferrable_typevars
 
 struct AnalysisError <: Exception
@@ -17,7 +17,22 @@ end
 anlys_error(expect, got) = throw(AnalysisError(expect, got))
 
 function Base.show(io::IO, e::AnalysisError)
-    print(io, "expect ", e.expect, " expression, got", e.got, ".")
+    print(io, "expect ", e.expect, " expression, got ", e.got, ".")
+end
+
+"""
+    is_fn(def)
+
+Check if given object is a function expression.
+"""
+function is_fn(@nospecialize(def))
+    @match def begin
+        ::JLFunction => true
+        Expr(:function, _, _) => true
+        Expr(:(=), _, _) => true
+        Expr(:(->), _, _) => true
+        _ => false
+    end
 end
 
 """
@@ -25,16 +40,31 @@ end
 
 Check if a given function definition supports keyword arguments.
 """
-is_kw_fn(def) = false
-is_kw_fn(def::JLFunction) = def.kwargs !== nothing
+function is_kw_fn(@nospecialize(def))
+    is_fn(def) || return false
 
-function is_kw_fn(def::Expr)
+    if def isa JLFunction
+        return def.kwargs !== nothing
+    end
+
     _, call, _ = split_function(def)
     @match call begin
         Expr(:tuple, Expr(:parameters, _...), _...) => true
         Expr(:call, _, Expr(:parameters, _...), _...) => true
         Expr(:block, _, ::LineNumberNode, _) => true
         _ => false
+    end
+end
+
+"""
+    split_doc(ex::Expr) -> line, doc, expr
+
+Split doc string from given expression.
+"""
+function split_doc(ex::Expr)
+    @match ex begin
+        Expr(:macrocall, GlobalRef(Core, Symbol("@doc")), line, doc, expr) => (line, doc, expr)
+        _ => (nothing, nothing, ex)
     end
 end
 
@@ -53,11 +83,11 @@ function split_function(ex::Expr)
 end
 
 """
-    split_call(ex::Expr) -> name, args, kw, whereparams
+    split_function_head(ex::Expr) -> name, args, kw, whereparams
 
-Split call name, arguments, keyword arguments and where parameters.
+Split function head to name, arguments, keyword arguments and where parameters.
 """
-function split_call(ex::Expr)
+function split_function_head(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing)
@@ -66,10 +96,10 @@ function split_call(ex::Expr)
         Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing)
         Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing)
         Expr(:where, call, whereparams...) => begin
-            name, args, kw, _ = split_call(call)
+            name, args, kw, _ = split_function_head(call)
             (name, args, kw, whereparams)
         end
-        _ => anlys_error("call", ex)
+        _ => anlys_error("function head expr", ex)
     end
 end
 
@@ -113,45 +143,74 @@ function uninferrable_typevars(def::Union{JLStruct, JLKwStruct})
 end
 
 function Types.JLFunction(ex::Expr)
-    head, call, body = split_function(ex)
-    name, args, kw, whereparams = split_call(call)
-    JLFunction(head, name, args, kw, whereparams, body)
+    line, doc, expr = split_doc(ex)
+    head, call, body = split_function(expr)
+    name, args, kw, whereparams = split_function_head(call)
+    JLFunction(head, name, args, kw, whereparams, body, line, doc)
 end
 
 function Types.JLStruct(ex::Expr)
-    ismutable, name, typevars, supertype, body = split_struct(ex)
+    line, doc, expr = split_doc(ex)
+    ismutable, typename, typevars, supertype, body = split_struct(expr)
 
-    fields = []
-    misc = []
-    line = nothing
+    fields, constructors, misc = JLField[], JLFunction[], []
+    field_doc, field_line = nothing, nothing
+
     for each in body.args
-        @match each begin
-            name::Symbol => push!(fields, JLField(name, Any, line))
-            :($name::$type) => push!(fields, JLField(name, type, line))
-            ::LineNumberNode => (line = each)
-            _ => push!(misc, each)
+        @switch each begin
+            @case :($name::$type)
+                push!(fields, JLField(name, type, field_doc, field_line))
+            @case name::Symbol
+                push!(fields, JLField(name, Any, field_doc, field_line))
+            @case ::String
+                field_doc = each
+            @case ::LineNumberNode
+                field_line = each
+            @case GuardBy(is_fn)
+                if name_only(each) === typename
+                    push!(constructors, JLFunction(each))
+                else
+                    push!(misc, each)
+                end
+            @case _
+                push!(misc, each)
         end
     end
-    JLStruct(name, ismutable, typevars, fields, supertype, misc)
+    JLStruct(typename, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
-function Types.JLKwStruct(ex::Expr)
-    ismutable, name, typevars, supertype, body = split_struct(ex)
+function Types.JLKwStruct(ex::Expr, typealias=nothing)
+    line, doc, expr = split_doc(ex)
+    ismutable, typename, typevars, supertype, body = split_struct(expr)
 
-    fields = []
-    misc = []
-    line = nothing
+    fields, constructors, misc = JLKwField[], JLFunction[], []
+    field_doc, field_line = nothing, nothing
+
     for each in body.args
-        @match each begin
-            :($name::$type = $default) => push!(fields, JLKwField(name, type, line, default))
-            :($(name::Symbol) = $default) => push!(fields, JLKwField(name, Any, line, default))
-            name::Symbol => push!(fields, JLKwField(name, Any, line))
-            :($name::$type) => push!(fields, JLKwField(name, type, line))
-            ::LineNumberNode => (line = each)
-            _ => push!(misc, each)
+        @switch each begin
+            @case :($name::$type = $default)
+                push!(fields, JLKwField(name, type, field_doc, field_line, default))
+            @case :($(name::Symbol) = $default)
+                push!(fields, JLKwField(name, Any, field_doc, field_line, default))
+            @case name::Symbol
+                push!(fields, JLKwField(name, Any, field_doc, field_line, no_default))
+            @case :($name::$type)
+                push!(fields, JLKwField(name, type, field_doc, field_line, no_default))
+            @case ::String
+                field_doc = each
+            @case ::LineNumberNode
+                field_line = each
+            @case GuardBy(is_fn)
+                if name_only(each) === typename
+                    push!(constructors, JLFunction(each))
+                else
+                    push!(misc, each)
+                end
+            @case _
+                push!(misc, each)
         end
     end
-    JLKwStruct(name, ismutable, typevars, fields, supertype, misc)
+    JLKwStruct(typename, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
 end

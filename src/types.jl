@@ -31,21 +31,24 @@ abstract type JLExpr end
 Type describes a Julia function declaration expression.
 """
 mutable struct JLFunction <: JLExpr
-    head::Symbol # function def must have a head
-    name::Any # name can be nothing, Symbol, Expr
-    args::Vector{Any}
-    kwargs::Maybe{Vector{Any}}
-    whereparams::Maybe{Vector{Any}}
+    head::Symbol  # function def must have a head
+    name::Any  # name can be nothing, Symbol, Expr
+    args::Vector{Any} 
+    kwargs::Maybe{Vector{Any}} 
+    whereparams::Maybe{Vector{Any}} 
     body::Any
+    line::Maybe{LineNumberNode} 
+    doc::Maybe{String} 
 end
 
-function JLFunction(;head::Symbol=:function,
-        name=nothing, args=[],
-        kwargs=nothing, whereparams=nothing,
-        body=Expr(:block))
-    JLFunction(head, name, args, kwargs, whereparams, body)
+function JLFunction(;
+        head=:function, name=nothing,
+        args=[], kwargs=nothing,
+        whereparams=nothing, body=Expr(:block),
+        line=nothing, doc=nothing
+    )
+    JLFunction(head, name, args, kwargs, whereparams, body, line, doc)
 end
-
 
 """
     JLField <: JLExpr
@@ -56,7 +59,12 @@ Type describes a Julia field in a Julia struct.
 mutable struct JLField <: JLExpr
     name::Symbol
     type::Any
+    doc::Maybe{String}
     line::Maybe{LineNumberNode}
+end
+
+function JLField(;name, type=Any, doc=nothing, line=nothing)
+    JLField(name, type, doc, line)
 end
 
 """
@@ -68,11 +76,14 @@ Type describes a Julia field that can have a default value in a Julia struct.
 mutable struct JLKwField <: JLExpr
     name::Symbol
     type::Any
+    doc::Maybe{String}
     line::Maybe{LineNumberNode}
     default::Any
 end
 
-JLKwField(name, type, line) = JLKwField(name, type, line, no_default)
+function JLKwField(;name, type=Any, doc=nothing, line=nothing, default=no_default)
+    JLKwField(name, type, doc, line, default)
+end
 
 """
     JLStruct <: JLExpr
@@ -83,9 +94,20 @@ mutable struct JLStruct <: JLExpr
     name::Symbol
     ismutable::Bool
     typevars::Vector{Any}
-    fields::Vector{JLField}
     supertype::Any
+    fields::Vector{JLField}
+    constructors::Vector{JLFunction}
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
     misc::Any
+end
+
+function JLStruct(;
+    name, ismutable=false,
+    typevars=[], supertype=nothing,
+    fields=JLField[], constructors=JLFunction[],
+    line=nothing, doc=nothing, misc=nothing)
+    JLStruct(name, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
 """
@@ -95,11 +117,22 @@ Type describes a Julia struct that allows keyword definition of defaults.
 """
 mutable struct JLKwStruct <: JLExpr
     name::Symbol
+    typealias::Maybe{String}
     ismutable::Bool
     typevars::Vector{Any}
-    fields::Vector{JLKwField}
     supertype::Any
+    fields::Vector{JLKwField}
+    constructors::Vector{JLFunction}
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
     misc::Any
+end
+
+function JLKwStruct(;name, typealias=nothing,
+    ismutable=false, typevars=[], supertype=nothing,
+    fields=JLField[], constructors=JLFunction[],
+    line=nothing, doc=nothing, misc=nothing)
+    JLKwStruct(name, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
 end

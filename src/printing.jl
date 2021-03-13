@@ -5,6 +5,7 @@ module Printings
 
 export with_marks, with_parathesis, with_curly, with_brackets, with_begin_end
 
+using Markdown
 using MLStyle
 using ..Types
 
@@ -25,6 +26,7 @@ string(x) = Box.CYAN_FG(Base.string(x))
 end
 
 no_indent(io::IO) = IOContext(io, :indent=>0)
+no_indent_first_line(io::IO) = IOContext(io, :no_indent_first_line=>true)
 
 function print(io::IO, xs...)
     indent = get(io, :indent, 0)
@@ -32,7 +34,13 @@ function print(io::IO, xs...)
     Base.print(io, tab^indent, xs...)
 end
 
-println(io::IO, xs...) = print(io, xs..., "\n")
+function println(io::IO, xs...)
+    if get(io, :no_indent_first_line, false)
+        print(no_indent(io), xs..., "\n")
+    else
+        print(io, xs..., "\n")
+    end
+end
 
 function indent(io)
     IOContext(io, :indent => get(io, :indent, 0) + INDENT)
@@ -84,6 +92,20 @@ Print with brackets. See also [`with_marks`](@ref), [`with_parathesis`](@ref),
 [`with_curly`](@ref), [`with_begin_end`](@ref).
 """
 with_brackets(f, io::IO) = with_marks(f, io, "[", "]")
+
+"""
+    with_triple_quotes(f, io::IO)
+
+Print with triple quotes.
+"""
+with_triple_quotes(f, io::IO) = with_marks(f, io, Color.string("\"\"\"\n"), Color.string("\"\"\""))
+
+"""
+    with_double_quotes(f, io::IO)
+
+Print with double quotes.
+"""
+with_double_quotes(f, io::IO) = with_marks(f, io, Color.string("\""), Color.string("\""))
 
 """
     with_begin_end(f, io::IO)
@@ -214,28 +236,16 @@ function print_ast(io::IO, def::JLFunction)
         end
         print(io, Color.kw("end"))
     else
-        print_ast(io, def.body)
+        print_ast(no_indent_first_line(io), def.body)
     end
 end
 
 function print_ast(io::IO, def::JLStruct)
-    print_ast_struct_head(io, def)
-    for each in def.fields
-        println(no_indent(io))
-        print_ast(indent(io), each)
-    end
-    println(no_indent(io))
-    print(io, Color.kw("end"))
+    print_ast_struct(io, def)
 end
 
 function print_ast(io::IO, def::JLKwStruct)
-    print_ast_struct_head(io, def)
-    for each in def.fields
-        println(no_indent(io))
-        print_ast(indent(io), each)
-    end
-    println(no_indent(io))
-    print(io, Color.kw("end"))
+    print_ast_struct(io, def)
 end
 
 function print_ast(io::IO, def::JLField)
@@ -247,15 +257,60 @@ function print_ast(io::IO, def::JLKwField)
     def.default === no_default || print(no_indent(io), " = ", def.default)
 end
 
+function print_ast_doc(io::IO, def)
+    def.doc === nothing && return
+    doc = def.doc
+    with_triple_quotes(io) do
+        print(io, Color.string(doc))
+    end
+    println(io)
+end
+
+function print_ast_struct(io::IO, def)
+    def.line === nothing || println(io, Color.line(def.line))
+    print_ast_doc(io, def)
+    print_ast_struct_head(io, def)
+    for each in def.fields
+        println(no_indent(io))
+        print_ast(indent(io), each)
+    end
+    println(no_indent(io))
+
+    for each in def.constructors
+        print_ast(indent(io), each)
+        println(io)
+    end
+
+    print(io, Color.kw("end"))
+end
+
 function print_ast_struct_field(io::IO, def)
+    def.line === nothing || println(io, Color.line(def.line))
+    if def.doc !== nothing
+        print(io)
+        with_double_quotes(no_indent(io)) do
+            print(no_indent(io), Color.string(def.doc))
+        end
+        println(io)
+    end
     print(io, def.name)
     def.type === Any || print(no_indent(io), "::", Color.type(def.type))
 end
 
 function print_ast_struct_head(io::IO, def)
     tab = get(io, :tab, " ")
-    def.ismutable && print(io, Color.kw("mutable"), tab)
-    print(io, Color.kw("struct"))
+    # make sure there is only one indent in the same line 
+    printed_indent = false
+    if def isa JLKwStruct
+        print(io, Color.line("#= kw =#"), tab)
+        printed_indent = true
+    end
+
+    if def.ismutable
+        print(printed_indent ? no_indent(io) : io, Color.kw("mutable"), tab)
+    end
+
+    print(printed_indent ? no_indent(io) : io, Color.kw("struct"))
     print(io, tab, def.name)
 
     isempty(def.typevars) || with_curly(no_indent(io)) do
