@@ -3,7 +3,15 @@ transform functions for Julia Expr.
 """
 module Transform
 
-export prettify, rm_lineinfo, flatten_blocks, name_only, rm_annotations
+export prettify, rm_lineinfo, flatten_blocks, name_only, rm_annotations, replace_symbol
+
+replace_symbol(x::Symbol, name::Symbol, value) = x === name ? value : x
+replace_symbol(x, ::Symbol, value) = x # other expressions
+
+function replace_symbol(ex::Expr, name::Symbol, value)
+    Expr(ex.head, map(x->replace_symbol(x, name, value), ex.args)...)
+end
+
 
 """
     name_only(ex)

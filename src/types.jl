@@ -3,7 +3,7 @@ intermediate types for Julia expression objects.
 """
 module Types
 
-export NoDefault, JLExpr, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
+export NoDefault, JLExpr, JLIfElse, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     no_default
 
 const Maybe{T} = Union{Nothing, T}
@@ -134,5 +134,12 @@ function JLKwStruct(;name, typealias=nothing,
     line=nothing, doc=nothing, misc=nothing)
     JLKwStruct(name, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
+
+mutable struct JLIfElse <: JLExpr
+    map::Dict{Any, Any}
+    otherwise::Any
+end
+
+JLIfElse() = JLIfElse(Dict(), nothing)
 
 end

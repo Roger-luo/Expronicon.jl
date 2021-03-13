@@ -7,7 +7,7 @@ using MLStyle
 using ..Types
 using ..Transform
 export AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
-    split_struct_name, annotations, uninferrable_typevars
+    split_struct_name, annotations, uninferrable_typevars, has_symbol
 
 struct AnalysisError <: Exception
     expect::String
@@ -18,6 +18,12 @@ anlys_error(expect, got) = throw(AnalysisError(expect, got))
 
 function Base.show(io::IO, e::AnalysisError)
     print(io, "expect ", e.expect, " expression, got ", e.got, ".")
+end
+
+function has_symbol(@nospecialize(ex), name::Symbol)
+    ex isa Symbol && return ex === name
+    ex isa Expr || return false
+    return any(x->has_symbol(x, name), ex.args)
 end
 
 """

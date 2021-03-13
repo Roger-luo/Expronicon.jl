@@ -196,6 +196,28 @@ function print_ast(io::IO, ex)
     end
 end
 
+function print_ast(io::IO, def::JLIfElse)
+    isempty(def.map) && return print_ast(io, def.otherwise)
+    tab = get(io, :tab, " ")
+    print(io, Color.kw("if"), tab)
+    for (k, (cond, action)) in enumerate(def.map)
+        print_ast(no_indent(io), cond)
+        println(io)
+        print_ast(indent(io), action)
+        println(io)
+
+        if k !== length(def.map)
+            print(io, Color.kw("elseif"), tab)
+        end
+    end
+    if def.otherwise !== nothing
+        print(io, Color.kw("else"), "\n")
+        print_ast(indent(io), def.otherwise)
+        println(io)
+    end
+    print(io, Color.kw("end"))
+end
+
 function print_ast(io::IO, def::JLFunction)
     tab = get(io, :tab, " ")
 

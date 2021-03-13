@@ -244,3 +244,16 @@ end
 end
 
 @test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
+
+@testset "JLIfElse" begin
+    jl = JLIfElse()
+    jl.map[:(foo(x))] = :(x = 1 + 1)
+    jl.map[:(goo(x))] = :(y = 1 + 2)
+    jl.otherwise = :(error("abc"))
+    println(jl)
+    ex = codegen_ast(jl)
+    @test ex.head === :if
+    @test ex.args[1] == :(goo(x))
+    @test ex.args[2].args[1] == :(y = 1 + 2)
+    @test ex.args[3].head === :elseif
+end

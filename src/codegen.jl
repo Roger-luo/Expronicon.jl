@@ -15,6 +15,22 @@ export codegen_ast,
     codegen_ast_struct_body,
     codegen_match
 
+function codegen_ast(def::JLIfElse)
+    isempty(def.map) && return def.otherwise
+    stmt = ex = Expr(:if)
+    for (k, (cond, action)) in enumerate(def.map)
+        push!(stmt.args, cond)
+        push!(stmt.args, Expr(:block, action))
+
+        if k !== length(def.map)
+            push!(stmt.args, Expr(:elseif))
+            stmt = stmt.args[end]
+        end
+    end
+    def.otherwise === nothing || push!(stmt.args, def.otherwise)
+    return ex
+end
+
 function codegen_ast(fn::JLFunction)
     fn_def = Expr(fn.head)
 
