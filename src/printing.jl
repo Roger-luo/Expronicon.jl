@@ -29,6 +29,9 @@ end
 no_indent(io::IO) = IOContext(io, :indent=>0)
 no_indent_first_line(io::IO) = IOContext(io, :no_indent_first_line=>true)
 
+# 1.0 compatibility
+indent_print(io::IO, ::Nothing) = print(io, "nothing")
+
 function indent_print(io::IO, xs...)
     indent = get(io, :indent, 0)
     tab = get(io, :tab, " ")
