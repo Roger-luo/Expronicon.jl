@@ -97,6 +97,9 @@ end
     @test_throws AnalysisError JLFunction(ex)
     ex = :(@foo(2, 3))
     @test_throws AnalysisError split_function_head(ex)
+
+    ex = :(Foo(; a = 1) = new(a))
+    @test JLFunction(ex).kwargs[1] == Expr(:kw, :a, 1)
 end
 
 @testset "JLStruct(ex)" begin
@@ -178,6 +181,12 @@ end
     def = JLKwStruct(ex)
     println(def)
 
+    ex = codegen_ast_kwfn(def, :create)
+    @test ex.args[1].args[1].args[1] === :create
+    @test ex.args[1].args[2] === :N
+    @test ex.args[1].args[3] === :T
+    @test ex.args[1].args[4].args[2] == :(Foo{N})
+
     @test rm_lineinfo(codegen_ast(def)) == rm_lineinfo(quote
         struct Foo{N, T}
             x::T
@@ -225,6 +234,14 @@ end
     @test jlstruct.constructors[1].name === :Foo
     @test jlstruct.misc[1] == :(1 + 1)
     println(jlstruct)
+
+    ex = :(struct Foo
+        a::Int = 1
+        Foo(;a = 1) = new(a)
+    end)
+
+    def = JLKwStruct(ex)
+    @test codegen_ast(def).args[end] === nothing
 end
 
 @testset "codegen_match" begin

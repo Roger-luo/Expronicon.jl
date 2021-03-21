@@ -97,7 +97,7 @@ function split_function_head(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing)
-        Expr(:call, Expr(:parameters, kw...), name, args...) => (name, args, kw, nothing)
+        Expr(:call, name, Expr(:parameters, kw...), args...) => (name, args, kw, nothing)
         Expr(:call, name, args...) => (name, args, nothing, nothing)
         Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing)
         Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing)

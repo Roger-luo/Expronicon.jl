@@ -9,6 +9,7 @@ using ..Analysis
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
 export codegen_ast,
+    codegen_ast_kwfn,
     codegen_ast_struct,
     codegen_ast_struct_curly,
     codegen_ast_struct_head,
@@ -59,10 +60,36 @@ function codegen_ast(def::JLStruct)
 end
 
 function codegen_ast(def::JLKwStruct)
+    quote
+        $(codegen_ast_struct(def))
+        $(codegen_ast_kwfn(def))
+    end
+end
+
+function codegen_ast_kwfn(def::JLKwStruct, name = nothing)
     required_typevars = uninferrable_typevars(def)
 
+    if name === nothing # constructor method
+        name = isempty(required_typevars) ? def.name : Expr(:curly, def.name, required_typevars...)
+        # do not generate kwfn if it's defined by the user
+        if any(def.constructors) do fn
+                isempty(fn.args) && fn.name == name
+            end
+            return
+        end
+
+        args = []
+        whereparams = isempty(def.typevars) ? nothing : name_only.(def.typevars)
+    else
+        T = gensym(:T)
+        ub = isempty(required_typevars) ? def.name : Expr(:curly, def.name, required_typevars...)
+        args = [:(::Type{$T}), ]
+        whereparams = [name_only.(def.typevars)..., :($T <: $ub)]
+    end
+
     kwfn_def = JLFunction(;
-        name = isempty(required_typevars) ? def.name : Expr(:curly, def.name, required_typevars...),
+        name = name,
+        args = args,
         kwargs = map(def.fields) do field::JLKwField
             if field.default === no_default
                 codegen_ast(field)
@@ -70,18 +97,14 @@ function codegen_ast(def::JLKwStruct)
                 Expr(:kw, codegen_ast(field), field.default)
             end
         end,
-        whereparams = isempty(def.typevars) ? nothing : name_only.(def.typevars)
+        whereparams = whereparams
     )
     push!(kwfn_def.body.args, 
         Expr(:call, codegen_ast_struct_curly(def),
             [field.name for field in def.fields]...)
     )
 
-    field_names = [field.type for field in def.fields]
-    quote
-        $(codegen_ast_struct(def))
-        $(codegen_ast(kwfn_def))
-    end
+    return codegen_ast(kwfn_def)
 end
 
 function codegen_ast_docstring(def, body)
