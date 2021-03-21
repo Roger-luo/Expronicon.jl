@@ -3,6 +3,8 @@ intermediate types for Julia expression objects.
 """
 module Types
 
+using OrderedCollections
+
 export NoDefault, JLExpr, JLIfElse, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     no_default
 
@@ -136,10 +138,10 @@ function JLKwStruct(;name, typealias=nothing,
 end
 
 mutable struct JLIfElse <: JLExpr
-    map::Dict{Any, Any}
+    map::OrderedDict{Any, Any}
     otherwise::Any
 end
 
-JLIfElse() = JLIfElse(Dict(), nothing)
+JLIfElse() = JLIfElse(OrderedDict(), nothing)
 
 end

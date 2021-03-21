@@ -270,7 +270,7 @@ end
     println(jl)
     ex = codegen_ast(jl)
     @test ex.head === :if
-    @test ex.args[1] == :(goo(x))
-    @test ex.args[2].args[1] == :(y = 1 + 2)
+    @test ex.args[1] == :(foo(x))
+    @test ex.args[2].args[1] == :(x = 1 + 1)
     @test ex.args[3].head === :elseif
 end
