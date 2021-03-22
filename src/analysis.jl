@@ -164,6 +164,21 @@ function uninferrable_typevars(def::Union{JLStruct, JLKwStruct})
     return uninferrable
 end
 
+"""
+    JLFunction(ex::Expr)
+
+Create a `JLFunction` object from a Julia function `Expr`.
+
+# Example
+
+```julia
+julia> JLFunction(:(f(x) = 2))
+f(x) = begin
+    #= REPL[37]:1 =#    
+    2    
+end
+```
+"""
 function Types.JLFunction(ex::Expr)
     line, doc, expr = split_doc(ex)
     head, call, body = split_function(expr)
@@ -171,6 +186,23 @@ function Types.JLFunction(ex::Expr)
     JLFunction(head, name, args, kw, whereparams, body, line, doc)
 end
 
+"""
+    JLStruct(ex::Expr)
+
+Create a `JLStruct` object from a Julia struct `Expr`.
+
+# Example
+
+```julia
+julia> JLStruct(:(struct Foo
+           x::Int
+       end))
+struct Foo
+    #= REPL[38]:2 =#
+    x::Int
+end
+```
+"""
 function Types.JLStruct(ex::Expr)
     line, doc, expr = split_doc(ex)
     ismutable, typename, typevars, supertype, body = split_struct(expr)
@@ -201,6 +233,24 @@ function Types.JLStruct(ex::Expr)
     JLStruct(typename, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
+"""
+    JLKwStruct(ex::Expr, typealias=nothing)
+
+Create a `JLKwStruct` from given Julia struct `Expr`, with an option to attach
+an alias to this type name.
+
+# Example
+
+```julia
+julia> JLKwStruct(:(struct Foo
+           x::Int = 1
+       end))
+#= kw =# struct Foo
+    #= REPL[39]:2 =#
+    x::Int = 1
+end
+```
+"""
 function Types.JLKwStruct(ex::Expr, typealias=nothing)
     line, doc, expr = split_doc(ex)
     ismutable, typename, typevars, supertype, body = split_struct(expr)
@@ -235,6 +285,54 @@ function Types.JLKwStruct(ex::Expr, typealias=nothing)
     JLKwStruct(typename, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
+"""
+    JLIfElse(ex::Expr)
+
+Create a `JLIfElse` from given Julia ifelse `Expr`.
+
+# Example
+
+```julia
+julia> ex = :(if foo(x)
+             x = 1 + 1
+         elseif goo(x)
+             y = 1 + 2
+         else
+             error("abc")
+         end)
+:(if foo(x)
+      #= REPL[41]:2 =#
+      x = 1 + 1
+  elseif #= REPL[41]:3 =# goo(x)
+      #= REPL[41]:4 =#
+      y = 1 + 2
+  else
+      #= REPL[41]:6 =#
+      error("abc")
+  end)
+
+julia> JLIfElse(ex)
+if foo(x)
+    begin
+        #= REPL[41]:2 =#        
+        x = 1 + 1        
+    end
+elseif begin
+    #= REPL[41]:3 =#    
+    goo(x)    
+end
+    begin
+        #= REPL[41]:4 =#        
+        y = 1 + 2        
+    end
+else
+    begin
+        #= REPL[41]:6 =#        
+        error("abc")        
+    end
+end
+```
+"""
 function Types.JLIfElse(ex::Expr)
     ex.head === :if || error("expect an if ... elseif ... else ... end expression")
     d, otherwise = split_ifelse(ex)

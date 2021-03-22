@@ -4,8 +4,6 @@ using Expronicon.Types
 using Expronicon.Analysis
 using Expronicon.CodeGen
 using Expronicon.Transform
-using MLStyle.MatchImpl
-using MLStyle.AbstractPatterns
 
 @testset "is_fn" begin
     @test is_fn(:(foo(x) = x))
