@@ -5,7 +5,7 @@ module Types
 
 using OrderedCollections
 
-export NoDefault, JLExpr, JLIfElse, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
+export NoDefault, JLExpr, JLIfElse, JLMatch, JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     no_default
 
 const Maybe{T} = Union{Nothing, T}
@@ -137,11 +137,62 @@ function JLKwStruct(;name, typealias=nothing,
     JLKwStruct(name, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
+"""
+    JLIfElse <: JLExpr
+
+`JLIfElse` describes a Julia `if ... elseif ... else ... end` expression. It allows one to easily construct
+such expression by inserting condition and code block via a map.
+
+# Example
+
+```julia
+julia> jl = JLIfElse()
+nothing
+
+julia> jl.map[:(foo(x))] = :(x = 1 + 1)
+:(x = 1 + 1)
+
+julia> jl.map[:(goo(x))] = :(y = 1 + 2)
+:(y = 1 + 2)
+
+julia> jl.otherwise = :(error("abc"))
+:(error("abc"))
+
+julia> jl
+if foo(x)
+    x = 1 + 1
+elseif goo(x)
+    y = 1 + 2
+else
+    error("abc")
+end
+```
+"""
 mutable struct JLIfElse <: JLExpr
     map::OrderedDict{Any, Any}
     otherwise::Any
 end
 
 JLIfElse() = JLIfElse(OrderedDict(), nothing)
+
+"""
+    JLMatch <: JLExpr
+
+`JLMatch` describes a Julia pattern match expression defined by
+[`MLStyle`](https://github.com/thautwarm/MLStyle.jl). It allows
+one to construct such expression by simply assign each code block
+to the corresponding pattern expression.
+"""
+struct JLMatch <: JLExpr
+    item::Any
+    map::OrderedDict{Any, Any}
+    fallthrough::Any
+    mod::Module
+    line::LineNumberNode
+end
+
+JLMatch(item) = JLMatch(item, OrderedDict(), nothing, Main, LineNumberNode(0))
+JLMatch(;item, map=OrderedDict(), fallthrough=nothing, mod=Main, line=LineNumberNode(0)) =
+    JLMatch(item, map, fallthrough, mod, line)
 
 end

@@ -3,11 +3,12 @@ analysis functions for Julia Expr
 """
 module Analysis
 
+using OrderedCollections
 using MLStyle
 using ..Types
 using ..Transform
 export AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
-    split_struct_name, annotations, uninferrable_typevars, has_symbol
+    split_struct_name, split_ifelse, annotations, uninferrable_typevars, has_symbol
 
 struct AnalysisError <: Exception
     expect::String
@@ -137,6 +138,21 @@ function split_struct(ex::Expr)
     return ex.args[1], name, typevars, supertype, body
 end
 
+function split_ifelse(ex::Expr)
+    dmap = OrderedDict()
+    otherwise = split_ifelse!(dmap, ex)
+    return dmap, otherwise
+end
+
+function split_ifelse!(d::AbstractDict, ex::Expr)
+    ex.head in [:if, :elseif] || return ex
+    d[ex.args[1]] = ex.args[2]
+    if length(ex.args) == 3
+        return split_ifelse!(d, ex.args[3])
+    end
+    return
+end
+
 function uninferrable_typevars(def::Union{JLStruct, JLKwStruct})
     typevars = name_only.(def.typevars)
     field_types = [field.type for field in def.fields]
@@ -217,6 +233,12 @@ function Types.JLKwStruct(ex::Expr, typealias=nothing)
         end
     end
     JLKwStruct(typename, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
+end
+
+function Types.JLIfElse(ex::Expr)
+    ex.head === :if || error("expect an if ... elseif ... else ... end expression")
+    d, otherwise = split_ifelse(ex)
+    return JLIfElse(d, otherwise)
 end
 
 end

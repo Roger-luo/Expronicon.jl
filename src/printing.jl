@@ -30,7 +30,11 @@ no_indent(io::IO) = IOContext(io, :indent=>0)
 no_indent_first_line(io::IO) = IOContext(io, :no_indent_first_line=>true)
 
 # 1.0 compatibility
-indent_print(io::IO, ::Nothing) = print(io, "nothing")
+function indent_print(io::IO, ::Nothing)
+    indent = get(io, :indent, 0)
+    tab = get(io, :tab, " ")
+    print(io, tab^indent, "nothing")
+end
 
 function indent_print(io::IO, xs...)
     indent = get(io, :indent, 0)
@@ -133,12 +137,11 @@ with_begin_end(f, io::IO) = with_marks(f, io, "begin", "end")
 
 Print a collection `xs` with deliminator `delim`, default is `","`.
 """
-function print_collection(io, xs; delim=",")
-    tab = get(io, :tab, " ")
+function print_collection(io, xs; delim=", ")
     for i in 1:length(xs)
         print_ast(io, xs[i])
         if i !== length(xs)
-            indent_print(io, delim, tab)
+            indent_print(io, delim)
         end
     end
 end
@@ -155,13 +158,15 @@ function print_ast(io::IO, xs...)
     end
 end
 
+
+
 function print_ast(io::IO, ex)
     tab = get(io, :tab, " ")
-
+    first_line_io = get(io, :no_indent_first_line, false) ? no_indent(io) : io
     @match ex begin
-        ::Union{Number} => indent_print(io, Color.literal(ex))
-        ::String => indent_print(stdout, Color.string(repr(ex)))
-        ::Symbol => indent_print(io, ex)
+        ::Union{Number} => indent_print(first_line_io, Color.literal(ex))
+        ::String => indent_print(first_line_io, Color.string(repr(ex)))
+        ::Symbol => indent_print(first_line_io, ex)
 
         Expr(:tuple, xs...) => begin
             with_parathesis(io) do 
@@ -185,19 +190,55 @@ function print_ast(io::IO, ex)
             end
         end
 
+        Expr(:(=), l, r) => begin
+            print_ast(io, l)
+            print(io, tab, Color.kw("="), tab)
+            print_ast(no_indent_first_line(io), r)
+        end
+
         Expr(:call, name, args...) => begin
-            indent_print(io, Color.fn(name))
-            with_parathesis(no_indent(io)) do
-                print_collection(no_indent(io), args)
+            if name in [:+, :-, :*, :/, :\, :(===), :(==)]
+                print_collection(no_indent(io), args; delim=Color.fn(string(tab, name, tab)))
+            else
+                indent_print(io, Color.fn(name))
+                with_parathesis(no_indent(io)) do
+                    print_collection(no_indent(io), args)
+                end    
             end
         end
 
         Expr(:block, stmts...) => begin
             indent_println(io, Color.kw("begin"))
+            io = IOContext(io, :no_indent_first_line=>false)
             within_indent(io) do io
                 for i in 1:length(stmts)
                     print_ast(io, stmts[i])
                     indent_println(io)
+                end
+            end
+            indent_print(io, Color.kw("end"))
+        end
+
+        Expr(:let, vars, body) => begin
+            if get(io, :no_indent_first_line, false)
+                print(io, Color.kw("let"))
+            else
+                indent_print(io, Color.kw("let"))
+            end
+
+            isempty(vars.args) || print_collection(no_indent(io), vars.args)
+            println(io)
+            io = IOContext(io, :no_indent_first_line=>false)
+            within_indent(io) do io
+                if body isa Expr && body.head === :block
+                    stmts = body.args
+                    for i in 1:length(stmts)
+                        print_ast(io, stmts[i])
+                        indent_println(io)
+                    end
+                else
+                    print_ast(io, body)
+                    println(io)
                 end
             end
             indent_print(io, Color.kw("end"))
@@ -211,9 +252,19 @@ function print_ast(io::IO, ex)
             end
         end
 
+        Expr(:if, xs...) => begin
+            print_ast(io, JLIfElse(ex))
+        end
+
         ::LineNumberNode => indent_print(io, Color.line(ex))
         # fallback to default printing
-        _ => indent_print(io, ex)
+        _ => begin
+            if get(io, :no_indent_first_line, false)
+                print(io, ex)
+            else
+                indent_print(io, ex)
+            end
+        end
     end
 end
 
@@ -236,6 +287,31 @@ function print_ast(io::IO, def::JLIfElse)
         print_ast(indent(io), def.otherwise)
         indent_println(io)
     end
+    indent_print(io, Color.kw("end"))
+end
+
+function print_ast(io::IO, def::JLMatch)
+    print_ast(io, def.line)
+    println(io)
+    isempty(def.map) && return print_ast(io, def.fallthrough)
+    tab = get(io, :tab, " ")
+    indent_println(io, Color.kw("@match"), tab, def.item, tab, Color.kw("begin"))
+    within_indent(io) do io
+        for (k, (pattern, action)) in enumerate(def.map)
+            within_line(io) do io
+                print_ast(io, pattern)
+                print(io, tab, Color.kw("=>"), tab)
+                print_ast(io, action)
+            end
+            println(io)
+        end
+
+        # match must have fallthrough
+        indent_print(io, "_")
+        print(io, tab, Color.kw("=>"), tab)
+        print_ast(io, def.fallthrough)
+    end
+    println(io)
     indent_print(io, Color.kw("end"))
 end
 
@@ -266,17 +342,21 @@ function print_ast(io::IO, def::JLFunction)
 
     # print body
     if def.head === :function
-        @match def.body begin
-            Expr(:block, stmts...) => begin
-                indent_println(io)
-                for i in 1:length(stmts)
-                    print_ast(indent(io), stmts[i])
+        println(io)
+        within_indent(io) do io
+            @match def.body begin
+                Expr(:block, stmts...) => begin
                     indent_println(io)
+                    for i in 1:length(stmts)
+                        print_ast(indent(io), stmts[i])
+                        indent_println(io)
+                    end
                 end
-            end
 
-            _ => print_ast(io, def.body)
+                _ => print_ast(io, def.body)
+            end
         end
+        println(io)
         indent_print(io, Color.kw("end"))
     else
         print_ast(no_indent_first_line(io), def.body)

@@ -4,6 +4,8 @@ using Expronicon.Types
 using Expronicon.Analysis
 using Expronicon.CodeGen
 using Expronicon.Transform
+using MLStyle.MatchImpl
+using MLStyle.AbstractPatterns
 
 @testset "is_fn" begin
     @test is_fn(:(foo(x) = x))
@@ -273,4 +275,19 @@ end
     @test ex.args[1] == :(foo(x))
     @test ex.args[2].args[1] == :(x = 1 + 1)
     @test ex.args[3].head === :elseif
+end
+
+@testset "JLMatch" begin
+    jl = JLMatch(:x)
+    jl.map[1] = true
+    jl.map[2] = :(sin(x))
+    println(jl)
+    ex = codegen_ast(jl)
+    jl = JLFunction(;name=:test_match, args=[:x], body=ex)
+    println(jl)
+    eval(codegen_ast(jl))
+
+    @test test_match(1) == true
+    @test test_match(2) == sin(2)
+    @test test_match(3) === nothing
 end

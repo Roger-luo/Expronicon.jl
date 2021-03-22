@@ -16,6 +16,16 @@ export codegen_ast,
     codegen_ast_struct_body,
     codegen_match
 
+function codegen_ast(def::JLMatch)
+    isempty(def.map) && return def.fallthrough
+    body = Expr(:block)
+    for (pattern, code) in def.map
+        push!(body.args, :($pattern => $code))
+    end
+    push!(body.args, :(_ => $(def.fallthrough)))
+    return init_cfg(gen_match(def.item, body, def.line, def.mod))
+end
+
 function codegen_ast(def::JLIfElse)
     isempty(def.map) && return def.otherwise
     stmt = ex = Expr(:if)
