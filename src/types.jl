@@ -31,6 +31,50 @@ abstract type JLExpr end
     JLFunction <: JLExpr
 
 Type describes a Julia function declaration expression.
+
+# Example
+
+Construct a function expression
+
+```julia
+julia> JLFunction(;name=:foo, args=[:(x::T)], body= quote 1+1 end, head=:function, whereparams=[:T])
+function foo(x::T) where {T}
+    #= REPL[25]:1 =#    
+    1 + 1    
+end
+```
+
+Decompose a function expression
+
+```julia
+julia> ex = :(function foo(x::T) where {T}
+           #= REPL[25]:1 =#    
+           1 + 1    
+       end)
+:(function foo(x::T) where T
+      #= REPL[26]:1 =#
+      #= REPL[26]:3 =#
+      1 + 1
+  end)
+
+julia> jl = JLFunction(ex)
+function foo(x::T) where {T}
+    #= REPL[26]:1 =#    
+    #= REPL[26]:3 =#    
+    1 + 1    
+end
+```
+
+Generate `Expr` from `JLFunction`
+
+```julia
+julia> codegen_ast(jl)
+:(function foo(x::T) where T
+      #= REPL[26]:1 =#
+      #= REPL[26]:3 =#
+      1 + 1
+  end)
+```
 """
 mutable struct JLFunction <: JLExpr
     head::Symbol  # function def must have a head
@@ -91,6 +135,45 @@ end
     JLStruct <: JLExpr
 
 Type describes a Julia struct.
+
+# Example
+
+Construct a Julia struct.
+
+```julia
+julia> JLStruct(;name=:Foo, typevars=[:T], fields=[JLField(;name=:x, type=Int)])
+struct Foo{T}
+    x::Int64
+end
+```
+
+Decompose a Julia struct expression
+
+```julia
+julia> ex = :(struct Foo{T}
+           x::Int64
+       end)
+:(struct Foo{T}
+      #= REPL[31]:2 =#
+      x::Int64
+  end)
+
+julia> jl = JLStruct(ex)
+struct Foo{T}
+    #= REPL[31]:2 =#
+    x::Int64
+end
+```
+
+Generate a Julia struct expression
+
+```julia
+julia> codegen_ast(jl)
+:(struct Foo{T}
+      #= REPL[31]:2 =#
+      x::Int64
+  end)
+```
 """
 mutable struct JLStruct <: JLExpr
     name::Symbol

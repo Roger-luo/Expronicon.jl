@@ -197,10 +197,13 @@ function print_ast(io::IO, ex)
         end
 
         Expr(:call, name, args...) => begin
+            if !get(io, :no_indent_first_line, false)
+                indent_print(io)
+            end
             if name in [:+, :-, :*, :/, :\, :(===), :(==)]
                 print_collection(no_indent(io), args; delim=Color.fn(string(tab, name, tab)))
             else
-                indent_print(io, Color.fn(name))
+                indent_print(no_indent(io), Color.fn(name))
                 with_parathesis(no_indent(io)) do
                     print_collection(no_indent(io), args)
                 end    
@@ -346,17 +349,18 @@ function print_ast(io::IO, def::JLFunction)
         within_indent(io) do io
             @match def.body begin
                 Expr(:block, stmts...) => begin
-                    indent_println(io)
                     for i in 1:length(stmts)
-                        print_ast(indent(io), stmts[i])
+                        print_ast(io, stmts[i])
                         indent_println(io)
                     end
                 end
 
-                _ => print_ast(io, def.body)
+                _ => begin
+                    print_ast(io, def.body)
+                    println(io)
+                end
             end
         end
-        println(io)
         indent_print(io, Color.kw("end"))
     else
         print_ast(no_indent_first_line(io), def.body)
