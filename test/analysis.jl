@@ -294,4 +294,18 @@ end
     jl = JLFor(ex)
     println(jl)
     @test codegen_ast(jl) == ex
+
+    jl = JLFor(;vars=[:x], iterators=[:itr], kernel=:(x + 1))
+    ex = codegen_ast(jl)
+    @test ex.head === :for
+    @test ex.args[1].args[1] == :(x = itr)
+    @test ex.args[2] == :(x+1)
+
+    ex = :(for i in 1:10
+        1 + 1
+    end)
+    jl = JLFor(ex)
+    println(jl)
+    @test jl.vars == [:i]
+    @test jl.iterators == [:(1:10)]
 end
