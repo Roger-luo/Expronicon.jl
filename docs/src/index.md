@@ -1,7 +1,3 @@
-```@meta
-CurrentModule = Expronicon
-```
-
 # Expronicon
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://Roger-luo.github.io/Expronicon.jl/stable)

@@ -1,6 +1,5 @@
 using Test
 using Expronicon
-using Expronicon.Transform
 
 @testset "name_only" begin
     @test name_only(:(x::Int)) == :x
@@ -66,4 +65,20 @@ end
         x::Int
         y::Float64
     end|>rm_lineinfo
+end
+
+global_x = 2
+
+@testset "eval_interp" begin
+    ex = Expr(:call, :+, Expr(:$, :global_x), 1)
+    @test eval_interp(Main, ex) == :(2 + 1)    
+end
+
+@testset "eval_literal" begin
+    ex = :(for i in 1:10
+        1 + 1
+    end)
+    @test rm_lineinfo(eval_literal(Main, ex)) == rm_lineinfo(:(for i in $(1:10)
+        2
+    end))
 end
