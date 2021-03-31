@@ -1,15 +1,3 @@
-"""
-Expronicon type pretty printings.
-"""
-module Printings
-
-export with_marks, with_parathesis, with_curly, with_brackets, within_line, within_indent,
-    with_begin_end, indent, no_indent, no_indent_first_line, indent_print, indent_println
-
-using Markdown
-using MLStyle
-using ..Types
-
 const INDENT=4
 
 "julia Expr printing color schema"
@@ -200,7 +188,7 @@ function print_ast(io::IO, ex)
             if !get(io, :no_indent_first_line, false)
                 indent_print(io)
             end
-            if name in [:+, :-, :*, :/, :\, :(===), :(==)]
+            if name in [:+, :-, :*, :/, :\, :(===), :(==), :(:)]
                 print_collection(no_indent(io), args; delim=Color.fn(string(tab, name, tab)))
             else
                 indent_print(no_indent(io), Color.fn(name))
@@ -269,6 +257,27 @@ function print_ast(io::IO, ex)
             end
         end
     end
+end
+
+function print_ast(io::IO, def::JLFor)
+    def.kernel === nothing && return
+    tab = get(io, :tab, " ")
+    indent_print(io, Color.kw("for"), tab)
+
+    within_indent(io) do io
+        for i in 1:length(def.vars)
+            print_ast(i==1 ? no_indent(io) : io, def.vars[i])
+            print(io, tab, Color.kw("in"), tab)
+            print_ast(no_indent(io), def.iterators[i])
+            i < length(def.vars) && print(io, ",")
+            println(io)
+        end
+        indent_println(io, Color.line("#= loop body =#"))
+        print_ast(io, def.kernel)
+        println(io)
+    end
+
+    indent_print(io, Color.kw("end"))
 end
 
 function print_ast(io::IO, def::JLIfElse)
@@ -451,5 +460,3 @@ end
 
 print_ast(::IO, def::JLExpr) = error("Printings.print_ast is not defined for $(typeof(def))")
 Base.show(io::IO, def::JLExpr) = print_ast(io, def)
-
-end

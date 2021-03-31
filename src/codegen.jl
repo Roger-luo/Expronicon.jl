@@ -1,20 +1,13 @@
-"""
-collection of code generators.
-"""
-module CodeGen
+# do nothing for other types
+codegen_ast(ex) = ex
 
-using ..Types
-using ..Transform
-using ..Analysis
-using MLStyle.MatchImpl
-using MLStyle.AbstractPatterns
-export codegen_ast,
-    codegen_ast_kwfn,
-    codegen_ast_struct,
-    codegen_ast_struct_curly,
-    codegen_ast_struct_head,
-    codegen_ast_struct_body,
-    codegen_match
+function codegen_ast(def::JLFor)
+    lhead = Expr(:block)
+    for (var, itr) in zip(def.vars, def.iterators)
+        push!(lhead.args, :($var = $itr))
+    end
+    return Expr(:for, lhead, codegen_ast(def.kernel))
+end
 
 function codegen_ast(def::JLMatch)
     isempty(def.map) && return def.fallthrough
@@ -31,14 +24,14 @@ function codegen_ast(def::JLIfElse)
     stmt = ex = Expr(:if)
     for (k, (cond, action)) in enumerate(def.map)
         push!(stmt.args, cond)
-        push!(stmt.args, Expr(:block, action))
+        push!(stmt.args, Expr(:block, codegen_ast(action)))
 
         if k !== length(def.map)
             push!(stmt.args, Expr(:elseif))
             stmt = stmt.args[end]
         end
     end
-    def.otherwise === nothing || push!(stmt.args, def.otherwise)
+    def.otherwise === nothing || push!(stmt.args, codegen_ast(def.otherwise))
     return ex
 end
 
@@ -61,7 +54,7 @@ function codegen_ast(fn::JLFunction)
     end
 
     push!(fn_def.args, call)
-    push!(fn_def.args, fn.body)
+    push!(fn_def.args, codegen_ast(fn.body))
     return codegen_ast_docstring(fn, fn_def)
 end
 
@@ -130,7 +123,7 @@ Generate the struct name with curly if it is parameterized.
 # Example
 
 ```julia
-julia> using Expronicon.Types, Expronicon.CodeGen
+julia> using Expronicon
 
 julia> def = JLStruct(:(struct Foo{T} end))
 struct Foo{T}
@@ -156,7 +149,7 @@ Generate the struct head.
 # Example
 
 ```julia
-julia> using Expronicon.Types, Expronicon.CodeGen
+julia> using Expronicon
 
 julia> def = JLStruct(:(struct Foo{T} end))
 struct Foo{T}
@@ -301,6 +294,4 @@ end
 """
 function codegen_match(f, x, line::LineNumberNode=LineNumberNode(0), mod::Module=Main)
     return init_cfg(gen_match(x, f(), line, mod))
-end
-
 end

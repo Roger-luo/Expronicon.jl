@@ -1,9 +1,5 @@
 using Test
 using Expronicon
-using Expronicon.Types
-using Expronicon.Analysis
-using Expronicon.CodeGen
-using Expronicon.Transform
 
 @testset "is_fn" begin
     @test is_fn(:(foo(x) = x))
@@ -288,4 +284,28 @@ end
     @test test_match(1) == true
     @test test_match(2) == sin(2)
     @test test_match(3) === nothing
+end
+
+@testset "JLFor" begin
+    ex = :(for i in 1:10, j in 1:20,
+            k in 1:10
+        1 + 1
+    end)
+    jl = JLFor(ex)
+    println(jl)
+    @test codegen_ast(jl) == ex
+
+    jl = JLFor(;vars=[:x], iterators=[:itr], kernel=:(x + 1))
+    ex = codegen_ast(jl)
+    @test ex.head === :for
+    @test ex.args[1].args[1] == :(x = itr)
+    @test ex.args[2] == :(x+1)
+
+    ex = :(for i in 1:10
+        1 + 1
+    end)
+    jl = JLFor(ex)
+    println(jl)
+    @test jl.vars == [:i]
+    @test jl.iterators == [:(1:10)]
 end

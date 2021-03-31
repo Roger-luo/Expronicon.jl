@@ -1,15 +1,3 @@
-"""
-analysis functions for Julia Expr
-"""
-module Analysis
-
-using OrderedCollections
-using MLStyle
-using ..Types
-using ..Transform
-export AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
-    split_struct_name, split_ifelse, annotations, uninferrable_typevars, has_symbol
-
 struct AnalysisError <: Exception
     expect::String
     got
@@ -19,6 +7,15 @@ anlys_error(expect, got) = throw(AnalysisError(expect, got))
 
 function Base.show(io::IO, e::AnalysisError)
     print(io, "expect ", e.expect, " expression, got ", e.got, ".")
+end
+
+"""
+    is_literal(x)
+
+Check if `x` is a literal value.
+"""
+function is_literal(x)
+    !(x isa Expr || x isa Symbol || x isa GlobalRef)
 end
 
 function has_symbol(@nospecialize(ex), name::Symbol)
@@ -153,6 +150,34 @@ function split_ifelse!(d::AbstractDict, ex::Expr)
     return
 end
 
+function split_forloop(ex::Expr)
+    ex.head === :for || error("expect a for loop expr, got $ex")
+    lhead = ex.args[1]
+    lbody = ex.args[2]
+    return split_for_head(lhead)..., lbody
+end
+
+function split_for_head(ex::Expr)
+    if ex.head === :block
+        vars, itrs = [], []
+        for each in ex.args
+            each isa Expr || continue # skip other things
+            var, itr = split_single_for_head(each)
+            push!(vars, var)
+            push!(itrs, itr)
+        end
+        return vars, itrs
+    else
+        var, itr = split_single_for_head(ex)
+        return Any[var], Any[itr]
+    end
+end
+
+function split_single_for_head(ex::Expr)
+    ex.head === :(=) || error("expect a single loop head, got $ex")
+    return ex.args[1], ex.args[2]
+end
+
 function uninferrable_typevars(def::Union{JLStruct, JLKwStruct})
     typevars = name_only.(def.typevars)
     field_types = [field.type for field in def.fields]
@@ -179,7 +204,7 @@ f(x) = begin
 end
 ```
 """
-function Types.JLFunction(ex::Expr)
+function JLFunction(ex::Expr)
     line, doc, expr = split_doc(ex)
     head, call, body = split_function(expr)
     name, args, kw, whereparams = split_function_head(call)
@@ -203,7 +228,7 @@ struct Foo
 end
 ```
 """
-function Types.JLStruct(ex::Expr)
+function JLStruct(ex::Expr)
     line, doc, expr = split_doc(ex)
     ismutable, typename, typevars, supertype, body = split_struct(expr)
 
@@ -251,7 +276,7 @@ julia> JLKwStruct(:(struct Foo
 end
 ```
 """
-function Types.JLKwStruct(ex::Expr, typealias=nothing)
+function JLKwStruct(ex::Expr, typealias=nothing)
     line, doc, expr = split_doc(ex)
     ismutable, typename, typevars, supertype, body = split_struct(expr)
 
@@ -333,10 +358,13 @@ else
 end
 ```
 """
-function Types.JLIfElse(ex::Expr)
+function JLIfElse(ex::Expr)
     ex.head === :if || error("expect an if ... elseif ... else ... end expression")
     d, otherwise = split_ifelse(ex)
     return JLIfElse(d, otherwise)
 end
 
+function JLFor(ex::Expr)
+    vars, itrs, body = split_forloop(ex)
+    return JLFor(vars, itrs, body)
 end
