@@ -5,6 +5,8 @@ module Transform
 
 export prettify, rm_lineinfo, flatten_blocks, name_only, rm_annotations, replace_symbol
 
+using MLStyle
+
 replace_symbol(x::Symbol, name::Symbol, value) = x === name ? value : x
 replace_symbol(x, ::Symbol, value) = x # other expressions
 
