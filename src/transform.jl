@@ -50,16 +50,12 @@ end
 
 Remove `LineNumberNode` in a given expression.
 """
-rm_lineinfo(ex) = ex
-
-function rm_lineinfo(ex::Expr)
-    args = []
-    for each in ex.args
-        if !(each isa LineNumberNode)
-            push!(args, rm_lineinfo(each))
-        end
+function rm_lineinfo(ex)
+    @match ex begin
+        Expr(:macrocall, name, line, args...) => Expr(:macrocall, name, line, map(rm_lineinfo, args)...)
+        Expr(head, args...) => Expr(head, map(rm_lineinfo, filter(x->!(x isa LineNumberNode), args))...)
+        _ => ex
     end
-    return Expr(ex.head, args...)
 end
 
 """
