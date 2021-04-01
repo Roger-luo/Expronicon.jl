@@ -15,7 +15,29 @@ end
         2 + 2
     end
     
-    @test rm_lineinfo(ex) == Expr(:block, :(1 + 1), :(2 + 2))        
+    @test rm_lineinfo(ex) == Expr(:block, :(1 + 1), :(2 + 2))
+    
+    ex = quote
+        Base.@kwdef mutable struct D
+            field1::Union{ID, Missing, Nothing} = nothing
+        end
+        StructTypes.StructType(::Type{D}) = begin
+            StructTypes.Mutable()
+        end
+        StructTypes.omitempties(::Type{D}) = begin
+            true
+        end
+    end
+
+    @test rm_lineinfo(ex).args[1].args[end] == rm_lineinfo(:(mutable struct D
+        field1::Union{ID, Missing, Nothing} = nothing
+    end))
+    @test rm_lineinfo(ex).args[2] == rm_lineinfo(:(StructTypes.StructType(::Type{D}) = begin
+        StructTypes.Mutable()
+    end))
+    @test rm_lineinfo(ex).args[3] == rm_lineinfo(:(StructTypes.omitempties(::Type{D}) = begin
+        true
+    end))
 end
 
 @testset "flatten_blocks" begin
@@ -26,7 +48,7 @@ end
         end
     end
     
-    @test rm_lineinfo(flatten_blocks(ex)) == Expr(:block, :(1+1), :(2+2))        
+    @test rm_lineinfo(flatten_blocks(ex)) == Expr(:block, :(1+1), :(2+2))
 end
 
 @testset "rm_annotations" begin
