@@ -6,7 +6,14 @@ evaluate the interpolation operator in `ex` inside given module `m`.
 """
 function eval_interp(m::Module, ex)
     ex isa Expr || return ex
-    ex.head === :$ && return Base.eval(m, ex.args[1])
+    if ex.head === :$
+        x = ex.args[1]
+        if x isa Symbol && isdefined(m, x)
+            return Base.eval(m, x)
+        else
+            return ex
+        end
+    end
     return Expr(ex.head, map(x->eval_interp(m, x), ex.args)...)
 end
 
@@ -85,6 +92,7 @@ function prettify(ex)
     ex isa Expr || return ex
     ex = rm_lineinfo(ex)
     ex = flatten_blocks(ex)
+    ex = rm_nothing(ex)
     return ex
 end
 
@@ -121,6 +129,14 @@ function _flatten_blocks(ex)
         end
     end
     return Expr(:block, args...)
+end
+
+function rm_nothing(ex)
+    @match ex begin
+        Expr(:block, args...) => Expr(:block, filter(x->x!==nothing, args)...)
+        Expr(head, args...) => Expr(head, map(rm_nothing, args)...)
+        _ => ex
+    end
 end
 
 """

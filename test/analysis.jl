@@ -31,63 +31,24 @@ end
     jlfn = JLFunction()
     @test jlfn.name === nothing
 
-    ex = :(function foo(x::Int, y::Type{T}) where {T <: Real}
+    @test_expr JLFunction function foo(x::Int, y::Type{T}) where {T <: Real}
         return x
-    end)
+    end
 
-    jlfn = JLFunction(ex)
-    @test jlfn.head === :function
-    @test jlfn.name === :foo
-    @test jlfn.args == Any[:(x::Int), :(y::Type{T})]
-    @test jlfn.kwargs === nothing
-    @test jlfn.whereparams == Any[:(T <: Real)]
-    @test jlfn.body == ex.args[2]
-    @test codegen_ast(jlfn) == ex
-    @test is_kw_fn(jlfn) == false
-
-    ex = :(function (x, y)
+    def = @test_expr JLFunction function (x, y)
         return 2
-    end)
+    end
+    @test is_kw_fn(def) == false
 
-    jlfn = JLFunction(ex)
-    println(jlfn)
-    @test jlfn.head === :function
-    @test jlfn.args == [:x, :y]
-    @test jlfn.name === nothing
-    @test jlfn.whereparams === nothing
-    @test codegen_ast(jlfn) == ex
-
-    ex = :(function (x, y; kw=2)
+    def = @test_expr JLFunction function (x, y; kw=2)
         return "aaa"
-    end)
+    end
+    @test is_kw_fn(def) == true
 
-    jlfn = JLFunction(ex)
-    println(jlfn)
-    @test jlfn.head === :function
-    @test jlfn.args == Any[:x, :y]
-    @test jlfn.kwargs == Any[Expr(:kw, :kw, 2)]
-    @test jlfn.name === nothing
-    @test codegen_ast(jlfn) == ex
-    @test is_kw_fn(jlfn) == true
-
-    ex = :((x, y)->sin(x))
-
-    jlfn = JLFunction(ex)
-    println(jlfn)
-    @test jlfn.head === :(->)
-    @test jlfn.args == Any[:x, :y]
-    @test jlfn.kwargs === nothing
-    @test jlfn.name === nothing
-    @test codegen_ast(jlfn) == ex
+    @test_expr JLFunction (x, y)->sin(x)
 
     # canonicalize head when it's a block
-    ex = :(function (x::Int; kw=1) end)
-    jlfn = JLFunction(ex)
-    println(jlfn)
-    @test jlfn.head === :function
-    @test jlfn.args == Any[:(x::Int)]
-    @test jlfn.kwargs == Any[Expr(:kw, :kw, 1)]
-    @test codegen_ast(jlfn) == Expr(:function, Expr(:tuple, Expr(:parameters, Expr(:kw, :kw, 1)), :(x::Int)), jlfn.body)
+    @test_expr JLFunction function (x::Int; kw=1) end
 
     ex = :(struct Foo end)
     @test_throws AnalysisError JLFunction(ex)
@@ -170,44 +131,46 @@ end
     @test JLKwField(;name=:x).type === Any
     @test JLKwStruct(;name=:Foo).name === :Foo
 
-    ex = :(struct Foo{N, T}
+    def = @expr JLKwStruct struct Foo1{N, T}
         x::T = 1
-    end)
-
-    def = JLKwStruct(ex)
+    end
     println(def)
 
-    ex = codegen_ast_kwfn(def, :create)
-    @test ex.args[1].args[1].args[1] === :create
-    @test ex.args[1].args[2] === :N
-    @test ex.args[1].args[3] === :T
-    @test ex.args[1].args[4].args[2] == :(Foo{N})
+    @test_expr codegen_ast_kwfn(def, :create) == quote
+        function create(::Type{S}; x = 1) where {N, T, S <: Foo}
+            Foo1{N, T}(x)
+        end
+        function create(::Type{S}; x = 1) where {N, S <: Foo{N}}
+            Foo1{N}(x)
+        end
+    end
 
-    @test rm_lineinfo(codegen_ast(def)) == rm_lineinfo(quote
-        struct Foo{N, T}
+    @test_expr codegen_ast(def) == quote
+        struct Foo1{N, T}
             x::T
         end
-        function Foo{N}(; x::T = 1) where {N, T}
-            Foo{N, T}(x)
+        function Foo1{N, T}(; x = 1) where {N, T}
+            Foo1{N, T}(x)
         end
-    end)
+        function Foo1{N}(; x = 1) where N
+            Foo1{N}(x)
+        end
+    end
 
-    ex = :(struct Foo <: AbstractFoo
+    def = @expr JLKwStruct struct Foo2 <: AbstractFoo
         x = 1
         y::Int
-    end)
+    end
 
-    def = JLKwStruct(ex)
-
-    @test rm_lineinfo(codegen_ast(def)) == rm_lineinfo(quote
-        struct Foo <: AbstractFoo
+    @test_expr codegen_ast(def) == quote
+        struct Foo2 <: AbstractFoo
             x
             y::Int
         end
-        function Foo(; x = 1, y::Int)
-            Foo(x, y)
+        function Foo2(; x = 1, y)
+            Foo2(x, y)
         end
-    end)
+    end
 
     ex = quote
         """
@@ -231,13 +194,17 @@ end
     @test jlstruct.misc[1] == :(1 + 1)
     println(jlstruct)
 
-    ex = :(struct Foo
+    def = @expr JLKwStruct struct Foo3
         a::Int = 1
-        Foo(;a = 1) = new(a)
-    end)
+        Foo3(;a = 1) = new(a)
+    end
 
-    def = JLKwStruct(ex)
-    @test codegen_ast(def).args[end] === nothing
+    @test_expr codegen_ast(def) == quote
+        struct Foo3
+            a::Int
+            Foo3(; a = 1) = new(a)
+        end
+    end
 end
 
 @testset "codegen_match" begin
