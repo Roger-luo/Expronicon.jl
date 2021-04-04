@@ -108,13 +108,13 @@ function compare_expr(lhs, rhs)
         @case (::Symbol, ::Symbol)
             lhs === rhs
         @case (Expr(:curly, name, lhs_vars...), Expr(:curly, &name, rhs_vars...))
-            mapreduce(compare_vars, &, lhs_vars, rhs_vars)
+            all(map(compare_vars, lhs_vars, rhs_vars))
         @case (Expr(:where, lbody, lparams...), Expr(:where, rbody, rparams...))
             compare_expr(lbody, rbody) &&
-                mapreduce(compare_vars, &, lparams, rparams)
+                all(map(compare_vars, lparams, rparams))
         @case (Expr(head, largs...), Expr(&head, rargs...))
             isempty(largs) && isempty(rargs) ||
-            mapreduce(compare_expr, &, largs, rargs)
+            all(map(compare_expr, largs, rargs))
         # ignore LineNumberNode
         @case (::LineNumberNode, ::LineNumberNode)
             true
@@ -135,7 +135,7 @@ function compare_vars(lhs, rhs)
         @case (::Symbol, ::Symbol)
             true
         @case (Expr(head, largs...), Expr(&head, rargs...))
-            mapreduce(compare_vars, &, largs, rargs)
+            all(map(compare_vars, largs, rargs))
         # ignore LineNumberNode
         @case (::LineNumberNode, ::LineNumberNode)
             true
