@@ -1,3 +1,85 @@
+"""
+    @expr <expression>
+
+Return the original expression object.
+
+# Example
+
+```julia
+julia> ex = @expr x + 1
+:(x + 1)
+```
+"""
+macro expr(ex)
+    return QuoteNode(ex)
+end
+
+"""
+    @test_expr <type> <ex>
+
+Test if the syntax type generates the same expression `ex`. Returns the
+corresponding syntax type instance. Requires `using Test` before using
+this macro.
+
+# Example
+
+```julia
+def = @test_expr JLFunction function (x, y)
+    return 2
+end
+@test is_kw_fn(def) == false
+```
+"""
+macro test_expr(type, ex)
+    @gensym def generated_expr original_expr
+    quote
+        $def = Expronicon.@expr $type $ex
+        println($def)
+        $generated_expr = $prettify($codegen_ast($def))
+        $original_expr = $prettify($(Expr(:quote, ex)))
+        @test $compare_expr($generated_expr, $original_expr)
+        $def
+    end |> esc
+end
+
+"""
+    @test_expr <expr> == <expr>
+
+Test if two expression is equivalent semantically, this uses `compare_expr`
+to decide if they are equivalent, ignores things such as `LineNumberNode`
+generated `Symbol` in `Expr(:curly, ...)` or `Expr(:where, ...)`.
+"""
+macro test_expr(ex::Expr)
+    ex.head === :call && ex.args[1] === :(==) || error("expect <expr> == <expr>, got $ex")
+    lhs, rhs = ex.args[2], ex.args[3]
+    quote
+        @test $compare_expr($prettify($lhs), $prettify($rhs))
+    end |> esc
+end
+
+"""
+    @expr <type> <expression>
+
+Return the expression in given type.
+
+# Example
+
+```julia
+julia> ex = @expr JLKwStruct struct Foo{N, T}
+           x::T = 1
+       end
+#= kw =# struct Foo{N, T}
+    #= /home/roger/code/julia/Expronicon/test/analysis.jl:5 =#
+    x::T = 1
+end
+```
+"""
+macro expr(type, ex)
+    quote
+        $type($(Expr(:quote, ex)))
+    end |> esc
+end
+
 struct AnalysisError <: Exception
     expect::String
     got
@@ -7,6 +89,59 @@ anlys_error(expect, got) = throw(AnalysisError(expect, got))
 
 function Base.show(io::IO, e::AnalysisError)
     print(io, "expect ", e.expect, " expression, got ", e.got, ".")
+end
+
+"""
+    compare_expr(lhs, rhs)
+
+Compare two expression of type `Expr` or `Symbol` semantically, which:
+
+1. ignore the detail value `LineNumberNode` in comparision
+2. ignore the detailed name of typevars in `Expr(:curly, ...)` or `Expr(:where, ...)`
+
+This gives a way to compare two Julia expression semantically which means
+although some details of the expression is different but they should
+produce the same lowered code.
+"""
+function compare_expr(lhs, rhs)
+    @switch (lhs, rhs) begin
+        @case (::Symbol, ::Symbol)
+            lhs === rhs
+        @case (Expr(:curly, name, lhs_vars...), Expr(:curly, &name, rhs_vars...))
+            mapreduce(compare_vars, &, lhs_vars, rhs_vars)
+        @case (Expr(:where, lbody, lparams...), Expr(:where, rbody, rparams...))
+            compare_expr(lbody, rbody) &&
+                mapreduce(compare_vars, &, lparams, rparams)
+        @case (Expr(head, largs...), Expr(&head, rargs...))
+            isempty(largs) && isempty(rargs) ||
+            mapreduce(compare_expr, &, largs, rargs)
+        # ignore LineNumberNode
+        @case (::LineNumberNode, ::LineNumberNode)
+            true
+        @case _
+            lhs == rhs
+    end
+end
+
+"""
+    compare_vars(lhs, rhs)
+
+Compare two expression by assuming all `Symbol`s are variables,
+thus their value doesn't matter, only where they are matters under
+this assumption. See also [`compare_expr`](@ref).
+"""
+function compare_vars(lhs, rhs)
+    @switch (lhs, rhs) begin
+        @case (::Symbol, ::Symbol)
+            true
+        @case (Expr(head, largs...), Expr(&head, rargs...))
+            mapreduce(compare_vars, &, largs, rargs)
+        # ignore LineNumberNode
+        @case (::LineNumberNode, ::LineNumberNode)
+            true
+        @case _
+            lhs == rhs
+    end
 end
 
 """
@@ -22,6 +157,20 @@ function has_symbol(@nospecialize(ex), name::Symbol)
     ex isa Symbol && return ex === name
     ex isa Expr || return false
     return any(x->has_symbol(x, name), ex.args)
+end
+
+"""
+    has_kwfn_constructor(def[, name = constructor_plain(def)])
+
+Check if the struct definition contains keyword function constructor of `name`.
+The constructor name to check by default is the plain constructor which does
+not infer any type variables and requires user to input all type variables.
+See also [`constructor_plain`](@ref).
+"""
+function has_kwfn_constructor(def, name = constructor_plain(def))
+    any(def.constructors) do fn::JLFunction
+        isempty(fn.args) && fn.name == name
+    end
 end
 
 """
