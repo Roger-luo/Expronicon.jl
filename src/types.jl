@@ -185,10 +185,6 @@ function JLStruct(;
     JLStruct(name, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
 
-support_default(f) = false
-support_default(f::JLKwField) = true
-support_default(f::JLKwStruct) = true
-
 """
     JLKwStruct <: JLExpr
 

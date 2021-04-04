@@ -153,6 +153,14 @@ function is_literal(x)
     !(x isa Expr || x isa Symbol || x isa GlobalRef)
 end
 
+"""
+    support_default(f)
+
+Check if field type `f` supports default value.
+"""
+support_default(f) = false
+support_default(f::JLKwField) = true
+
 function has_symbol(@nospecialize(ex), name::Symbol)
     ex isa Symbol && return ex === name
     ex isa Expr || return false
