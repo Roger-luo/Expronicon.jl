@@ -1,12 +1,6 @@
 using Test
 using Expronicon
 
-def = @expr JLKwStruct struct Foo{N, T}
-    x::T = 1
-end
-
-codegen_ast_kwfn_plain(def)
-
 @testset "is_fn" begin
     @test is_fn(:(foo(x) = x))
     @test is_fn(:(x -> 2x))
@@ -143,10 +137,10 @@ end
     println(def)
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{var"##T#613"}; x = 1) where {N, T, var"##T#613" <: Foo}
+        function create(::Type{S}; x = 1) where {N, T, S <: Foo}
             Foo1{N, T}(x)
         end
-        function create(::Type{var"##T#614"}; x = 1) where {N, var"##T#614" <: Foo{N}}
+        function create(::Type{S}; x = 1) where {N, S <: Foo{N}}
             Foo1{N}(x)
         end
     end

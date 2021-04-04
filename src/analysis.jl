@@ -113,8 +113,8 @@ function compare_expr(lhs, rhs)
             compare_expr(lbody, rbody) &&
                 all(map(compare_vars, lparams, rparams))
         @case (Expr(head, largs...), Expr(&head, rargs...))
-            isempty(largs) && isempty(rargs) ||
-            all(map(compare_expr, largs, rargs))
+                isempty(largs) && isempty(rargs) ||
+            (length(largs) == length(rargs) && all(map(compare_expr, largs, rargs)))
         # ignore LineNumberNode
         @case (::LineNumberNode, ::LineNumberNode)
             true
