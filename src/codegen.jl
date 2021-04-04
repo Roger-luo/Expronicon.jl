@@ -257,9 +257,7 @@ off to call [`codegen_ast`](@ref) on each field object.
 function codegen_ast_fields(fields; just_name::Bool=true)
     map(fields) do field
         name = just_name ? field.name : codegen_ast(field)
-
-        # for other kind of fields, just return
-        hasfield(typeof(field), :default) || return name
+        support_default(field) || return name
 
         if field.default === no_default
             name
