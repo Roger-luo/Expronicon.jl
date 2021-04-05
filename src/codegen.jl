@@ -188,7 +188,7 @@ function codegen_ast_kwfn_plain(def, name = nothing)
     else
         @gensym T
         args = [:(::Type{$T}), ]
-        whereparams = isempty(def.typevars) ? nothing : [name_only.(def.typevars)..., :($T <: $(def.name))]
+        whereparams = [name_only.(def.typevars)..., :($T <: $(def.name))]
     end
 
     # do not generate kwfn if it's defined by the user

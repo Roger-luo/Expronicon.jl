@@ -131,6 +131,17 @@ end
     @test JLKwField(;name=:x).type === Any
     @test JLKwStruct(;name=:Foo).name === :Foo
 
+    def = @expr JLKwStruct struct ConvertOption
+        include_defaults::Bool=false
+        exclude_nothing::Bool=false
+    end
+
+    @test_expr codegen_ast_kwfn(def, :create) == quote
+        function create(::Type{S}; include_defaults = false, exclude_nothing = false) where S <: ConvertOption
+            ConvertOption(include_defaults, exclude_nothing)
+        end
+    end
+
     def = @expr JLKwStruct struct Foo1{N, T}
         x::T = 1
     end
