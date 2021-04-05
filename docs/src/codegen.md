@@ -8,7 +8,6 @@ codegen_ast_kwfn
 codegen_ast_kwfn_plain
 codegen_ast_kwfn_infer
 codegen_ast_struct
-codegen_ast_struct_curly
 codegen_ast_struct_head
 codegen_ast_struct_body
 codegen_match
