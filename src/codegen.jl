@@ -72,7 +72,7 @@ end
 
 function codegen_ast(fn::JLFunction)
     # handle anonymous syntax: function (x; kw=value) end
-    if fn.head === :function && fn.name === nothing &&
+    if fn.head === :function && fn.name === nothing && fn.kwargs !== nothing &&
             isone(length(fn.args)) && isone(length(fn.kwargs))
 
         kw = fn.kwargs[1].args[1]
