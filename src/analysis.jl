@@ -341,7 +341,7 @@ function uninferrable_typevars(def::Union{JLStruct, JLKwStruct})
 
     uninferrable = []
     for T in typevars
-        T in field_types || push!(uninferrable, T)
+        any(map(f->has_symbol(f, T), field_types)) || push!(uninferrable, T)
     end
     return uninferrable
 end

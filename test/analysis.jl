@@ -6,6 +6,20 @@ using Expronicon
     @test is_fn(:(x -> 2x))
 end
 
+@testset "uninferrable_typevars" begin
+    def = @expr JLKwStruct struct Inferable1{T}
+        x::Constaint{T, <(2)}
+    end
+    
+    @test isempty(uninferrable_typevars(def))
+    
+    def = @expr JLKwStruct struct Inferable2{T}
+        x::Constaint{Float64, <(2)}
+    end
+    
+    @test uninferrable_typevars(def) == [:T]    
+end
+
 @testset "is_kw_fn" begin
     @test is_kw_fn(:(
         function foo(x::Int; kw=1)
