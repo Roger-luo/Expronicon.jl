@@ -1,3 +1,12 @@
+```@setup jlfn
+using ANSIColoredPrinters
+function show_ascii(x)
+    buf = IOBuffer()
+    print(buf, x)
+    HTMLPrinter(buf, root_class="terminal-output")
+end
+```
+
 # Expronicon
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://Roger-luo.github.io/Expronicon.jl/stable)
@@ -74,7 +83,12 @@ Now if we convert them to the `JLFunction` type
 
 ```@example jlfn
 jl1 = JLFunction(ex1)
+show_ascii(jl1)# hide
+```
+
+```@example jlfn
 jl2 = JLFunction(ex2)
+show_ascii(jl2)# hide
 ```
 
 we can see they have the same structure under the representation of [`JLFunction`](@ref).
@@ -103,20 +117,21 @@ def = @expr JLStruct struct Foo{T} <: AbstractType
     x::Int
     y::T
 end
-nothing # hide
+show_ascii(def) # hide
 ```
 
 we again use [`@expr`](@ref) for convenience, however you can also just convert the expression to
 `JLStruct` manually
 
-```julia
+```@example jlfn
 ex = quote
     struct Foo{T} <: AbstractType
         x::Int
         y::T
     end
 end
-def = JLStruct(ex)
+def = JLStruct(ex.args[2])
+show_ascii(def) # hide
 ```
 
 once you have the corresponding `JLStruct` object, you can access many useful information directly
@@ -180,6 +195,7 @@ jl.map[:(x > 100)] = :(x + 1)
 jl.map[:(x > 80)] = :(x + 2)
 jl.otherwise = :(error("some error msg"))
 jl
+show_ascii(jl) # hide
 ```
 
 now let's generate back to `Expr` so that we can give Julia back some executable expression
@@ -263,7 +279,7 @@ name_only.(def.args)
 
 The code generation functions help you generate other target expressions, e.g [`codegen_ast`](@ref)
 generates the Julia AST object `Expr`. All the syntax type can use [`codegen_ast`](@ref) to generate
-the corresponding `Expr`, there are also some other functions start with name [`codegen`](@ref) in
+the corresponding `Expr`, there are also some other functions start with name `codegen` in
 [CodeGen](@ref) you may find useful.
 
 ## Pretty Printing

@@ -4,7 +4,9 @@ using Documenter
 using ANSIColoredPrinters
 using DocumenterTools: Themes
 
-DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
+DocMeta.setdocmeta!(Expronicon, :DocTestSetup, quote
+    using Expronicon
+end; recursive=true)
 Themes.compile(joinpath(@__DIR__, "src/assets/main.scss"))
 
 makedocs(;
@@ -15,7 +17,7 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://Roger-luo.github.io/Expronicon.jl",
-        assets=String["assets/main.css"],
+        assets=String["assets/main.css", "assets/default.css"],
     ),
     pages=[
         "Quick Start" => "index.md",
