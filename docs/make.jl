@@ -18,11 +18,7 @@ makedocs(;
     ),
     pages=[
         "Quick Start" => "index.md",
-        "Syntax Types" => "types.md",
-        "Analysis" => "analysis.md",
-        "Transform" => "transform.md",
-        "CodeGen" => "codegen.md",
-        "Printings" => "printings.md",
+        "API Reference" => "reference.md",
     ],
 )
 
