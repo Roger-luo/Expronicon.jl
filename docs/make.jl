@@ -1,8 +1,10 @@
 using MLStyle
 using Expronicon
 using Documenter
+using DocumenterTools: Themes
 
 DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
+Themes.compile(joinpath(@__DIR__, "src/assets/main.scss"))
 
 makedocs(;
     modules=[Expronicon, MLStyle],
@@ -12,7 +14,7 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://Roger-luo.github.io/Expronicon.jl",
-        assets=String[],
+        assets=String["assets/main.css"],
     ),
     pages=[
         "Quick Start" => "index.md",
