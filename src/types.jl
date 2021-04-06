@@ -15,6 +15,11 @@ describes a field should have no default value.
 """
 const no_default = NoDefault()
 
+"""
+    abstract type JLExpr end
+
+Abstract type for Julia syntax type.
+"""
 abstract type JLExpr end
 
 """
