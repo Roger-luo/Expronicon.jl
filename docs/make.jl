@@ -1,13 +1,14 @@
 using MLStyle
 using Expronicon
 using Documenter
+using ANSIColoredPrinters
 using DocumenterTools: Themes
 
 DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
 Themes.compile(joinpath(@__DIR__, "src/assets/main.scss"))
 
 makedocs(;
-    modules=[Expronicon, MLStyle],
+    modules=[Expronicon],
     authors="Roger-luo <rogerluo.rl18@gmail.com> and contributors",
     repo="https://github.com/Roger-luo/Expronicon.jl/blob/{commit}{path}#{line}",
     sitename="Expronicon.jl",
