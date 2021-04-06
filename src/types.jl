@@ -374,11 +374,26 @@ Create a `JLMatch` object from keyword arguments.
 JLMatch(;item, map=OrderedDict(), fallthrough=nothing, mod=Main, line=LineNumberNode(0)) =
     JLMatch(item, map, fallthrough, mod, line)
 
+"""
+    JLFor <: JLExpr
 
+Syntax type for Julia for loop.
+"""
 struct JLFor <: JLExpr
     vars::Vector{Any}
     iterators::Vector{Any}
     kernel::Any
 end
 
+"""
+    JLFor(;vars=[], iterators=[], kernel=nothing)
+
+Generate a `JLFor` object.
+
+# Kwargs
+
+- `vars`: loop variables.
+- `iterators`: loop iterators.
+- `kernel`: loop kernel.
+"""
 JLFor(;vars=[], iterators=[], kernel=nothing) = JLFor(vars, iterators, kernel)
