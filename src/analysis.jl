@@ -235,11 +235,11 @@ function has_plain_constructor(def, name = struct_name_plain(def))
 end
 
 """
-    is_fn(def)
+    is_function(def)
 
 Check if given object is a function expression.
 """
-function is_fn(@nospecialize(def))
+function is_function(@nospecialize(def))
     @match def begin
         ::JLFunction => true
         Expr(:function, _, _) => true
@@ -250,12 +250,12 @@ function is_fn(@nospecialize(def))
 end
 
 """
-    is_kw_fn(def)
+    is_kw_function(def)
 
 Check if a given function definition supports keyword arguments.
 """
-function is_kw_fn(@nospecialize(def))
-    is_fn(def) || return false
+function is_kw_function(@nospecialize(def))
+    is_function(def) || return false
 
     if def isa JLFunction
         return def.kwargs !== nothing
@@ -266,6 +266,80 @@ function is_kw_fn(@nospecialize(def))
         Expr(:tuple, Expr(:parameters, _...), _...) => true
         Expr(:call, _, Expr(:parameters, _...), _...) => true
         Expr(:block, _, ::LineNumberNode, _) => true
+        _ => false
+    end
+end
+
+@deprecate is_kw_fn(def) is_kw_function(def)
+@deprecate is_fn(def) is_function(def)
+
+"""
+    is_struct(ex)
+
+Check if `ex` is a struct expression.
+"""
+function is_struct(@nospecialize(ex))
+    ex isa Expr || return false
+    return ex.head === :struct
+end
+
+"""
+    is_struct_not_kw_struct(ex)
+
+Check if `ex` is a struct expression excluding keyword struct syntax.
+"""
+function is_struct_not_kw_struct(ex)
+    is_struct(ex) || return false
+    body = ex.args[3]
+    body isa Expr && body.head === :block || return false
+    any(is_field_default, body.args) && return false
+    return true
+end
+
+"""
+    is_ifelse(ex)
+
+Check if `ex` is an `if ... elseif ... else ... end` expression.
+"""
+function is_ifelse(@nospecialize(ex))
+    ex isa Expr || return false
+    return ex.head === :if
+end
+
+"""
+    is_for(ex)
+
+Check if `ex` is a `for` loop expression.
+"""
+function is_for(@nospecialize(ex))
+    ex isa Expr || return false
+    return ex.head === :for
+end
+
+"""
+    is_field(ex)
+
+Check if `ex` is a valid field expression.
+"""
+function is_field(@nospecialize(ex))
+    @match ex begin
+        :($name::$type = $default) => false
+        :($(name::Symbol) = $default) => false
+        name::Symbol => true
+        :($name::$type) => true
+        _ => false
+    end
+end
+
+"""
+    is_field_default(ex)
+
+Check if `ex` is a `<field expr> = <default expr>` expression.
+"""
+function is_field_default(@nospecialize(ex))
+    @match ex begin
+        :($name::$type = $default) => true
+        :($(name::Symbol) = $default) => true
         _ => false
     end
 end
@@ -464,7 +538,7 @@ function JLStruct(ex::Expr)
                 field_doc = each
             @case ::LineNumberNode
                 field_line = each
-            @case GuardBy(is_fn)
+            @case GuardBy(is_function)
                 if name_only(each) === typename
                     push!(constructors, JLFunction(each))
                 else
@@ -516,7 +590,7 @@ function JLKwStruct(ex::Expr, typealias=nothing)
                 field_doc = each
             @case ::LineNumberNode
                 field_line = each
-            @case GuardBy(is_fn)
+            @case GuardBy(is_function)
                 if name_only(each) === typename
                     push!(constructors, JLFunction(each))
                 else

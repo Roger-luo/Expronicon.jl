@@ -20,4 +20,8 @@ end
     include("transform.jl")
 end
 
+@testset "match" begin
+    include("match.jl")
+end
+
 doctest(Expronicon)

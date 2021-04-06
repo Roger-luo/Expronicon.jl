@@ -12,8 +12,11 @@ export
     JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     # analysis
     @expr, @test_expr, compare_expr, compare_vars,
-    AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
-    split_struct_name, split_ifelse, annotations, uninferrable_typevars, has_symbol,
+    AnalysisError, is_function, is_kw_function, is_struct,
+    is_ifelse, is_for, is_field, is_field_default,
+    split_function, split_function_head, split_struct,
+    split_struct_name, split_ifelse, annotations,
+    uninferrable_typevars, has_symbol,
     is_literal, has_kwfn_constructor, has_plain_constructor,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
@@ -32,8 +35,11 @@ export
     struct_name_plain,
     struct_name_without_inferable,
     # printings
-    with_marks, with_parathesis, with_curly, with_brackets, within_line, within_indent,
-    with_begin_end, indent, no_indent, no_indent_first_line, indent_print, indent_println
+    with_marks, with_parathesis, with_curly,
+    with_brackets, within_line, within_indent,
+    with_begin_end, indent, no_indent,
+    no_indent_first_line, indent_print,
+    indent_println
 
 
 
@@ -44,5 +50,6 @@ include("transform.jl")
 include("analysis.jl")
 include("codegen.jl")
 include("printing.jl")
+include("match.jl")
 
 end

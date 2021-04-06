@@ -1,9 +1,9 @@
 using Test
 using Expronicon
 
-@testset "is_fn" begin
-    @test is_fn(:(foo(x) = x))
-    @test is_fn(:(x -> 2x))
+@testset "is_function" begin
+    @test is_function(:(foo(x) = x))
+    @test is_function(:(x -> 2x))
 end
 
 @testset "uninferrable_typevars" begin
@@ -75,22 +75,22 @@ end
     @test has_plain_constructor(def) == false
 end
 
-@testset "is_kw_fn" begin
-    @test is_kw_fn(:(
+@testset "is_kw_function" begin
+    @test is_kw_function(:(
         function foo(x::Int; kw=1)
         end
     ))
 
     ex = :(function (x::Int; kw=1) end)
-    @test is_kw_fn(ex)
-    @test !is_kw_fn(true)
+    @test is_kw_function(ex)
+    @test !is_kw_function(true)
 
-    @test !is_kw_fn(:(
+    @test !is_kw_function(:(
         function foo(x::Int)
         end
     ))
 
-    @test !is_kw_fn(:(
+    @test !is_kw_function(:(
         function (x::Int)
         end
     ))
@@ -107,12 +107,12 @@ end
     def = @test_expr JLFunction function (x, y)
         return 2
     end
-    @test is_kw_fn(def) == false
+    @test is_kw_function(def) == false
 
     def = @test_expr JLFunction function (x, y; kw=2)
         return "aaa"
     end
-    @test is_kw_fn(def) == true
+    @test is_kw_function(def) == true
 
     @test_expr JLFunction (x, y)->sin(x)
 
@@ -189,7 +189,7 @@ end
     @test ast.args[1] == GlobalRef(Core, Symbol("@doc"))
     @test ast.args[3] == "Foo\n"
     @test ast.args[4].head === :struct
-    @test is_fn(ast.args[4].args[end].args[end-1])
+    @test is_function(ast.args[4].args[end].args[end-1])
     println(jlstruct)
 
     @test_throws AnalysisError split_struct_name(:(function Foo end))
