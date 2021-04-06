@@ -14,8 +14,8 @@ makedocs(;
         assets=String[],
     ),
     pages=[
-        "Home" => "index.md",
-        "Types" => "types.md",
+        "Quick Start" => "index.md",
+        "Syntax Types" => "types.md",
         "Analysis" => "analysis.md",
         "Transform" => "transform.md",
         "CodeGen" => "codegen.md",
