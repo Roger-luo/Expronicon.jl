@@ -34,6 +34,8 @@ export
     construct_method_inferable,
     struct_name_plain,
     struct_name_without_inferable,
+    # match
+    @syntax_pattern,
     # printings
     with_marks, with_parathesis, with_curly,
     with_brackets, within_line, within_indent,
