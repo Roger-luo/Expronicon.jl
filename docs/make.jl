@@ -1,10 +1,11 @@
+using MLStyle
 using Expronicon
 using Documenter
 
 DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
 
 makedocs(;
-    modules=[Expronicon],
+    modules=[Expronicon, MLStyle],
     authors="Roger-luo <rogerluo.rl18@gmail.com> and contributors",
     repo="https://github.com/Roger-luo/Expronicon.jl/blob/{commit}{path}#{line}",
     sitename="Expronicon.jl",

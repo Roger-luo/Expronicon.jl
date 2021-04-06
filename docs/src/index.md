@@ -7,7 +7,8 @@
 [![Downstream](https://github.com/Roger-luo/Expronicon.jl/actions/workflows/Downstream.yml/badge.svg)](https://github.com/Roger-luo/Expronicon.jl/actions/workflows/Downstream.yml)
 
 
-Collective tools for metaprogramming on Julia Expr.
+Collective tools for metaprogramming on Julia Expr, the meta programming
+standard library for [MLStyle](https://thautwarm.github.io/MLStyle.jl/latest/).
 
 Meta programming in general can be decomposed into three steps:
 
@@ -188,6 +189,49 @@ codegen_ast(jl)
 ```
 
 You can find available syntax types in [Syntax Types](@ref)
+
+## Pattern Matching
+
+Since `Expronicon` serves as the meta programming stdlib for MLStyle, you can
+also use the syntax types along with MLStyle, e.g
+
+
+```@example match
+using MLStyle
+using Expronicon
+
+f = @λ begin
+   JLFunction(;name=:foo, args) => (args, )
+   JLFunction(;name=:boo, args) => (args, )
+   _ => nothing
+end
+
+ex_foo = @expr function foo(x::Int, y::T) where {T <: Real}
+    x + y
+end
+
+ex_boo = @expr function foo(x::Int)
+    x
+end
+nothing # hide
+```
+
+then we can check if our match function gives the right result
+
+```@repl match
+f(ex_foo)
+f(ex_boo)
+```
+
+You can use **any** syntax types builtin as your expression
+template to match using MLStyle. If you define your own
+syntax type, you can also support pattern matching via
+[`@syntax_pattern`](@ref).
+
+```@docs
+@syntax_pattern
+```
+
 
 ## Analysis Functions
 
