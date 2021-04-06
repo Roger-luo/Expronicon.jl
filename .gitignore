@@ -4,5 +4,8 @@
 /Manifest.toml
 /docs/Manifest.toml
 /docs/build/
+docs/build
+docs/site
+docs/src/assets/main.css
 .vscode
 lcov.info
