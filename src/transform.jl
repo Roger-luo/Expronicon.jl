@@ -41,8 +41,7 @@ end
 """
     subtitute(ex::Expr, old=>new)
 
-Subtitute the old symbol `old` with `new`, similar to
-[`replace_symbol`](@ref), but with a easier to read syntax.
+Subtitute the old symbol `old` with `new`.
 """
 function subtitute(ex::Expr, replace::Pair)
     name, value = replace

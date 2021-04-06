@@ -4,9 +4,6 @@ using Documenter
 using ANSIColoredPrinters
 using DocumenterTools: Themes
 
-DocMeta.setdocmeta!(Expronicon, :DocTestSetup, quote
-    using Expronicon
-end; recursive=true)
 Themes.compile(joinpath(@__DIR__, "src/assets/main.scss"))
 
 makedocs(;

@@ -6,3 +6,7 @@ Pretty printing functions.
 Modules = [Expronicon]
 Pages = ["printing.jl"]
 ```
+
+```@docs
+Expronicon.Color
+```
