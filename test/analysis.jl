@@ -11,13 +11,68 @@ end
         x::Constaint{T, <(2)}
     end
     
-    @test isempty(uninferrable_typevars(def))
+    @test uninferrable_typevars(def) == []
     
     def = @expr JLKwStruct struct Inferable2{T}
         x::Constaint{Float64, <(2)}
     end
-    
-    @test uninferrable_typevars(def) == [:T]    
+
+    @test uninferrable_typevars(def) == [:T]
+
+    def = @expr JLKwStruct struct Inferable3{T, N}
+        x::Int
+        y::N
+    end
+    @test uninferrable_typevars(def) == [:T]
+
+
+    def = @expr JLKwStruct struct Inferable4{T, N}
+        x::T
+        y::N
+    end
+    @test uninferrable_typevars(def) == []
+
+    def = @expr JLKwStruct struct Inferable5{T, N}
+        x::T
+        y::Float64
+    end
+
+    @test uninferrable_typevars(def) == [:T, :N]
+    @test uninferrable_typevars(def; leading_inferable=false) == [:N]
+end
+
+@testset "has_plain_constructor" begin
+    def = @expr JLKwStruct struct Foo1{T, N}
+        x::Int
+        y::N
+        Foo1{T, N}(x, y) where {T, N} = new{T, N}(x, y)
+    end
+
+    @test has_plain_constructor(def) == true
+
+    def = @expr JLKwStruct struct Foo2{T, N}
+        x::T
+        y::N
+        Foo2(x, y) = new{typeof(x), typeof(y)}(x, y)
+    end
+
+    @test has_plain_constructor(def) == false
+
+    def = @expr JLKwStruct struct Foo3{T, N}
+        x::Int
+        y::N
+        Foo3{T}(x, y) where T = new{T, typeof(y)}(x, y)
+    end
+
+    @test has_plain_constructor(def) == false
+
+    def = @expr JLKwStruct struct Foo4{T, N}
+        x::T
+        y::N
+        Foo4{T, N}(x::T, y::N) where {T, N} = new{T, N}(x, y)
+    end
+
+    @test has_plain_constructor(def) == false
 end
 
 @testset "is_kw_fn" begin

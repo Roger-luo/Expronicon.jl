@@ -14,7 +14,7 @@ export
     @expr, @test_expr, compare_expr, compare_vars,
     AnalysisError, is_fn, is_kw_fn, split_function, split_function_head, split_struct,
     split_struct_name, split_ifelse, annotations, uninferrable_typevars, has_symbol,
-    is_literal, has_kwfn_constructor,
+    is_literal, has_kwfn_constructor, has_plain_constructor,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     rm_annotations, replace_symbol, subtitute, eval_interp, eval_literal,
@@ -29,6 +29,8 @@ export
     codegen_match,
     construct_method_plain,
     construct_method_inferable,
+    struct_name_plain,
+    struct_name_without_inferable,
     # printings
     with_marks, with_parathesis, with_curly, with_brackets, within_line, within_indent,
     with_begin_end, indent, no_indent, no_indent_first_line, indent_print, indent_println

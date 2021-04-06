@@ -168,16 +168,69 @@ function has_symbol(@nospecialize(ex), name::Symbol)
 end
 
 """
-    has_kwfn_constructor(def[, name = constructor_plain(def)])
+    has_kwfn_constructor(def[, name = struct_name_plain(def)])
 
 Check if the struct definition contains keyword function constructor of `name`.
 The constructor name to check by default is the plain constructor which does
 not infer any type variables and requires user to input all type variables.
-See also [`constructor_plain`](@ref).
+See also [`struct_name_plain`](@ref).
 """
-function has_kwfn_constructor(def, name = constructor_plain(def))
+function has_kwfn_constructor(def, name = struct_name_plain(def))
     any(def.constructors) do fn::JLFunction
         isempty(fn.args) && fn.name == name
+    end
+end
+
+"""
+    has_plain_constructor(def, name = struct_name_plain(def))
+
+Check if the struct definition contains the plain constructor of `name`.
+By default the name is the inferable name [`struct_name_plain`](@ref).
+
+# Example
+
+```julia
+def = @expr JLKwStruct struct Foo{T, N}
+    x::Int
+    y::N
+
+    Foo{T, N}(x, y) where {T, N} = new{T, N}(x, y)
+end
+
+has_plain_constructor(def) # true
+
+def = @expr JLKwStruct struct Foo{T, N}
+    x::T
+    y::N
+
+    Foo(x, y) = new{typeof(x), typeof(y)}(x, y)
+end
+
+has_plain_constructor(def) # false
+```
+
+the arguments must have no type annotations.
+
+```julia
+def = @expr JLKwStruct struct Foo{T, N}
+    x::T
+    y::N
+
+    Foo{T, N}(x::T, y::N) where {T, N} = new{T, N}(x, y)
+end
+
+has_plain_constructor(def) # false
+```
+"""
+function has_plain_constructor(def, name = struct_name_plain(def))
+    any(def.constructors) do fn::JLFunction
+        fn.name == name || return false
+        fn.kwargs === nothing || return false
+        length(def.fields) == length(fn.args) || return false
+        for (f, x) in zip(def.fields, fn.args)
+            f.name === x || return false
+        end
+        return true
     end
 end
 
@@ -335,12 +388,21 @@ function split_single_for_head(ex::Expr)
     return ex.args[1], ex.args[2]
 end
 
-function uninferrable_typevars(def::Union{JLStruct, JLKwStruct})
+function uninferrable_typevars(def::Union{JLStruct, JLKwStruct}; leading_inferable::Bool=true)
     typevars = name_only.(def.typevars)
     field_types = [field.type for field in def.fields]
 
-    uninferrable = []
-    for T in typevars
+    if leading_inferable
+        idx = findfirst(typevars) do t
+            !any(map(f->has_symbol(f, t), field_types))
+        end
+        idx === nothing && return []
+    else
+        idx = 0
+    end
+    uninferrable = typevars[1:idx]
+
+    for T in typevars[idx+1:end]
         any(map(f->has_symbol(f, T), field_types)) || push!(uninferrable, T)
     end
     return uninferrable

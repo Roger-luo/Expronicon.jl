@@ -217,7 +217,7 @@ Generate the keyword function that infers the type.
 function codegen_ast_kwfn_infer(def, name = nothing)
     # no typevars to infer, use the plain one
     isempty(def.typevars) && return
-    struct_name = struct_name_inferable(def)
+    struct_name = struct_name_without_inferable(def)
     requires = uninferrable_typevars(def)
 
     if name === nothing # constructor method
@@ -275,12 +275,12 @@ Plain constructor name. See also [`struct_name_inferable`](@ref).
 # Example
 
 ```julia
-julia> def = @expr JLKwStruct struct Foo{N, Inferrable}
-    x::Inferrable = 1
+julia> def = @expr JLKwStruct struct Foo{N, Inferable}
+    x::Inferable = 1
 end
 
 julia> struct_name_plain(def)
-:(Foo{N, Inferrable})
+:(Foo{N, Inferable})
 ```
 """
 function struct_name_plain(def)
@@ -289,25 +289,38 @@ function struct_name_plain(def)
 end
 
 """
-    struct_name_inferable(def)
+    struct_name_inferable(def; leading_inferable::Bool=true)
 
 Constructor name that assume some of the type variables is inferred.
-See also [`struct_name_plain`](@ref).
+See also [`struct_name_plain`](@ref). The kwarg `leading_inferable`
+can be used to configure whether to preserve the leading inferable
+type variables, the default is `true` to be consistent with the
+default julia constructors.
 
 # Example
 
 ```julia
-julia> def = @expr JLKwStruct struct Foo{N, Inferrable}
-    x::Inferrable = 1
+julia> def = @expr JLKwStruct struct Foo{N, Inferable}
+    x::Inferable = 1
 end
 
 julia> struct_name_inferable(def)
 :(Foo{N})
+
+julia> def = @expr JLKwStruct struct Foo{Inferable, NotInferable}
+    x::Inferable
+end
+
+julia> struct_name_inferable(def; leading_inferable=true)
+:(Foo{Inferable, NotInferable})
+
+julia> struct_name_inferable(def; leading_inferable=false)
+:(Foo{NotInferable})
 ```
 """
-function struct_name_inferable(def)
+function struct_name_without_inferable(def; leading_inferable::Bool=true)
     isempty(def.typevars) && return def.name
-    required_typevars = uninferrable_typevars(def)
+    required_typevars = uninferrable_typevars(def; leading_inferable=leading_inferable)
     return Expr(:curly, def.name, required_typevars...)
 end
 
