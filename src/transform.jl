@@ -17,6 +17,12 @@ function eval_interp(m::Module, ex)
     return Expr(ex.head, map(x->eval_interp(m, x), ex.args)...)
 end
 
+"""
+    eval_literal(m::Module, ex)
+
+Evaluate the literal values and insert them back to the expression.
+The literal value can be checked via [`is_literal`](@ref).
+"""
 function eval_literal(m::Module, ex)
     ex isa Expr || return ex
     if ex.head === :call && all(is_literal, ex.args[2:end])
@@ -32,6 +38,12 @@ function replace_symbol(ex::Expr, name::Symbol, value)
     Expr(ex.head, map(x->replace_symbol(x, name, value), ex.args)...)
 end
 
+"""
+    subtitute(ex::Expr, old=>new)
+
+Subtitute the old symbol `old` with `new`, similar to
+[`replace_symbol`](@ref), but with a easier to read syntax.
+"""
 function subtitute(ex::Expr, replace::Pair)
     name, value = replace
     return replace_symbol(ex, name, value)
@@ -143,6 +155,11 @@ function _flatten_blocks(ex)
     return Expr(:block, args...)
 end
 
+"""
+    rm_nothing(ex)
+
+Remove the constant value `nothing` in given expression `ex`.
+"""
 function rm_nothing(ex)
     @match ex begin
         Expr(:block, args...) => Expr(:block, filter(x->x!==nothing, args)...)
