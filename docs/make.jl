@@ -18,6 +18,7 @@ makedocs(;
     ),
     pages=[
         "Quick Start" => "index.md",
+        "Case Study" => "case.md",
         "API Reference" => "reference.md",
     ],
 )
