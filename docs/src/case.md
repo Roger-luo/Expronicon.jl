@@ -1,4 +1,4 @@
-# Case Study
+# Use Cases
 
 ## Packages Using Expronicon
 
