@@ -12,6 +12,7 @@ OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 
 [compat]
 Crayons = "4.0"
+DocStringExtensions = "0.8"
 MLStyle = "0.4"
 OrderedCollections = "1.4"
 julia = "1"
