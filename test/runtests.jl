@@ -24,4 +24,8 @@ end
     include("match.jl")
 end
 
+@testset "codegen" begin
+    include("codegen.jl")
+end
+
 doctest(Expronicon)

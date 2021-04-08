@@ -2,6 +2,7 @@ module Expronicon
 
 using MLStyle
 using Markdown
+using DocStringExtensions
 using OrderedCollections
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
@@ -34,6 +35,18 @@ export
     construct_method_inferable,
     struct_name_plain,
     struct_name_without_inferable,
+    # x functions
+    xtuple,
+    xnamedtuple,
+    xcall,
+    xpush,
+    xfirst,
+    xlast,
+    xprint,
+    xprintln,
+    xmap,
+    xmapreduce,
+    xiterate,
     # match
     @syntax_pattern,
     # printings

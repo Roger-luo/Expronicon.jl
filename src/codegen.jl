@@ -486,3 +486,122 @@ end
 function codegen_match(f, x, line::LineNumberNode=LineNumberNode(0), mod::Module=Main)
     return init_cfg(gen_match(x, f(), line, mod))
 end
+
+# X functions, the x<name> functions from Zygote, IRTools etc.
+
+"""
+$TYPEDSIGNATURES
+
+Create a `Tuple` expression.
+"""
+xtuple(xs...) = Expr(:tuple, xs...)
+
+"""
+$TYPEDSIGNATURES
+
+Create a `NamedTuple` expression.
+"""
+function xnamedtuple(;kw...)
+    ex = Expr(:tuple)
+    for (k, v) in kw
+        push!(ex.args, :($k = $v))
+    end
+    return ex
+end
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call to `name`.
+"""
+function xcall(name, args...; kw...)
+    isempty(kw) && return Expr(:call, name, args...)
+    p = Expr(:parameters)
+    for (k, v) in kw
+        push!(p.args, Expr(:kw, k, v))
+    end
+    Expr(:call, name, p, args...)
+end
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call to `GlobalRef(m, name)`.
+
+!!! tip
+
+    due to [Revise/#616](https://github.com/timholy/Revise.jl/issues/616),
+    to make your macro work with Revise, use the dot expression
+    `Expr(:., <module>, QuoteNode(<name>))` instead of `GlobalRef`.
+"""
+function xcall(m::Module, name::Symbol, args...; kw...)
+    xcall(GlobalRef(m, name), args...; kw...)
+end
+
+# NOTE: not use GlobalRef due to Revise#616
+base_xcall(name, args...; kw...) = xcall(:($Base.$name), args...; kw...)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.push!`.
+"""
+function xpush(collection, items...)
+    base_xcall(:(push!), collection, items...)
+end
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.first`.
+"""
+xfirst(collection) = base_xcall(:first, collection)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.last`.
+"""
+xlast(collection) = base_xcall(:last, collection)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.print`.
+"""
+xprint(xs...) = base_xcall(:print, xs...)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.println`.
+"""
+xprintln(xs...) = base_xcall(:println, xs...)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.map`.
+"""
+xmap(f, xs...) = base_xcall(:map, f, xs...)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.mapreduce`.
+"""
+xmapreduce(f, op, xs...) = base_xcall(:mapreduce, f, op, xs...)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.iterate`.
+"""
+xiterate(it) = base_xcall(:iterate, it)
+
+"""
+$TYPEDSIGNATURES
+
+Create a function call expression to `Base.iterate`.
+"""
+xiterate(it, st) = base_xcall(:iterate, it, st)

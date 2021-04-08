@@ -53,6 +53,7 @@ macro test_expr(ex::Expr)
     ex.head === :call && ex.args[1] === :(==) || error("expect <expr> == <expr>, got $ex")
     lhs, rhs = ex.args[2], ex.args[3]
     quote
+        $__source__
         @test $compare_expr($prettify($lhs), $prettify($rhs))
     end |> esc
 end
