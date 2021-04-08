@@ -16,15 +16,13 @@ describes a field should have no default value.
 const no_default = NoDefault()
 
 """
-    abstract type JLExpr end
-
+$TYPEDEF
 Abstract type for Julia syntax type.
 """
 abstract type JLExpr end
 
 """
-    JLFunction <: JLExpr
-
+$TYPEDEF
 Type describes a Julia function declaration expression.
 
 # Example
@@ -92,8 +90,7 @@ function JLFunction(;
 end
 
 """
-    JLField <: JLExpr
-    JLField(name, type, line)
+$TYPEDEF
 
 Type describes a Julia field in a Julia struct.
 """
@@ -104,13 +101,17 @@ mutable struct JLField <: JLExpr
     line::Maybe{LineNumberNode}
 end
 
+"""
+$SIGNATURES
+
+Create a `JLField` instance.
+"""
 function JLField(;name, type=Any, doc=nothing, line=nothing)
     JLField(name, type, doc, line)
 end
 
 """
-    JLKwField <: JLExpr
-    JLKwField(name, type, line, default=no_default)
+$TYPEDEF
 
 Type describes a Julia field that can have a default value in a Julia struct.
 """
@@ -122,12 +123,17 @@ mutable struct JLKwField <: JLExpr
     default::Any
 end
 
+"""
+$SIGNATURES
+
+Create a `JLKwField` instance.
+"""
 function JLKwField(;name, type=Any, doc=nothing, line=nothing, default=no_default)
     JLKwField(name, type, doc, line, default)
 end
 
 """
-    JLStruct <: JLExpr
+$TYPEDEF
 
 Type describes a Julia struct.
 
@@ -182,6 +188,11 @@ mutable struct JLStruct <: JLExpr
     misc::Any
 end
 
+"""
+$SIGNATURES
+
+Create a `JLStruct` instance.
+"""
 function JLStruct(;
     name, ismutable=false,
     typevars=[], supertype=nothing,
@@ -208,6 +219,11 @@ mutable struct JLKwStruct <: JLExpr
     misc::Any
 end
 
+"""
+$SIGNATURES
+
+Create a `JLKwStruct` instance.
+"""
 function JLKwStruct(;name, typealias=nothing,
     ismutable=false, typevars=[], supertype=nothing,
     fields=JLField[], constructors=JLFunction[],
@@ -216,7 +232,7 @@ function JLKwStruct(;name, typealias=nothing,
 end
 
 """
-    JLIfElse <: JLExpr
+$TYPEDEF
 
 `JLIfElse` describes a Julia `if ... elseif ... else ... end` expression. It allows one to easily construct
 such expression by inserting condition and code block via a map.
@@ -270,10 +286,15 @@ mutable struct JLIfElse <: JLExpr
     otherwise::Any
 end
 
+"""
+$SIGNATURES
+
+Create an emptry `ifelse` syntax type instance.
+"""
 JLIfElse() = JLIfElse(OrderedDict(), nothing)
 
 """
-    JLMatch <: JLExpr
+$TYPEDEF
 
 `JLMatch` describes a Julia pattern match expression defined by
 [`MLStyle`](https://github.com/thautwarm/MLStyle.jl). It allows
@@ -356,7 +377,7 @@ struct JLMatch <: JLExpr
 end
 
 """
-    JLMatch(item)
+$SIGNATURES
 
 Generate an empty `JLMatch` object with given item expression.
 `item` can be a `Symbol` or an `Expr`.
@@ -364,7 +385,7 @@ Generate an empty `JLMatch` object with given item expression.
 JLMatch(item) = JLMatch(item, OrderedDict(), nothing, Main, LineNumberNode(0))
 
 """
-    JLMatch(;item, map=OrderedDict(), fallthrough=nothing, mod=Main, line=LineNumberNode(0))
+$SIGNATURES
 
 Create a `JLMatch` object from keyword arguments.
 
@@ -380,7 +401,7 @@ JLMatch(;item, map=OrderedDict(), fallthrough=nothing, mod=Main, line=LineNumber
     JLMatch(item, map, fallthrough, mod, line)
 
 """
-    JLFor <: JLExpr
+$TYPEDEF
 
 Syntax type for Julia for loop.
 """
@@ -391,7 +412,7 @@ struct JLFor <: JLExpr
 end
 
 """
-    JLFor(;vars=[], iterators=[], kernel=nothing)
+$TYPEDEF
 
 Generate a `JLFor` object.
 
