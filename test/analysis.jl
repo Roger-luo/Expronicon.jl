@@ -126,6 +126,12 @@ end
 
     ex = :(Foo(; a = 1) = new(a))
     @test JLFunction(ex).kwargs[1] == Expr(:kw, :a, 1)
+
+    @test_expr JLFunction function f(x::T; a=10)::Int where T
+        return x
+    end
+
+    @test_expr JLFunction f(x::Int)::Int = x
 end
 
 @testset "JLStruct(ex)" begin

@@ -341,6 +341,10 @@ function print_ast(io::IO, def::JLFunction)
             end
         end
 
+        if def.rettype !== nothing
+            print(io, "::", Color.type(def.rettype))
+        end
+
         if def.whereparams !== nothing
             indent_print(io, tab, Color.kw("where"), tab)
             with_curly(io) do

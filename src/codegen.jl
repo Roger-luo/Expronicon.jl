@@ -73,36 +73,32 @@ end
 function codegen_ast(fn::JLFunction)
     # handle anonymous syntax: function (x; kw=value) end
     if fn.head === :function && fn.name === nothing && fn.kwargs !== nothing &&
-            isone(length(fn.args)) && isone(length(fn.kwargs))
-
+        isone(length(fn.args)) && isone(length(fn.kwargs))
         kw = fn.kwargs[1].args[1]
         va = fn.kwargs[1].args[2]
-            
-        return Expr(:function,
-            Expr(:block, fn.args[1], :($kw = $va)),
-            maybe_wrap_block(fn.body),
-        )
-    end
-
-    fn_def = Expr(fn.head)
-
-    if fn.name === nothing
-        call = Expr(:tuple)
+        call = Expr(:block, fn.args[1], :($kw = $va))
     else
-        call = Expr(:call, fn.name)
+        if fn.name === nothing
+            call = Expr(:tuple)
+        else
+            call = Expr(:call, fn.name)
+        end
+
+        if fn.kwargs !== nothing
+            push!(call.args, Expr(:parameters, fn.kwargs...))
+        end
+        append!(call.args, fn.args)
     end
 
-    if fn.kwargs !== nothing
-        push!(call.args, Expr(:parameters, fn.kwargs...))
+    if fn.rettype !== nothing
+        call = Expr(:(::), call, fn.rettype)
     end
 
-    append!(call.args, fn.args)
     if fn.whereparams !== nothing
         call = Expr(:where, call, fn.whereparams...)
     end
 
-    push!(fn_def.args, call)
-    push!(fn_def.args, maybe_wrap_block(codegen_ast(fn.body)))
+    fn_def = Expr(fn.head, call, maybe_wrap_block(codegen_ast(fn.body)))
     return codegen_ast_docstring(fn, fn_def)
 end
 

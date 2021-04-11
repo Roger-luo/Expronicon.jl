@@ -372,21 +372,25 @@ function split_function(ex::Expr)
 end
 
 """
-    split_function_head(ex::Expr) -> name, args, kw, whereparams
+    split_function_head(ex::Expr) -> name, args, kw, whereparams, rettype
 
 Split function head to name, arguments, keyword arguments and where parameters.
 """
 function split_function_head(ex::Expr)
     @match ex begin
-        Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing)
-        Expr(:tuple, args...) => (nothing, args, nothing, nothing)
-        Expr(:call, name, Expr(:parameters, kw...), args...) => (name, args, kw, nothing)
-        Expr(:call, name, args...) => (name, args, nothing, nothing)
-        Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing)
-        Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing)
+        Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing, nothing)
+        Expr(:tuple, args...) => (nothing, args, nothing, nothing, nothing)
+        Expr(:call, name, Expr(:parameters, kw...), args...) => (name, args, kw, nothing, nothing)
+        Expr(:call, name, args...) => (name, args, nothing, nothing, nothing)
+        Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing, nothing)
+        Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing, nothing)
+        Expr(:(::), call, rettype) => begin
+            name, args, kw, whereparams, _ = split_function_head(call)
+            (name, args, kw, whereparams, rettype)
+        end
         Expr(:where, call, whereparams...) => begin
-            name, args, kw, _ = split_function_head(call)
-            (name, args, kw, whereparams)
+            name, args, kw, _, rettype = split_function_head(call)
+            (name, args, kw, whereparams, rettype)
         end
         _ => anlys_error("function head expr", ex)
     end
@@ -501,8 +505,8 @@ end
 function JLFunction(ex::Expr)
     line, doc, expr = split_doc(ex)
     head, call, body = split_function(expr)
-    name, args, kw, whereparams = split_function_head(call)
-    JLFunction(head, name, args, kw, whereparams, body, line, doc)
+    name, args, kw, whereparams, rettype = split_function_head(call)
+    JLFunction(head, name, args, kw, rettype, whereparams, body, line, doc)
 end
 
 """
