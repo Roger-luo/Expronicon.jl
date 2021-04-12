@@ -1,9 +1,8 @@
 module Expronicon
 
 using MLStyle
-using Markdown
-using DocStringExtensions
 using OrderedCollections
+using ExproniconLite
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
 
@@ -57,12 +56,8 @@ export
     indent_println
 
 
-
-
 include("patches.jl")
 include("types.jl")
-include("transform.jl")
-include("analysis.jl")
 include("codegen.jl")
 include("match.jl")
 include("printing.jl")

@@ -44,6 +44,8 @@ macro syntax_pattern(type, checker)
     return esc(ex)
 end
 
+using ExproniconLite: is_struct_not_kw_struct
+
 @syntax_pattern JLFunction  is_function
 @syntax_pattern JLStruct    is_struct_not_kw_struct
 @syntax_pattern JLKwStruct  is_struct

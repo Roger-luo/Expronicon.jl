@@ -1,5 +1,6 @@
 using MLStyle
 using Expronicon
+using ExproniconLite
 using Documenter
 using ANSIColoredPrinters
 using DocumenterTools: Themes
@@ -7,7 +8,7 @@ using DocumenterTools: Themes
 Themes.compile(joinpath(@__DIR__, "src/assets/main.scss"))
 
 makedocs(;
-    modules=[Expronicon],
+    modules=[Expronicon, ExproniconLite],
     authors="Roger-luo <rogerluo.rl18@gmail.com> and contributors",
     repo="https://github.com/Roger-luo/Expronicon.jl/blob/{commit}{path}#{line}",
     sitename="Expronicon.jl",
