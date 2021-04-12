@@ -25,7 +25,7 @@ JLExpr
 Functions for analysing a given Julia `Expr`, e.g splitting Julia function/struct definitions etc.
 
 ```@autodocs
-Modules = [Expronicon]
+Modules = [ExproniconLite, Expronicon]
 Pages = ["analysis.jl"]
 ```
 
@@ -34,7 +34,7 @@ Pages = ["analysis.jl"]
 Some common transformations for Julia `Expr`, these functions takes an `Expr` and returns an `Expr`.
 
 ```@autodocs
-Modules = [Expronicon]
+Modules = [ExproniconLite, Expronicon]
 Pages = ["transform.jl"]
 ```
 
@@ -43,7 +43,7 @@ Pages = ["transform.jl"]
 Code generators, functions that generates Julia `Expr` from given arguments, `Expronicon` types. 
 
 ```@autodocs
-Modules = [Expronicon]
+Modules = [ExproniconLite, Expronicon]
 Pages = ["codegen.jl"]
 ```
 
