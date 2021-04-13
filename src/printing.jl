@@ -39,6 +39,9 @@ print_expr(ex) = print_expr(stdout, ex)
 print_expr(io::IO, ex) = print_expr(io, ex, PrintState())
 print_expr(io::IO, ex, p::PrintState) = print_expr(io, ex, p, Color())
 
+@deprecate print_ast(ex) print_expr(ex)
+@deprecate print_ast(io, ex) print_expr(io, ex)
+
 const uni_ops = Set{Symbol}([:(+), :(-), :(!), :(¬), :(~), :(<:), :(>:), :(√), :(∛), :(∜)])
 const expr_infix_wide = Set{Symbol}([
     :(=), :(+=), :(-=), :(*=), :(/=), :(\=), :(^=), :(&=), :(|=), :(÷=), :(%=), :(>>>=), :(>>=), :(<<=),
