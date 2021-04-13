@@ -126,6 +126,12 @@ end
 
     ex = :(Foo(; a = 1) = new(a))
     @test JLFunction(ex).kwargs[1] == Expr(:kw, :a, 1)
+
+    @test_expr JLFunction function f(x::T; a=10)::Int where T
+        return x
+    end
+
+    @test_expr JLFunction f(x::Int)::Int = x
 end
 
 @testset "JLStruct(ex)" begin
@@ -287,28 +293,12 @@ end
     end
 end
 
-@testset "codegen_match" begin
-    ex = codegen_match(:x) do
-        quote
-            1 => true
-            2 => false
-            _ => nothing
-        end
-    end
-
-    eval(codegen_ast(JLFunction(;name=:test_match, args=[:x], body=ex)))
-
-    @test test_match(1) == true
-    @test test_match(2) == false
-    @test test_match(3) === nothing
-end
-
 @test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
 
 @testset "JLIfElse" begin
     jl = JLIfElse()
-    jl.map[:(foo(x))] = :(x = 1 + 1)
-    jl.map[:(goo(x))] = :(y = 1 + 2)
+    jl[:(foo(x))] = :(x = 1 + 1)
+    jl[:(goo(x))] = :(y = 1 + 2)
     jl.otherwise = :(error("abc"))
     println(jl)
 
@@ -317,21 +307,6 @@ end
     @test_expr dst.map[:(foo(x))] == :(x = 1 + 1)
     @test_expr dst.map[:(goo(x))] == :(y = 1 + 2)
     @test_expr dst.otherwise == :(error("abc"))
-end
-
-@testset "JLMatch" begin
-    jl = JLMatch(:x)
-    jl.map[1] = true
-    jl.map[2] = :(sin(x))
-    println(jl)
-    ex = codegen_ast(jl)
-    jl = JLFunction(;name=:test_match, args=[:x], body=ex)
-    println(jl)
-    eval(codegen_ast(jl))
-
-    @test test_match(1) == true
-    @test test_match(2) == sin(2)
-    @test test_match(3) === nothing
 end
 
 @testset "JLFor" begin

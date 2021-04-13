@@ -9,3 +9,4 @@ docs/site
 docs/src/assets/main.css
 .vscode
 lcov.info
+build/

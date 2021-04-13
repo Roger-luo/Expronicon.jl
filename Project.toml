@@ -4,17 +4,11 @@ authors = ["Roger-luo <rogerluo.rl18@gmail.com> and contributors"]
 version = "0.5.8"
 
 [deps]
-Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
-ExproniconLite = "55351af7-c7e9-48d6-89ff-24e801d99491"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
-OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 
 [compat]
-Crayons = "4.0"
-ExproniconLite = "0.1"
 MLStyle = "0.4"
-OrderedCollections = "1.4"
 julia = "1"
 
 [extras]

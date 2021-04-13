@@ -1,8 +1,7 @@
 module Expronicon
 
 using MLStyle
-using OrderedCollections
-using ExproniconLite
+using Markdown
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
 
@@ -20,7 +19,8 @@ export
     is_literal, has_kwfn_constructor, has_plain_constructor,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
-    rm_annotations, replace_symbol, subtitute, eval_interp, eval_literal,
+    rm_annotations, rm_single_block, rm_nothing,
+    replace_symbol, subtitute, eval_interp, eval_literal,
     # codegen
     codegen_ast,
     codegen_ast_kwfn,
@@ -49,18 +49,13 @@ export
     # match
     @syntax_pattern,
     # printings
-    with_marks, with_parathesis, with_curly,
-    with_brackets, within_line, within_indent,
-    with_begin_end, indent, no_indent,
-    no_indent_first_line, indent_print,
-    indent_println
+    print_expr, sprint_expr
 
 
 include("patches.jl")
 include("types.jl")
 include("codegen.jl")
-include("match.jl")
 include("printing.jl")
-
+include("match.jl")
 
 end

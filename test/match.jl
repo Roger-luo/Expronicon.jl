@@ -41,7 +41,7 @@ end
 
 @testset "JLIfElse pattern" begin    
     f = @λ begin
-        JLIfElse(;map, otherwise) => (map, otherwise)
+        JLIfElse(;conds, stmts, otherwise) => (conds, stmts, otherwise)
         _ => nothing
     end
     
@@ -50,10 +50,10 @@ end
     else
         nothing
     end
-    d, otherwise = f(ex)
-    @test_expr d[:(x > 1)] == quote
-        x + 1
-    end
+    conds, stmts, otherwise = f(ex)
+    @test conds == Any[:(x > 1)]
+    @test prettify.(stmts) == Any[:(x + 1)]
+
     @test_expr otherwise == quote
         nothing
     end
@@ -92,4 +92,39 @@ end
 
     @test f(GlobalRef(Main, :sin)) == (Main, :sin)
     @test f(:(1 + 1)) === nothing
+end
+
+@testset "codegen_match" begin
+    ex = codegen_match(:x) do
+        quote
+            1 => true
+            2 => false
+            _ => nothing
+        end
+    end
+
+    eval(codegen_ast(JLFunction(;name=:test_match, args=[:x], body=ex)))
+
+    @test test_match(1) == true
+    @test test_match(2) == false
+    @test test_match(3) === nothing
+end
+
+@testset "JLMatch" begin
+    jl = JLMatch(:x)
+    jl[1] = true
+    jl[2] = :(sin(x))
+    jl[3] = quote
+        1 + 2
+        3 + 4
+    end
+    println(jl)
+    ex = codegen_ast(jl)
+    jl = JLFunction(;name=:test_match, args=[:x], body=ex)
+    println(jl)
+    eval(codegen_ast(jl))
+
+    @test test_match(1) == true
+    @test test_match(2) == sin(2)
+    @test test_match("abc") === nothing
 end
