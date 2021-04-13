@@ -32,8 +32,11 @@ end
     include("codegen.jl")
 end
 
-@testset "expand" begin
-    include("expand.jl")
+# this feature is only available for 1.6+
+@static if VERSION > v"1.6-"
+    @testset "expand" begin
+        include("expand.jl")
+    end
 end
 
 doctest(Expronicon)
