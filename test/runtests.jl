@@ -32,4 +32,8 @@ end
     include("codegen.jl")
 end
 
+@testset "expand" begin
+    include("expand.jl")
+end
+
 doctest(Expronicon)
