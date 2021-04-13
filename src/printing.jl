@@ -1,441 +1,403 @@
-const INDENT=4
+tab(n::Int) = " "^n
 
-"julia Expr printing color schema"
-module Color
-using Crayons.Box
-
-kw(x) = LIGHT_MAGENTA_FG(Base.string(x))
-fn(x) = LIGHT_BLUE_FG(Base.string(x))
-line(x) = DARK_GRAY_FG(Base.string(x))
-literal(x) = YELLOW_FG(Base.string(x))
-type(x) = LIGHT_GREEN_FG(Base.string(x))
-string(x::String) = Box.CYAN_FG(x)
-string(x) = Box.CYAN_FG(Base.string(x))
-
+Base.@kwdef struct Color
+    literal::Symbol = :yellow
+    type::Symbol = :light_green
+    string::Symbol = :light_red
+    comment::Symbol = :light_black
+    kw::Symbol = :light_magenta
+    fn::Symbol = :light_blue
 end
 
-no_indent(io::IO) = IOContext(io, :indent=>0)
-no_indent_first_line(io::IO) = IOContext(io, :no_indent_first_line=>true)
-
-# 1.0 compatibility
-function indent_print(io::IO, ::Nothing)
-    indent = get(io, :indent, 0)
-    tab = get(io, :tab, " ")
-    print(io, tab^indent, "nothing")
+Base.@kwdef mutable struct PrintState
+    line_indent::Int = 0
+    content_indent::Int = line_indent
+    color::Symbol = :normal
 end
 
-function indent_print(io::IO, xs...)
-    indent = get(io, :indent, 0)
-    tab = get(io, :tab, " ")
-    Base.print(io, tab^indent, xs...)
-end
-
-function indent_println(io::IO, xs...)
-    if get(io, :no_indent_first_line, false)
-        indent_print(no_indent(io), xs..., "\n")
+function sprint_expr(ex; context=nothing)
+    buf = IOBuffer()
+    if isnothing(context)
+        print_expr(buf, ex)
     else
-        indent_print(io, xs..., "\n")
+        print_expr(IOContext(buf, context), ex)
     end
+    return String(take!(buf))
 end
 
-function within_line(f, io)
-    indent_print(io)
-    f(no_indent(io))
+print_expr(ex) = print_expr(stdout, ex)
+print_expr(io::IO, ex) = print_expr(io, ex, PrintState())
+
+const uni_ops = Set{Symbol}([:(+), :(-), :(!), :(¬), :(~), :(<:), :(>:), :(√), :(∛), :(∜)])
+const expr_infix_wide = Set{Symbol}([
+    :(=), :(+=), :(-=), :(*=), :(/=), :(\=), :(^=), :(&=), :(|=), :(÷=), :(%=), :(>>>=), :(>>=), :(<<=),
+    :(.=), :(.+=), :(.-=), :(.*=), :(./=), :(.\=), :(.^=), :(.&=), :(.|=), :(.÷=), :(.%=), :(.>>>=), :(.>>=), :(.<<=),
+    :(&&), :(||), :(<:), :($=), :(⊻=), :(>:), :(-->)])
+
+Base.show(io::IO, def::JLExpr) = print_expr(io, def)
+
+function print_expr(io::IO, ex::JLExpr, ps::PrintState, theme::Color=Color())
+    print_expr(io, codegen_ast(ex), ps, theme)
 end
 
-function within_indent(f, io)
-    f(indent(io))
-end
-
-function indent(io)
-    IOContext(io, :indent => get(io, :indent, 0) + INDENT)
-end
-
-"""
-    with_marks(f, io, lhs, rhs)
-
-Print using `f` with marks specified on LHS and RHS by `lhs` and `rhs`.
-See also [`with_parathesis`](@ref), [`with_curly`](@ref), [`with_brackets`](@ref),
-[`with_begin_end`](@ref).
-"""
-function with_marks(f, io::IO, lhs, rhs)
-    indent_print(io, lhs)
-    f()
-    indent_print(io, rhs)
-end
-
-"""
-    with_parathesis(f, io::IO)
-
-Print with parathesis. See also [`with_marks`](@ref),
-[`with_curly`](@ref), [`with_brackets`](@ref),
-[`with_begin_end`](@ref).
-
-# Example
-
-```julia
-julia> with_parathesis(stdout) do
-        print(1, ", ", 2)
-    end
-(1, 2)
-```
-"""
-with_parathesis(f, io::IO) = with_marks(f, io, "(", ")")
-
-"""
-    with_curly(f, io::IO)
-
-Print with curly parathesis. See also [`with_marks`](@ref), [`with_parathesis`](@ref),
-[`with_brackets`](@ref), [`with_begin_end`](@ref).
-"""
-with_curly(f, io::IO) = with_marks(f, io, "{", "}")
-
-"""
-    with_brackets(f, io::IO)
-
-Print with brackets. See also [`with_marks`](@ref), [`with_parathesis`](@ref),
-[`with_curly`](@ref), [`with_begin_end`](@ref).
-"""
-with_brackets(f, io::IO) = with_marks(f, io, "[", "]")
-
-"""
-    with_triple_quotes(f, io::IO)
-
-Print with triple quotes.
-"""
-with_triple_quotes(f, io::IO) = with_marks(f, io, Color.string("\"\"\"\n"), Color.string("\"\"\""))
-
-"""
-    with_double_quotes(f, io::IO)
-
-Print with double quotes.
-"""
-with_double_quotes(f, io::IO) = with_marks(f, io, Color.string("\""), Color.string("\""))
-
-"""
-    with_begin_end(f, io::IO)
-
-Print with begin ... end. See also [`with_marks`](@ref), [`with_parathesis`](@ref),
-[`with_curly`](@ref), [`with_brackets`](@ref).
-"""
-with_begin_end(f, io::IO) = with_marks(f, io, "begin", "end")
-
-"""
-    print_collection(io, xs; delim=",")
-
-Print a collection `xs` with deliminator `delim`, default is `","`.
-"""
-function print_collection(io, xs; delim=", ")
-    for i in 1:length(xs)
-        print_ast(io, xs[i])
-        if i !== length(xs)
-            indent_print(io, delim)
-        end
-    end
-end
-
-"""
-    print_ast(io::IO, xs...)
-
-Print Julia AST. This is a custom implementation of
-`Base.show(io, ::Expr)`.
-"""
-function print_ast(io::IO, xs...)
-    foreach(xs) do x
-        print_ast(io, x)
-    end
-end
-
-
-
-function print_ast(io::IO, ex)
-    tab = get(io, :tab, " ")
-    first_line_io = get(io, :no_indent_first_line, false) ? no_indent(io) : io
-    @match ex begin
-        ::Union{Number} => indent_print(first_line_io, Color.literal(ex))
-        ::String => indent_print(first_line_io, Color.string(repr(ex)))
-        ::Symbol => indent_print(first_line_io, ex)
-
-        Expr(:tuple, xs...) => begin
-            with_parathesis(io) do 
-                print_collection(no_indent(io), xs)
+function print_expr(io::IO, ex, ps::PrintState, theme::Color=Color())
+    @switch ex begin
+        @case Expr(:block, line::LineNumberNode, stmt)
+            print_expr(io, stmt, ps, theme)
+            print(io, tab(2))
+            print_expr(io, line, ps, theme)
+        @case Expr(:block, stmt1, line::LineNumberNode, stmt2)
+            printstyled(io, "("; color=ps.color)
+            print_expr(io, stmt1, ps, theme)
+            printstyled(io, "; "; color=ps.color)
+            print_expr(io, stmt2)
+            printstyled(io, ")"; color=ps.color)
+        @case Expr(:block, stmts...)
+            print_kw(io, "begin", ps, theme)
+            println(io, ps)
+            print_stmts_list(io, stmts, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:let, vars, body)
+            print_kw(io, "let", ps, theme)
+            if !isempty(vars.args)
+                print(io, tab(1))
+                print_collection(io, vars.args, ps, theme)
             end
-        end
-
-        Expr(:(::), name, type) => begin
-            within_line(io) do io
-                print_ast(io, name)
-                indent_print(io, "::")
-                print_ast(io, Color.type(type))
-            end
-        end
-
-        Expr(:kw, name, value) => begin
-            within_line(io) do io
-                print_ast(io, name)
-                indent_print(io, tab, "=", tab)
-                print_ast(io, value)
-            end
-        end
-
-        Expr(:(=), l, r) => begin
-            print_ast(io, l)
-            print(io, tab, Color.kw("="), tab)
-            print_ast(no_indent_first_line(io), r)
-        end
-
-        Expr(:call, name, args...) => begin
-            if !get(io, :no_indent_first_line, false)
-                indent_print(io)
-            end
-            if name in [:+, :-, :*, :/, :\, :(===), :(==), :(:)]
-                print_collection(no_indent(io), args; delim=Color.fn(string(tab, name, tab)))
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:if, cond, body, otherwise...) || Expr(:elseif, cond, body, otherwise...)
+            printstyled(io, ex.head, tab(1); color=theme.kw)
+            print_expr(io, cond, ps, theme)
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            if isempty(otherwise)
+                print_end(io, ps, theme)
             else
-                indent_print(no_indent(io), Color.fn(name))
-                with_parathesis(no_indent(io)) do
-                    print_collection(no_indent(io), args)
-                end    
-            end
-        end
-
-        Expr(:block, stmts...) => begin
-            indent_println(io, Color.kw("begin"))
-            io = IOContext(io, :no_indent_first_line=>false)
-            within_indent(io) do io
-                for i in 1:length(stmts)
-                    print_ast(io, stmts[i])
-                    indent_println(io)
-                end
-            end
-            indent_print(io, Color.kw("end"))
-        end
-
-        Expr(:let, vars, body) => begin
-            if get(io, :no_indent_first_line, false)
-                print(io, Color.kw("let"))
-            else
-                indent_print(io, Color.kw("let"))
-            end
-
-            isempty(vars.args) || print_collection(no_indent(io), vars.args)
-            println(io)
-            io = IOContext(io, :no_indent_first_line=>false)
-            within_indent(io) do io
-                if body isa Expr && body.head === :block
-                    stmts = body.args
-                    for i in 1:length(stmts)
-                        print_ast(io, stmts[i])
-                        indent_println(io)
-                    end
+                otherwise = otherwise[1]
+                if Meta.isexpr(otherwise, :elseif)
+                    print_expr(io, otherwise, ps, theme)
                 else
-                    print_ast(io, body)
-                    println(io)
+                    print_kw(io, "else", ps, theme)
+                    println(io, ps)
+                    print_stmts(io, otherwise, ps, theme)
+                    print_end(io, ps, theme)
                 end
             end
-            indent_print(io, Color.kw("end"))
-        end
-
-        Expr(:return, xs...) => begin
-            within_line(io) do io
-                print_ast(io, Color.kw("return"))
-                indent_print(io, tab)
-                print_ast(io, xs...)
+        @case Expr(:for, head, body)
+            within_line(io, ps) do
+                print_kw(io, "for ", ps, theme)
+                if Meta.isexpr(head, :block)
+                    print_collection(io, head.args, ps, theme)
+                else
+                    print_expr(io, head, ps, theme)
+                end
             end
-        end
-
-        Expr(:if, xs...) => begin
-            print_ast(io, JLIfElse(ex))
-        end
-
-        ::LineNumberNode => indent_print(io, Color.line(ex))
-        # fallback to default printing
-        _ => begin
-            if get(io, :no_indent_first_line, false)
-                print(io, ex)
-            else
-                indent_print(io, ex)
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:function, call, body)
+            within_line(io, ps) do
+                print_kw(io, "function ", ps, theme)
+                print_expr(io, call, ps, theme)
             end
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:macrocall, GlobalRef(Core, Symbol("@doc")), line, doc, code)
+            print_expr(io, line, ps, theme)
+            println(io, ps)
+            print(io, tab(ps.line_indent))
+            printstyled(io, "\"\"\""; color=theme.string)
+            println(io, ps)
+            lines = split(doc, '\n')
+            for (i, line) in enumerate(lines)
+                print(io, tab(ps.line_indent))
+                printstyled(io, line; color=theme.string)
+                if i != length(lines)
+                    println(io, ps)
+                end
+            end
+            print(io, tab(ps.line_indent))
+            printstyled(io, "\"\"\""; color=theme.string)
+            println(io, ps)
+            print_expr(io, code, ps, theme)
+        @case Expr(:macrocall, name, line, xs...)
+            print_expr(io, line, ps, theme)
+            println(io, ps)
+            within_line(io, ps) do
+                with_color(theme.fn, ps) do
+                    print_expr(io, name, ps, theme)
+                end
+                print(io, tab(1))
+                print_collection(io, xs, ps, theme; delim=tab(1))
+            end
+        @case Expr(:struct, ismutable, head, body)
+            within_line(io, ps) do
+                if ismutable
+                    printstyled(io, "mutable "; color=theme.kw)
+                end
+                printstyled(io, "struct "; color=theme.kw)
+                print_expr(io, head, ps, theme)
+            end
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:try, try_body, catch_var, catch_body)
+            print_try(io, try_body, ps, theme)
+            print_catch(io, catch_var, catch_body, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:try, try_body, false, false, finally_body)
+            print_try(io, try_body, ps, theme)
+            print_finally(io, finally_body, ps, theme)
+            print_end(io, ps, theme)
+        @case Expr(:try, try_body, catch_var, catch_body, finally_body)
+            print_try(io, try_body, ps, theme)
+            print_catch(io, catch_var, catch_body, ps, theme)
+            print_finally(io, finally_body, ps, theme)
+            print_end(io, ps, theme)
+        @case _
+            print_within_line(io, ex, ps, theme)
+    end
+end
+
+function print_kw(io::IO, x, ps, theme::Color)
+    print(io, tab(ps.line_indent))
+    printstyled(io, x; color=theme.kw)
+end
+
+print_end(io::IO, ps, theme) = print_kw(io, "end", ps, theme)
+
+function Base.println(io::IO, ps::PrintState)
+    ps.line_indent = ps.content_indent
+    println(io)
+end
+
+function print_stmts(io, body, ps::PrintState, theme::Color)
+    if body isa Expr && body.head === :block
+        print_stmts_list(io, body.args, ps, theme)
+    else
+        print_expr(io, body, ps, theme)
+    end
+end
+
+function print_try(io, try_body, ps, theme)
+    print_kw(io, "try", ps, theme)
+    println(io, ps)
+    print_stmts(io, try_body, ps, theme)
+end
+
+function print_catch(io, catch_var, catch_body, ps, theme)
+    print_kw(io, "catch ", ps, theme)
+    print_expr(io, catch_var, ps, theme)
+    println(io, ps)
+    print_stmts(io, catch_body, ps, theme)
+end
+
+function print_finally(io, finally_body, ps, theme)
+    print_kw(io, "finally", ps, theme)
+    println(io, ps)
+    print_stmts(io, finally_body, ps, theme)
+end
+
+function print_stmts_list(io, stmts, ps::PrintState, theme::Color)
+    ps.line_indent += 4
+    ps.content_indent = ps.line_indent
+    for stmt in stmts
+        print_expr(io, stmt, ps, theme)
+        println(io, ps)
+    end
+    ps.line_indent -= 4
+    ps.content_indent = ps.line_indent
+    return
+end
+
+function print_collection(io, xs, ps::PrintState, theme=Color(); delim=", ")
+    for i in 1:length(xs)
+        print_expr(io, xs[i], ps, theme)
+        if i !== length(xs)
+            print(io, delim)
         end
     end
 end
 
-function print_ast(io::IO, def::JLFor)
-    def.kernel === nothing && return
-    tab = get(io, :tab, " ")
-    indent_print(io, Color.kw("for"), tab)
-
-    within_indent(io) do io
-        for i in 1:length(def.vars)
-            print_ast(i==1 ? no_indent(io) : io, def.vars[i])
-            print(io, tab, Color.kw("in"), tab)
-            print_ast(no_indent(io), def.iterators[i])
-            i < length(def.vars) && print(io, ",")
-            println(io)
-        end
-        indent_println(io, Color.line("#= loop body =#"))
-        print_ast(io, def.kernel)
-        println(io)
+function with_color(f, name::Symbol, ps::PrintState)
+    color = ps.color
+    if color === :normal
+        ps.color = name
     end
-
-    indent_print(io, Color.kw("end"))
+    ret = f()
+    ps.color = color
+    return ret
 end
 
-function print_ast(io::IO, def::JLIfElse)
-    isempty(def.map) && return print_ast(io, def.otherwise)
-    tab = get(io, :tab, " ")
-    indent_print(io, Color.kw("if"), tab)
-    for (k, (cond, action)) in enumerate(def.map)
-        print_ast(no_indent(io), cond)
-        indent_println(io)
-        print_ast(indent(io), action)
-        indent_println(io)
-
-        if k !== length(def.map)
-            indent_print(io, Color.kw("elseif"), tab)
-        end
-    end
-    if def.otherwise !== nothing
-        indent_print(io, Color.kw("else"), "\n")
-        print_ast(indent(io), def.otherwise)
-        indent_println(io)
-    end
-    indent_print(io, Color.kw("end"))
+function within_line(f, io, ps)
+    indent = ps.line_indent
+    print(io, tab(indent))
+    ps.line_indent = 0
+    ret = f()
+    ps.line_indent = indent
+    return ret
 end
 
-function print_ast(io::IO, def::JLFunction)
-    tab = get(io, :tab, " ")
-    within_line(io) do io
-        def.head === :function && indent_print(io, Color.kw("function"), tab)
-        # print calls
-        def.name === nothing || indent_print(io, Color.fn(def.name))
-        with_parathesis(io) do
-            print_collection(io, def.args)
-            if def.kwargs !== nothing
-                indent_print(io, "; ")
-                print_collection(io, def.kwargs)
-            end
-        end
-
-        if def.rettype !== nothing
-            print(io, "::", Color.type(def.rettype))
-        end
-
-        if def.whereparams !== nothing
-            indent_print(io, tab, Color.kw("where"), tab)
-            with_curly(io) do
-                print_collection(io, def.whereparams)    
-            end
-        end
-
-        def.head === :(=) && indent_print(io, tab, "=", tab)
-        def.head === :(->) && indent_print(io, tab, "->", tab)
-    end
-
-    # print body
-    if def.head === :function
-        println(io)
-        within_indent(io) do io
-            @match def.body begin
-                Expr(:block, stmts...) => begin
-                    for i in 1:length(stmts)
-                        print_ast(io, stmts[i])
-                        indent_println(io)
+function print_within_line(io::IO, ex, ps::PrintState, theme::Color=Color())
+    within_line(io, ps) do
+        @switch ex begin
+            @case ::Number
+                printstyled(io, ex; color=theme.literal)
+            @case ::String
+                printstyled(io, "\"", ex, "\""; color=theme.string)
+            @case ::Symbol
+                printstyled(io, ex; color=ps.color)
+            @case ::Nothing
+                printstyled(io, "nothing"; color=:blue)
+            @case ::QuoteNode
+                if Base.isidentifier(ex.value)
+                    print(io, ":", ex.value)
+                else
+                    print(io, ":(", ex.value, ")")
+                end
+            @case ::GlobalRef
+                printstyled(io, ex.mod, "."; color=ps.color)
+                print_expr(io, ex.name, ps, theme)
+            @case ::LineNumberNode
+                printstyled(io, ex; color=theme.comment)
+            @case Expr(:tuple, Expr(:parameters, kwargs...), args...)
+                printstyled(io, "("; color=ps.color)
+                print_collection(io, args, ps, theme)
+                if !isempty(kwargs)
+                    printstyled(io, "; "; color=ps.color)
+                    print_collection(io, kwargs, ps)
+                end
+                printstyled(io, ")"; color=ps.color)
+            @case Expr(:tuple, xs...)
+                printstyled(io, "("; color=ps.color)
+                print_collection(io, xs, ps)
+                printstyled(io, ")"; color=ps.color)
+            @case Expr(:(::), type)
+                printstyled(io, "::"; color=ps.color)
+                with_color(theme.type, ps) do
+                    print_expr(io, type, ps, theme)
+                end
+            @case Expr(:(::), name, type)
+                print_expr(io, name, ps, theme)
+                printstyled(io, "::"; color=ps.color)
+                with_color(theme.type, ps) do
+                    print_expr(io, type, ps, theme)
+                end
+            @case Expr(:(<:), name, type)
+                print_expr(io, name, ps, theme)
+                printstyled(io, " <: "; color=ps.color)
+                with_color(theme.type, ps) do
+                    print_expr(io, type, ps, theme)
+                end
+            @case Expr(:kw, name, value) || Expr(:(=), name, value)
+                print_expr(io, name, ps, theme)
+                printstyled(io, tab(1), "=", tab(1); color=ps.color)
+                print_expr(io, value, ps, theme)
+            @case Expr(:..., name)
+                print_expr(io, name, ps, theme)
+                print(io, "...")
+            @case Expr(:&, name)
+                printstyled(io, "&"; color=theme.kw)
+                print_expr(io, name, ps, theme)
+            @case Expr(:$, name)
+                printstyled(io, "\$"; color=theme.kw)
+                print(io, "(")
+                print_expr(io, name, ps, theme)
+                print(io, ")")
+            @case Expr(:curly, name, vars...)
+                print_expr(io, name, ps, theme)
+                print(io, "{")
+                with_color(theme.type, ps) do
+                    print_collection(io, vars, ps, theme)
+                end
+                print(io, "}")
+            @case Expr(:ref, name, xs...)
+                print_expr(io, name, ps, theme)
+                print(io, "[")
+                print_collection(io, xs, ps, theme)
+                print(io, "]")
+            @case Expr(:where, body, whereparams...)
+                print_expr(io, body, ps, theme)
+                printstyled(io, tab(1), "where", tab(1); color=theme.kw)
+                print(io, "{")
+                print_collection(io, whereparams, ps, theme)
+                print(io, "}")
+            @case Expr(:call, name, Expr(:parameters, kwargs...), args...)
+                print_expr(io, name, ps, theme)
+                printstyled(io, "("; color=ps.color)
+                print_collection(io, args, ps)
+                if !isempty(kwargs)
+                    printstyled(io, "; "; color=ps.color)
+                    print_collection(io, kwargs, ps)
+                end
+                printstyled(io, ")"; color=ps.color)
+            @case Expr(:call, :(:), xs...)
+                print_collection(io, xs, ps, theme; delim=":")
+            @case Expr(:call, name::Symbol, x)
+                if name in uni_ops
+                    print_expr(io, name, ps, theme)
+                    print_expr(io, x, ps, theme)
+                else
+                    print_call_expr(io, name, [x], ps, theme)
+                end
+            @case Expr(:call, name, lhs, rhs)
+                func_prec = Base.operator_precedence(name_only(name))
+                if func_prec > 0
+                    print_expr(io, lhs, ps, theme)
+                    print(io, tab(1))
+                    print_expr(io, name, ps, theme)
+                    print(io, tab(1))
+                    print_expr(io, rhs, ps, theme)
+                else
+                    print_call_expr(io, name, [lhs, rhs], ps, theme)
+                end
+            @case Expr(:call, name, args...)
+                print_call_expr(io, name, args, ps, theme)
+            @case Expr(:(->), call, body)
+                print_expr(io, call, ps, theme)
+                printstyled(io, tab(1), "->", tab(1); color=theme.kw)
+                print_expr(io, body, ps, theme)
+            @case Expr(:return, x)
+                printstyled(io, "return", tab(1); color=theme.kw)
+                @match x begin
+                    Expr(:tuple, xs...) => print_collection(io, xs, ps)
+                    _ => print_expr(io, x, ps, theme)
+                end
+            @case Expr(:string, xs...)
+                printstyled(io, "\""; color=theme.string)
+                for x in xs
+                    if x isa String
+                        printstyled(io, x, ; color=theme.string)
+                    else
+                        printstyled(io, "\$"; color=theme.literal)
+                        with_color(theme.literal, ps) do
+                            print_expr(io, x, ps, theme)
+                        end
                     end
                 end
-
-                _ => begin
-                    print_ast(io, def.body)
-                    println(io)
+                printstyled(io, "\""; color=theme.string)
+            @case Expr(head, lhs, rhs)
+                if head in expr_infix_wide
+                    print_expr(io, lhs, ps, theme)
+                    printstyled(io, tab(1), head, tab(1); color=theme.kw)
+                    print_expr(io, rhs, ps, theme)
+                else
+                    Base.show_unquoted_quote_expr(IOContext(io, :unquote_fallback => true), ex, ps.line_indent, -1, 0)
                 end
-            end
+            @case ::Base.ExprNode
+                Base.show_unquoted_quote_expr(IOContext(io, :unquote_fallback => true), ex, ps.line_indent, -1, 0)
+            @case _
+                print(io, ex)
         end
-        indent_print(io, Color.kw("end"))
-    else
-        print_ast(no_indent_first_line(io), def.body)
     end
+    return
 end
 
-function print_ast(io::IO, def::JLStruct)
-    print_ast_struct(io, def)
+function print_call_expr(io::IO, name, args, ps, theme)
+    print_expr(io, name, ps, theme)
+    printstyled(io, "("; color=ps.color)
+    print_collection(io, args, ps, theme)
+    printstyled(io, ")"; color=ps.color)
 end
-
-function print_ast(io::IO, def::JLKwStruct)
-    print_ast_struct(io, def)
-end
-
-function print_ast(io::IO, def::JLField)
-    print_ast_struct_field(io, def)
-end
-
-function print_ast(io::IO, def::JLKwField)
-    print_ast_struct_field(io, def)
-    def.default === no_default || indent_print(no_indent(io), " = ", def.default)
-end
-
-function print_ast_doc(io::IO, def)
-    def.doc === nothing && return
-    doc = def.doc
-    with_triple_quotes(io) do
-        indent_print(io, Color.string(doc))
-    end
-    indent_println(io)
-end
-
-function print_ast_struct(io::IO, def)
-    def.line === nothing || indent_println(io, Color.line(def.line))
-    print_ast_doc(io, def)
-    print_ast_struct_head(io, def)
-    for each in def.fields
-        indent_println(no_indent(io))
-        print_ast(indent(io), each)
-    end
-    indent_println(no_indent(io))
-
-    for each in def.constructors
-        print_ast(indent(io), each)
-        indent_println(io)
-    end
-
-    indent_print(io, Color.kw("end"))
-end
-
-function print_ast_struct_field(io::IO, def)
-    def.line === nothing || indent_println(io, Color.line(def.line))
-    if def.doc !== nothing
-        indent_print(io)
-        with_double_quotes(no_indent(io)) do
-            indent_print(no_indent(io), Color.string(def.doc))
-        end
-        indent_println(io)
-    end
-    indent_print(io, def.name)
-    def.type === Any || indent_print(no_indent(io), "::", Color.type(def.type))
-end
-
-function print_ast_struct_head(io::IO, def)
-    tab = get(io, :tab, " ")
-    # make sure there is only one indent in the same line 
-    printed_indent = false
-    if def isa JLKwStruct
-        indent_print(io, Color.line("#= kw =#"), tab)
-        printed_indent = true
-    end
-
-    if def.ismutable
-        indent_print(printed_indent ? no_indent(io) : io, Color.kw("mutable"), tab)
-    end
-
-    indent_print(printed_indent ? no_indent(io) : io, Color.kw("struct"))
-    indent_print(io, tab, def.name)
-
-    isempty(def.typevars) || with_curly(no_indent(io)) do
-        print_collection(no_indent(io), def.typevars)
-    end
-
-    if def.supertype !== nothing
-        indent_print(no_indent(io), tab, "<:", tab, Color.type(def.supertype))
-    end
-end
-
-print_ast(::IO, def::JLExpr) = error("Printings.print_ast is not defined for $(typeof(def))")
-Base.show(io::IO, def::JLExpr) = print_ast(io, def)

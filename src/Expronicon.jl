@@ -50,11 +50,7 @@ export
     # match
     @syntax_pattern,
     # printings
-    with_marks, with_parathesis, with_curly,
-    with_brackets, within_line, within_indent,
-    with_begin_end, indent, no_indent,
-    no_indent_first_line, indent_print,
-    indent_println, print_expr, PrintState
+    print_expr, sprint_expr
 
 
 
@@ -65,7 +61,6 @@ include("transform.jl")
 include("analysis.jl")
 include("codegen.jl")
 include("match.jl")
-# include("printing.jl")
-include("printing2.jl")
+include("printing.jl")
 
 end
