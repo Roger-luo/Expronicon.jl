@@ -1,7 +1,6 @@
 module Expronicon
 
 using MLStyle
-using Markdown
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
 
