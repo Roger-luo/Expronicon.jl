@@ -12,6 +12,10 @@ using Test
     end
 end
 
+@testset "printings" begin
+    include("printing.jl")
+end
+
 @testset "analysis" begin
     include("analysis.jl")
 end
