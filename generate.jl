@@ -22,24 +22,9 @@ function replace_include(m::Module, ex)
             @static if !isdefined(@__MODULE__(), :include_generated)
                 function include_generated(m::Module, path::String)
                     raw = read(path, String)
-                    ex = Meta.parse("quote $raw end")
-                    ex = m.eval(ex)
-                    eval_generated(m, ex)
+                    ex = Base.include_string(m, "quote $raw end", path)
+                    m.eval(m.eval(ex))
                     return
-                end
-
-                function eval_generated(m, ex)
-                    if ex isa Expr
-                        if ex.head === :block
-                            map(x->eval_generated(m, x), ex.args)
-                        else
-                            m.eval(ex)
-                        end
-                        return
-                    else
-                        m.eval(ex)
-                        return
-                    end
                 end
             end
             include_generated(@__MODULE__(), joinpath(@__DIR__, $path))

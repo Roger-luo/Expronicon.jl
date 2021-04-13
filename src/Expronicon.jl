@@ -19,7 +19,8 @@ export
     is_literal, has_kwfn_constructor, has_plain_constructor,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
-    rm_annotations, replace_symbol, subtitute, eval_interp, eval_literal,
+    rm_annotations, rm_single_block, rm_nothing,
+    replace_symbol, subtitute, eval_interp, eval_literal,
     # codegen
     codegen_ast,
     codegen_ast_kwfn,

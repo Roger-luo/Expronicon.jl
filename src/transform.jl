@@ -170,6 +170,9 @@ end
 
 function rm_single_block(ex)
     @match ex begin
+        Expr(:(=), _...) || Expr(:(->), _...) => ex
+        Expr(:block, Expr(:quote, xs...)) => ex
+        Expr(:quote, xs...) => ex
         Expr(:block, stmt) => stmt
         Expr(head, args...) => Expr(head, map(rm_single_block, args)...)
         _ => ex
