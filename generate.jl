@@ -27,7 +27,7 @@ function replace_include(m::Module, ex)
                     eval_generated(m, ex)
                     return
                 end
-                
+
                 function eval_generated(m, ex)
                     if ex isa Expr
                         if ex.head === :block
