@@ -75,7 +75,8 @@ julia> codegen_ast(jl)
 """
 struct JLMatch <: JLExpr
     item::Any
-    map::OrderedDict{Any, Any}
+    patterns::Vector{Any}
+    actions::Vector{Any}
     fallthrough::Any
     mod::Module
     line::LineNumberNode
@@ -87,7 +88,7 @@ end
 Generate an empty `JLMatch` object with given item expression.
 `item` can be a `Symbol` or an `Expr`.
 """
-JLMatch(item) = JLMatch(item, OrderedDict(), nothing, Main, LineNumberNode(0))
+JLMatch(item) = JLMatch(item, [], [], nothing, Main, LineNumberNode(0))
 
 """
     JLMatch(;kw...)
@@ -102,14 +103,42 @@ Create a `JLMatch` object from keyword arguments.
 - `mod`: module to evaluate the expression.
 - `line`: line number `LineNumberNode`.
 """
-JLMatch(;item, map=OrderedDict(), fallthrough=nothing, mod=Main, line=LineNumberNode(0)) =
-    JLMatch(item, map, fallthrough, mod, line)
+JLMatch(;item, patterns=[], actions=[], fallthrough=nothing, mod=Main, line=LineNumberNode(0)) =
+    JLMatch(item, patterns, actions, fallthrough, mod, line)
 
+Base.length(jl::JLMatch) = length(jl.patterns)
+
+function Base.getindex(jl::JLMatch, pattern)
+    idx = findfirst(jl.patterns) do p
+        compare_expr(p, pattern)
+    end
+    idx === nothing && error("cannot find pattern: $pattern")
+    return jl.actions[idx]
+end
+
+function Base.setindex!(jl::JLMatch, action, pattern)
+    idx = findfirst(jl.patterns) do p
+        compare_expr(p, pattern)
+    end
+
+    if idx === nothing
+        push!(jl.patterns, pattern)
+        push!(jl.actions, action)
+    else
+        jl.actions[idx] = action
+    end
+    return action
+end
+
+function Base.iterate(jl::JLMatch, st=1)
+    st > length(jl) && return
+    return jl.patterns[st] => jl.actions[st], st + 1
+end
 
 function codegen_ast(def::JLMatch)
-    isempty(def.map) && return def.fallthrough
+    isempty(def.patterns) && return def.fallthrough
     body = Expr(:block)
-    for (pattern, code) in def.map
+    for (pattern, code) in def
         push!(body.args, :($pattern => $code))
     end
     push!(body.args, :(_ => $(def.fallthrough)))
@@ -117,30 +146,37 @@ function codegen_ast(def::JLMatch)
 end
 
 
-function print_ast(io::IO, def::JLMatch)
-    print_ast(io, def.line)
+function print_expr(io::IO, def::JLMatch, ps::PrintState, theme::Color)
+    print_expr(io, def.line, ps, theme)
     println(io)
-    isempty(def.map) && return print_ast(io, def.fallthrough)
-    tab = get(io, :tab, " ")
-    indent_println(io, Color.kw("@match"), tab, def.item, tab, Color.kw("begin"))
-    within_indent(io) do io
-        for (k, (pattern, action)) in enumerate(def.map)
-            within_line(io) do io
-                print_ast(io, pattern)
-                print(io, tab, Color.kw("=>"), tab)
-                print_ast(io, action)
-            end
-            println(io)
-        end
+    isempty(def.patterns) && return print_expr(io, def.fallthrough, ps, theme)
 
-        # match must have fallthrough
-        indent_print(io, "_")
-        print(io, tab, Color.kw("=>"), tab)
-        print_ast(io, def.fallthrough)
+    within_line(io, ps) do
+        print_kw(io, "@match ", ps, theme)
+        print_expr(io, def.item, ps, theme)
+        print_kw(io, " begin ", ps, theme)
     end
-    println(io)
-    indent_print(io, Color.kw("end"))
+    println(io, ps)
+    within_indent(ps) do
+        for (k, (pattern, action)) in enumerate(def)
+            within_line(io, ps) do
+                print_expr(io, pattern, ps, theme)
+                print_kw(io, " => ", ps, theme)
+                print_expr(io, action, ps, theme)
+            end
+            println(io, ps)
+        end
+        within_line(io, ps) do
+            print(io, "_")
+            print_kw(io, " => ", ps, theme)
+            print_expr(io, def.fallthrough, ps, theme)
+        end
+    end
+    println(io, ps)
+    print_end(io, ps, theme)
 end
+
+
 
 """
     @syntax_pattern <syntax type> <syntax checker>

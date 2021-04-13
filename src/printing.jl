@@ -27,6 +27,7 @@ end
 
 print_expr(ex) = print_expr(stdout, ex)
 print_expr(io::IO, ex) = print_expr(io, ex, PrintState())
+print_expr(io::IO, ex, p::PrintState) = print_expr(io, ex, p, Color())
 
 const uni_ops = Set{Symbol}([:(+), :(-), :(!), :(¬), :(~), :(<:), :(>:), :(√), :(∛), :(∜)])
 const expr_infix_wide = Set{Symbol}([
@@ -36,11 +37,11 @@ const expr_infix_wide = Set{Symbol}([
 
 Base.show(io::IO, def::JLExpr) = print_expr(io, def)
 
-function print_expr(io::IO, ex::JLExpr, ps::PrintState, theme::Color=Color())
+function print_expr(io::IO, ex::JLExpr, ps::PrintState, theme::Color)
     print_expr(io, codegen_ast(ex), ps, theme)
 end
 
-function print_expr(io::IO, ex, ps::PrintState, theme::Color=Color())
+function print_expr(io::IO, ex, ps::PrintState, theme::Color)
     @switch ex begin
         @case Expr(:block, line::LineNumberNode, stmt)
             print_expr(io, stmt, ps, theme)
@@ -177,7 +178,10 @@ function print_stmts(io, body, ps::PrintState, theme::Color)
     if body isa Expr && body.head === :block
         print_stmts_list(io, body.args, ps, theme)
     else
-        print_expr(io, body, ps, theme)
+        within_indent(ps) do
+            print_expr(io, body, ps, theme)
+            println(io, ps)
+        end
     end
 end
 
@@ -201,14 +205,12 @@ function print_finally(io, finally_body, ps, theme)
 end
 
 function print_stmts_list(io, stmts, ps::PrintState, theme::Color)
-    ps.line_indent += 4
-    ps.content_indent = ps.line_indent
-    for stmt in stmts
-        print_expr(io, stmt, ps, theme)
-        println(io, ps)
+    within_indent(ps) do
+        for stmt in stmts
+            print_expr(io, stmt, ps, theme)
+            println(io, ps)
+        end
     end
-    ps.line_indent -= 4
-    ps.content_indent = ps.line_indent
     return
 end
 
@@ -237,6 +239,15 @@ function within_line(f, io, ps)
     ps.line_indent = 0
     ret = f()
     ps.line_indent = indent
+    return ret
+end
+
+function within_indent(f, ps)
+    ps.line_indent += 4
+    ps.content_indent = ps.line_indent
+    ret = f()
+    ps.line_indent -= 4
+    ps.content_indent = ps.line_indent
     return ret
 end
 

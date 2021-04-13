@@ -116,6 +116,7 @@ function prettify(ex)
     ex = rm_lineinfo(ex)
     ex = flatten_blocks(ex)
     ex = rm_nothing(ex)
+    ex = rm_single_block(ex)
     return ex
 end
 
@@ -163,6 +164,14 @@ function rm_nothing(ex)
     @match ex begin
         Expr(:block, args...) => Expr(:block, filter(x->x!==nothing, args)...)
         Expr(head, args...) => Expr(head, map(rm_nothing, args)...)
+        _ => ex
+    end
+end
+
+function rm_single_block(ex)
+    @match ex begin
+        Expr(:block, stmt) => stmt
+        Expr(head, args...) => Expr(head, map(rm_single_block, args)...)
         _ => ex
     end
 end

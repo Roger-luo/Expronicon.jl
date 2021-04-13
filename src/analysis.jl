@@ -426,16 +426,18 @@ function split_struct(ex::Expr)
 end
 
 function split_ifelse(ex::Expr)
-    dmap = OrderedDict()
-    otherwise = split_ifelse!(dmap, ex)
-    return dmap, otherwise
+    conds, stmts = [], []
+    otherwise = split_ifelse!((conds, stmts), ex)
+    return conds, stmts, otherwise
 end
 
-function split_ifelse!(d::AbstractDict, ex::Expr)
+function split_ifelse!((conds, stmts), ex::Expr)
     ex.head in [:if, :elseif] || return ex
-    d[ex.args[1]] = ex.args[2]
+    push!(conds, ex.args[1])
+    push!(stmts, ex.args[2])
+
     if length(ex.args) == 3
-        return split_ifelse!(d, ex.args[3])
+        return split_ifelse!((conds, stmts), ex.args[3])
     end
     return
 end
@@ -659,8 +661,8 @@ end
 """
 function JLIfElse(ex::Expr)
     ex.head === :if || error("expect an if ... elseif ... else ... end expression")
-    d, otherwise = split_ifelse(ex)
-    return JLIfElse(d, otherwise)
+    conds, stmts, otherwise = split_ifelse(ex)
+    return JLIfElse(conds, stmts, otherwise)
 end
 
 """

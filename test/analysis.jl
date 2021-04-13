@@ -297,8 +297,8 @@ end
 
 @testset "JLIfElse" begin
     jl = JLIfElse()
-    jl.map[:(foo(x))] = :(x = 1 + 1)
-    jl.map[:(goo(x))] = :(y = 1 + 2)
+    jl[:(foo(x))] = :(x = 1 + 1)
+    jl[:(goo(x))] = :(y = 1 + 2)
     jl.otherwise = :(error("abc"))
     println(jl)
     ex = codegen_ast(jl)

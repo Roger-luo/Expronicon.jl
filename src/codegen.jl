@@ -45,13 +45,13 @@ function codegen_ast(def::JLFor)
 end
 
 function codegen_ast(def::JLIfElse)
-    isempty(def.map) && return def.otherwise
+    isempty(def.conds) && return def.otherwise
     stmt = ex = Expr(:if)
-    for (k, (cond, action)) in enumerate(def.map)
+    for (k, (cond, action)) in enumerate(def)
         push!(stmt.args, cond)
         push!(stmt.args, Expr(:block, codegen_ast(action)))
 
-        if k !== length(def.map)
+        if k !== length(def)
             push!(stmt.args, Expr(:elseif))
             stmt = stmt.args[end]
         end

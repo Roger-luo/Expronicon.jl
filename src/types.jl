@@ -251,10 +251,10 @@ One can construct an `ifelse` as following
 julia> jl = JLIfElse()
 nothing
 
-julia> jl.map[:(foo(x))] = :(x = 1 + 1)
+julia> jl[:(foo(x))] = :(x = 1 + 1)
 :(x = 1 + 1)
 
-julia> jl.map[:(goo(x))] = :(y = 1 + 2)
+julia> jl[:(goo(x))] = :(y = 1 + 2)
 :(y = 1 + 2)
 
 julia> jl.otherwise = :(error("abc"))
@@ -286,7 +286,8 @@ julia> codegen_ast(jl)
 ```
 """
 mutable struct JLIfElse <: JLExpr
-    map::OrderedDict{Any, Any}
+    conds::Vector{Any}
+    stmts::Vector{Any}
     otherwise::Any
 end
 
@@ -295,7 +296,34 @@ end
 
 Create an emptry `ifelse` syntax type instance.
 """
-JLIfElse() = JLIfElse(OrderedDict(), nothing)
+JLIfElse() = JLIfElse([], [], nothing)
+
+function Base.getindex(jl::JLIfElse, cond)
+    idx = findfirst(jl.conds) do x
+        cond == x
+    end
+    idx === nothing && error("cannot find condition: $cond")
+    return jl.stmts[idx]
+end
+
+function Base.setindex!(jl::JLIfElse, stmt, cond)
+    idx = findfirst(jl.conds) do x
+        x == cond
+    end
+    if idx === nothing
+        push!(jl.conds, cond)
+        push!(jl.stmts, stmt)
+    else
+        jl.stmts[idx] = stmt
+    end
+    return stmt
+end
+
+Base.length(jl::JLIfElse) = length(jl.conds)
+function Base.iterate(jl::JLIfElse, st=1)
+    st > length(jl) && return
+    jl.conds[st] => jl.stmts[st], st + 1
+end
 
 """
     JLFor <: JLExpr

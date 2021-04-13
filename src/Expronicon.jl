@@ -2,7 +2,6 @@ module Expronicon
 
 using MLStyle
 using Markdown
-using OrderedCollections
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
 
@@ -59,7 +58,7 @@ include("types.jl")
 include("transform.jl")
 include("analysis.jl")
 include("codegen.jl")
-include("match.jl")
 include("printing.jl")
+include("match.jl")
 
 end
