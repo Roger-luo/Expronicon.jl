@@ -1,6 +1,5 @@
 using Test
 using Expronicon
-using MLStyle
 
 @testset "one line expression" begin
     @test sprint_expr(:(name::type)) == "name::type"

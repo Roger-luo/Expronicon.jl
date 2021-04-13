@@ -16,13 +16,15 @@ describes a field should have no default value.
 const no_default = NoDefault()
 
 """
-$TYPEDEF
+    abstract type JLExpr end
+
 Abstract type for Julia syntax type.
 """
 abstract type JLExpr end
 
 """
-$TYPEDEF
+    JLFunction <: JLExpr
+
 Type describes a Julia function declaration expression.
 
 # Example
@@ -92,7 +94,7 @@ function JLFunction(;
 end
 
 """
-$TYPEDEF
+    JLField <: JLExpr
 
 Type describes a Julia field in a Julia struct.
 """
@@ -104,7 +106,7 @@ mutable struct JLField <: JLExpr
 end
 
 """
-$SIGNATURES
+    JLField(;name, type=Any, doc=nothing, line=nothing)
 
 Create a `JLField` instance.
 """
@@ -113,7 +115,7 @@ function JLField(;name, type=Any, doc=nothing, line=nothing)
 end
 
 """
-$TYPEDEF
+    JLKwField <: JLExpr
 
 Type describes a Julia field that can have a default value in a Julia struct.
 """
@@ -126,7 +128,7 @@ mutable struct JLKwField <: JLExpr
 end
 
 """
-$SIGNATURES
+    JLKwField(;kw...)
 
 Create a `JLKwField` instance.
 """
@@ -135,7 +137,7 @@ function JLKwField(;name, type=Any, doc=nothing, line=nothing, default=no_defaul
 end
 
 """
-$TYPEDEF
+    JLStruct <: JLExpr
 
 Type describes a Julia struct.
 
@@ -191,7 +193,7 @@ mutable struct JLStruct <: JLExpr
 end
 
 """
-$SIGNATURES
+    JLStruct(;kw...)
 
 Create a `JLStruct` instance.
 """
@@ -222,7 +224,7 @@ mutable struct JLKwStruct <: JLExpr
 end
 
 """
-$SIGNATURES
+    JLKwStruct(;kw...)
 
 Create a `JLKwStruct` instance.
 """
@@ -234,7 +236,7 @@ function JLKwStruct(;name, typealias=nothing,
 end
 
 """
-$TYPEDEF
+    JLIfElse <: JLExpr
 
 `JLIfElse` describes a Julia `if ... elseif ... else ... end` expression. It allows one to easily construct
 such expression by inserting condition and code block via a map.
@@ -289,14 +291,14 @@ mutable struct JLIfElse <: JLExpr
 end
 
 """
-$SIGNATURES
+    JLIfElse()
 
 Create an emptry `ifelse` syntax type instance.
 """
 JLIfElse() = JLIfElse(OrderedDict(), nothing)
 
 """
-$TYPEDEF
+    JLFor <: JLExpr
 
 Syntax type for Julia for loop.
 """
@@ -307,7 +309,7 @@ struct JLFor <: JLExpr
 end
 
 """
-$TYPEDEF
+    JLFor(;vars=[], iterators=[], kernel=nothing)
 
 Generate a `JLFor` object.
 

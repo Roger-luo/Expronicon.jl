@@ -1,5 +1,5 @@
 """
-$TYPEDEF
+    JLMatch <: JLExpr
 
 `JLMatch` describes a Julia pattern match expression defined by
 [`MLStyle`](https://github.com/thautwarm/MLStyle.jl). It allows
@@ -82,7 +82,7 @@ struct JLMatch <: JLExpr
 end
 
 """
-$SIGNATURES
+    JLMatch(item)
 
 Generate an empty `JLMatch` object with given item expression.
 `item` can be a `Symbol` or an `Expr`.
@@ -90,7 +90,7 @@ Generate an empty `JLMatch` object with given item expression.
 JLMatch(item) = JLMatch(item, OrderedDict(), nothing, Main, LineNumberNode(0))
 
 """
-$SIGNATURES
+    JLMatch(;kw...)
 
 Create a `JLMatch` object from keyword arguments.
 

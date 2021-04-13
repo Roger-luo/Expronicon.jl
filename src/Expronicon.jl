@@ -2,7 +2,6 @@ module Expronicon
 
 using MLStyle
 using Markdown
-using DocStringExtensions
 using OrderedCollections
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
