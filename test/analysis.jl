@@ -304,8 +304,8 @@ end
 
     ex = codegen_ast(jl)
     dst = JLIfElse(ex)
-    @test_expr dst.map[:(foo(x))] == :(x = 1 + 1)
-    @test_expr dst.map[:(goo(x))] == :(y = 1 + 2)
+    @test_expr dst[:(foo(x))] == :(x = 1 + 1)
+    @test_expr dst[:(goo(x))] == :(y = 1 + 2)
     @test_expr dst.otherwise == :(error("abc"))
 end
 

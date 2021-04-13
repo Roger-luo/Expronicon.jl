@@ -52,8 +52,12 @@ export
     print_expr, sprint_expr
 
 
+
+
 include("patches.jl")
 include("types.jl")
+include("transform.jl")
+include("analysis.jl")
 include("codegen.jl")
 include("printing.jl")
 include("match.jl")
