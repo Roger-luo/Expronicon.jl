@@ -15,6 +15,11 @@ Base.@kwdef mutable struct PrintState
     color::Symbol = :normal
 end
 
+"""
+    sprint_expr(ex; context=nothing)
+
+Print given expression to `String`, see also [`print_expr`](@ref).
+"""
 function sprint_expr(ex; context=nothing)
     buf = IOBuffer()
     if context === nothing
@@ -25,6 +30,11 @@ function sprint_expr(ex; context=nothing)
     return String(take!(buf))
 end
 
+"""
+    print_expr([io::IO], ex)
+
+Print a given expression. `ex` can be a `Expr` or a syntax type `JLExpr`.
+"""
 print_expr(ex) = print_expr(stdout, ex)
 print_expr(io::IO, ex) = print_expr(io, ex, PrintState())
 print_expr(io::IO, ex, p::PrintState) = print_expr(io, ex, p, Color())
