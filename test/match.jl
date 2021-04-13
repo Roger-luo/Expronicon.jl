@@ -93,3 +93,34 @@ end
     @test f(GlobalRef(Main, :sin)) == (Main, :sin)
     @test f(:(1 + 1)) === nothing
 end
+
+@testset "codegen_match" begin
+    ex = codegen_match(:x) do
+        quote
+            1 => true
+            2 => false
+            _ => nothing
+        end
+    end
+
+    eval(codegen_ast(JLFunction(;name=:test_match, args=[:x], body=ex)))
+
+    @test test_match(1) == true
+    @test test_match(2) == false
+    @test test_match(3) === nothing
+end
+
+@testset "JLMatch" begin
+    jl = JLMatch(:x)
+    jl.map[1] = true
+    jl.map[2] = :(sin(x))
+    println(jl)
+    ex = codegen_ast(jl)
+    jl = JLFunction(;name=:test_match, args=[:x], body=ex)
+    println(jl)
+    eval(codegen_ast(jl))
+
+    @test test_match(1) == true
+    @test test_match(2) == sin(2)
+    @test test_match(3) === nothing
+end

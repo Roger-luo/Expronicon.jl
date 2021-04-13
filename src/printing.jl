@@ -302,31 +302,6 @@ function print_ast(io::IO, def::JLIfElse)
     indent_print(io, Color.kw("end"))
 end
 
-function print_ast(io::IO, def::JLMatch)
-    print_ast(io, def.line)
-    println(io)
-    isempty(def.map) && return print_ast(io, def.fallthrough)
-    tab = get(io, :tab, " ")
-    indent_println(io, Color.kw("@match"), tab, def.item, tab, Color.kw("begin"))
-    within_indent(io) do io
-        for (k, (pattern, action)) in enumerate(def.map)
-            within_line(io) do io
-                print_ast(io, pattern)
-                print(io, tab, Color.kw("=>"), tab)
-                print_ast(io, action)
-            end
-            println(io)
-        end
-
-        # match must have fallthrough
-        indent_print(io, "_")
-        print(io, tab, Color.kw("=>"), tab)
-        print_ast(io, def.fallthrough)
-    end
-    println(io)
-    indent_print(io, Color.kw("end"))
-end
-
 function print_ast(io::IO, def::JLFunction)
     tab = get(io, :tab, " ")
     within_line(io) do io

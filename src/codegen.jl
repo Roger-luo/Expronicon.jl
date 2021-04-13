@@ -44,16 +44,6 @@ function codegen_ast(def::JLFor)
     return Expr(:for, lhead, codegen_ast(def.kernel))
 end
 
-function codegen_ast(def::JLMatch)
-    isempty(def.map) && return def.fallthrough
-    body = Expr(:block)
-    for (pattern, code) in def.map
-        push!(body.args, :($pattern => $code))
-    end
-    push!(body.args, :(_ => $(def.fallthrough)))
-    return init_cfg(gen_match(def.item, body, def.line, def.mod))
-end
-
 function codegen_ast(def::JLIfElse)
     isempty(def.map) && return def.otherwise
     stmt = ex = Expr(:if)
@@ -531,11 +521,10 @@ Create a function call to `GlobalRef(m, name)`.
     `Expr(:., <module>, QuoteNode(<name>))` instead of `GlobalRef`.
 """
 function xcall(m::Module, name::Symbol, args...; kw...)
-    xcall(GlobalRef(m, name), args...; kw...)
+    # NOTE: not use GlobalRef due to Revise#616
+    xcall(Expr(:., m, QuoteNode(name)), args...; kw...)
 end
 
-# NOTE: not use GlobalRef due to Revise#616
-base_xcall(name, args...; kw...) = xcall(:($Base.$name), args...; kw...)
 
 """
 $TYPEDSIGNATURES
@@ -543,7 +532,7 @@ $TYPEDSIGNATURES
 Create a function call expression to `Base.push!`.
 """
 function xpush(collection, items...)
-    base_xcall(:(push!), collection, items...)
+    xcall(Base, :(push!), collection, items...)
 end
 
 """
@@ -551,53 +540,53 @@ $TYPEDSIGNATURES
 
 Create a function call expression to `Base.first`.
 """
-xfirst(collection) = base_xcall(:first, collection)
+xfirst(collection) = xcall(Base, :first, collection)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.last`.
 """
-xlast(collection) = base_xcall(:last, collection)
+xlast(collection) = xcall(Base, :last, collection)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.print`.
 """
-xprint(xs...) = base_xcall(:print, xs...)
+xprint(xs...) = xcall(Base, :print, xs...)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.println`.
 """
-xprintln(xs...) = base_xcall(:println, xs...)
+xprintln(xs...) = xcall(Base, :println, xs...)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.map`.
 """
-xmap(f, xs...) = base_xcall(:map, f, xs...)
+xmap(f, xs...) = xcall(Base, :map, f, xs...)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.mapreduce`.
 """
-xmapreduce(f, op, xs...) = base_xcall(:mapreduce, f, op, xs...)
+xmapreduce(f, op, xs...) = xcall(Base, :mapreduce, f, op, xs...)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.iterate`.
 """
-xiterate(it) = base_xcall(:iterate, it)
+xiterate(it) = xcall(Base, :iterate, it)
 
 """
 $TYPEDSIGNATURES
 
 Create a function call expression to `Base.iterate`.
 """
-xiterate(it, st) = base_xcall(:iterate, it, st)
+xiterate(it, st) = xcall(Base, :iterate, it, st)

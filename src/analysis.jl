@@ -351,9 +351,10 @@ end
 Split doc string from given expression.
 """
 function split_doc(ex::Expr)
-    @match ex begin
-        Expr(:macrocall, GlobalRef(Core, Symbol("@doc")), line, doc, expr) => (line, doc, expr)
-        _ => (nothing, nothing, ex)
+    if ex.head === :macrocall && ex.args[1] == GlobalRef(Core, Symbol("@doc"))
+        return ex.args[2], ex.args[3], ex.args[4]
+    else
+        return nothing, nothing, ex
     end
 end
 
