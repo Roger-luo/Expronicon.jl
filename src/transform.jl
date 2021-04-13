@@ -75,8 +75,10 @@ julia> name_only(:(x::Int))
 """
 function name_only(@nospecialize(ex))
     ex isa Symbol && return ex
+    ex isa QuoteNode && return ex.value
     ex isa Expr || error("unsupported expression $ex")
     ex.head in [:call, :curly, :(<:), :(::), :where, :function, :kw, :(=), :(->)] && return name_only(ex.args[1])
+    ex.head === :. && return name_only(ex.args[2])
     error("unsupported expression $ex")
 end
 
@@ -113,6 +115,15 @@ extra code blocks.
 """
 function prettify(ex)
     ex isa Expr || return ex
+    for _ in 1:10
+        curr = prettify_pass(ex)
+        ex == curr && break
+        ex = curr
+    end
+    return ex
+end
+
+function prettify_pass(ex)
     ex = rm_lineinfo(ex)
     ex = flatten_blocks(ex)
     ex = rm_nothing(ex)

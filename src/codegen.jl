@@ -441,38 +441,6 @@ function codegen_ast(def::Union{JLField, JLKwField})
     end
 end
 
-"""
-    codegen_match(f, x[, line::LineNumberNode=LineNumberNode(0), mod::Module=Main])
-
-Generate a zero dependency match expression using MLStyle code generator,
-the syntax is identical to MLStyle.
-
-# Example
-
-```julia
-codegen_match(:x) do
-    quote
-        1 => true
-        2 => false
-        _ => nothing
-    end
-end
-```
-
-This code generates the following corresponding MLStyle expression
-
-```julia
-@match x begin
-    1 => true
-    2 => false
-    _ => nothing
-end
-```
-"""
-function codegen_match(f, x, line::LineNumberNode=LineNumberNode(0), mod::Module=Main)
-    return init_cfg(gen_match(x, f(), line, mod))
-end
-
 # X functions, the x<name> functions from Zygote, IRTools etc.
 
 """

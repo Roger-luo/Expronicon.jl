@@ -6,7 +6,7 @@ using MLStyle.AbstractPatterns
 
 export 
     # types
-    NoDefault, JLExpr, JLFor, JLIfElse, JLMatch,
+    NoDefault, JLExpr, JLFor, JLIfElse,
     JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     # analysis
     @expr, @test_expr, compare_expr, compare_vars,
@@ -28,7 +28,6 @@ export
     codegen_ast_struct,
     codegen_ast_struct_head,
     codegen_ast_struct_body,
-    codegen_match,
     construct_method_plain,
     construct_method_inferable,
     struct_name_plain,
@@ -45,8 +44,6 @@ export
     xmap,
     xmapreduce,
     xiterate,
-    # match
-    @syntax_pattern,
     # printings
     print_expr, sprint_expr
 
@@ -60,5 +57,6 @@ include("analysis.jl")
 include("codegen.jl")
 include("printing.jl")
 include("match.jl")
+include("expand.jl")
 
 end
