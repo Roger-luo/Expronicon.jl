@@ -1,19 +1,24 @@
+using Test
 using Expronicon
 using MLStyle
 
-sprint_expr(:(name::type)) == "name::type"
-sprint_expr(:("abc $name")) == "\"abc \$name\""
-sprint_expr(:(compare_expr(lhs, rhs::Int))) == "compare_expr(lhs, rhs::Int)"
-sprint_expr(:(compare_expr(lhs, rhs::Int; a = "c"))) == "compare_expr(lhs, rhs::Int; a = \"c\")"
-sprint_expr(:(return a, b, c)) == "return a, b, c"
-sprint_expr(:(a = b)) == "a = b"
-sprint_expr(Expr(:kw, :a, :b)) == "a = b"
-sprint_expr(:(!x)) == "!x"
-sprint_expr(:(x + 1)) == "x + 1"
-sprint_expr(:(x * 1)) == "x * 1"
-occursin("f(x) = x", sprint_expr(:(f(x) = x)))
-occursin("x -> 2 * x", sprint_expr(:(x->2x)))
-sprint_expr(:(Type{T <: Real})) == "Type{T <: Real}"
+@testset "one line expression" begin
+    @test sprint_expr(:(name::type)) == "name::type"
+    @test sprint_expr(:("abc $name")) == "\"abc \$name\""
+    @test sprint_expr(:(compare_expr(lhs, rhs::Int))) == "compare_expr(lhs, rhs::Int)"
+    @test sprint_expr(:(compare_expr(lhs, rhs::Int; a = "c"))) == "compare_expr(lhs, rhs::Int; a = \"c\")"
+    @test sprint_expr(:(return a, b, c)) == "return a, b, c"
+    @test sprint_expr(:(a = b)) == "a = b"
+    @test sprint_expr(Expr(:kw, :a, :b)) == "a = b"
+    @test sprint_expr(:(!x)) == "!x"
+    @test sprint_expr(:(x + 1)) == "x + 1"
+    @test sprint_expr(:(x * 1)) == "x * 1"
+    str = sprint_expr(:(f(x) = x))
+    @test occursin("f(x) = x", str)
+    str = sprint_expr(:(x->2x))
+    @test occursin("x -> 2 * x", str)
+    @test sprint_expr(:(Type{T <: Real})) == "Type{T <: Real}"
+end
 
 print_expr(:(let x, y
     x + 1
