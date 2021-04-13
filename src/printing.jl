@@ -17,7 +17,7 @@ end
 
 function sprint_expr(ex; context=nothing)
     buf = IOBuffer()
-    if isnothing(context)
+    if context === nothing
         print_expr(buf, ex)
     else
         print_expr(IOContext(buf, context), ex)
