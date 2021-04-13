@@ -1,9 +1,9 @@
 tab(n::Int) = " "^n
 
 Base.@kwdef struct Color
-    literal::Symbol = :yellow
+    literal::Symbol = :light_blue
     type::Symbol = :light_green
-    string::Symbol = :light_red
+    string::Symbol = :yellow
     comment::Symbol = :light_black
     kw::Symbol = :light_magenta
     fn::Symbol = :light_blue
