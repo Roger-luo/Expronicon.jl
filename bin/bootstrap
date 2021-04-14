@@ -15,7 +15,7 @@ cd(dirname(dirname(pathof(Expronicon)))) do
     end
     build_dir = joinpath("build", "ExproniconLite")
 
-    misc = map(splitpath.(split(read(".gitignore", String)))) do xs
+    misc = map(splitpath.(String.(split(read(".gitignore", String))))) do xs
         joinpath(xs...)
     end
 
@@ -28,9 +28,11 @@ cd(dirname(dirname(pathof(Expronicon)))) do
         src_dont_touch=["types.jl", "codegen.jl"],
         exclude_paths=[
             "README.md",
-            "test/match.jl", "generate.jl",
-            "docs/Manifest.toml",
-            "docs/build",
+            joinpath("test", "match.jl"),
+            joinpath("test", "expand.jl"),
+            "generate.jl",
+            joinpath("docs", "Manifest.toml"),
+            joinpath("docs", "build"),
             "Manifest.toml", "build",
             ".git", "bin", ".vscode",
             ".github",
@@ -44,11 +46,8 @@ cd(dirname(dirname(pathof(Expronicon)))) do
             run(`git add -A`)
             run(`git commit -m"generated from Expronicon"`)
             run(`git push origin master`)
-        else
-            run(`ion release current`)
         end
+        run(`ion release current`)
     end
-
     # rm("build"; force=true, recursive=true)
-
 end # cd project

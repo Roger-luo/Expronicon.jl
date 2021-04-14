@@ -219,6 +219,8 @@ function expand_project(options::ExpandOptions)
         delete!(d["deps"], package)
         delete!(d["compat"], package)
     end
+    compat = d["compat"]
+    compat["julia"] = "1.3"
 
     open(joinpath(options.build_dir, options.project_toml), "w+") do io
         TOML.print(io, d; sorted=true, by=key -> (Pkg.Types.project_key_order(key), key))
@@ -237,7 +239,6 @@ function _cp(src, dst, options::ExpandOptions)
     for each in options.exclude_paths
         # use local path
         path = normpath(relpath(each, dirname(src)))
-        @info "removing" path
         raw = replace(raw, "include(\"$path\")"=>"nothing")
     end
     dst_dir = dirname(dst)
