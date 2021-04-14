@@ -33,7 +33,7 @@ end
 end
 
 # this feature is only available for 1.6+
-@static if VERSION > v"1.6-"
+@static if VERSION > v"1.6-" && Sys.isunix()
     @testset "expand" begin
         include("expand.jl")
     end
