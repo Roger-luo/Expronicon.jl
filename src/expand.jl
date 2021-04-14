@@ -154,6 +154,10 @@ function expand_project(; kw...)
 end
 
 function expand_project(options::ExpandOptions)
+    if Sys.iswindows()
+        error("expand_project does not support windows")
+    end
+
     pathof(options.mod) === nothing && error("not a project module")
     project_dir = dirname(dirname(pathof(options.mod)))
     @info "expanding macro"
