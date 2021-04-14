@@ -233,6 +233,7 @@ function _cp(src, dst, options::ExpandOptions)
     for each in options.exclude_paths
         # use local path
         path = relpath(each, dirname(src))
+        @info "removing" path
         raw = replace(raw, "include(\"$path\")"=>"nothing")
     end
     dst_dir = dirname(dst)
