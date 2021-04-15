@@ -180,38 +180,31 @@ function rm_nothing(ex)
 end
 
 function rm_single_block(ex)
-    @switch ex begin
-        @case Expr(:(=), _...) ||
+    @match ex begin
+        Expr(:(=), _...) ||
             Expr(:(->), _...) ||
             Expr(:quote, xs...) ||
-            Expr(:block, Expr(:quote, xs...))
-            return ex
-        @case Expr(:try, Expr(:block, try_stmts...), false, false, Expr(:block, finally_stmts...))
-            return Expr(:try,
+            Expr(:block, Expr(:quote, xs...)) => ex
+        Expr(:try, Expr(:block, try_stmts...), false, false, Expr(:block, finally_stmts...)) => Expr(:try,
                 Expr(:block, rm_single_block.(try_stmts)...),
                 false, false,
                 Expr(:block, rm_single_block.(finally_stmts)...)
             )
-        @case Expr(:try, Expr(:block, try_stmts...), catch_var, Expr(:block, catch_stmts...))
-            return Expr(:try,
+        Expr(:try, Expr(:block, try_stmts...), catch_var, Expr(:block, catch_stmts...)) => Expr(:try,
                 Expr(:block, rm_single_block.(try_stmts)...),
                 catch_var,
                 Expr(:block, rm_single_block.(catch_stmts)...)
             )
-        @case Expr(:try, Expr(:block, try_stmts...), catch_var,
-            Expr(:block, catch_stmts...), Expr(:block, finally_stmts...))
-            return Expr(:try,
+        Expr(:try, Expr(:block, try_stmts...), catch_var,
+            Expr(:block, catch_stmts...), Expr(:block, finally_stmts...)) => Expr(:try,
                 Expr(:block, rm_single_block.(try_stmts)...),
                 catch_var,
-                Expr(:block, rm_single_block(catch_stmts)...),
-                Expr(:block, rm_single_block(finally_stmts)...)
+                Expr(:block, rm_single_block.(catch_stmts)...),
+                Expr(:block, rm_single_block.(finally_stmts)...)
             )
-        @case Expr(:block, stmt)
-            return stmt
-        @case Expr(head, args...)
-            return Expr(head, map(rm_single_block, args)...)
-        @case _
-            return ex
+        Expr(:block, stmt) => stmt
+        Expr(head, args...) => Expr(head, map(rm_single_block, args)...)
+        _ => ex
     end
 end
 
