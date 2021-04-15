@@ -57,9 +57,15 @@ end
 function print_expr(io::IO, ex, ps::PrintState, theme::Color)
     @switch ex begin
         @case Expr(:block, line::LineNumberNode, stmt)
+            # stmt #= line =#
             print_expr(io, stmt, ps, theme)
             print(io, tab(2))
             print_expr(io, line, ps, theme)
+        @case Expr(:block, line1::LineNumberNode, line2::LineNumberNode, stmts...)
+            print_kw(io, "begin", ps, theme)
+            println(io, ps)
+            print_stmts_list(io, ex.args, ps, theme)
+            print_end(io, ps, theme)
         @case Expr(:block, stmt1, line::LineNumberNode, stmt2)
             printstyled(io, "("; color=ps.color)
             print_expr(io, stmt1, ps, theme)
@@ -81,8 +87,10 @@ function print_expr(io::IO, ex, ps::PrintState, theme::Color)
             print_stmts(io, body, ps, theme)
             print_end(io, ps, theme)
         @case Expr(:if, cond, body, otherwise...) || Expr(:elseif, cond, body, otherwise...)
-            printstyled(io, ex.head, tab(1); color=theme.kw)
-            print_expr(io, cond, ps, theme)
+            within_line(io, ps) do
+                print_kw(io, string(ex.head, tab(1)), ps, theme)
+                print_expr(io, cond, ps, theme)
+            end
             println(io, ps)
             print_stmts(io, body, ps, theme)
             if isempty(otherwise)
@@ -118,6 +126,14 @@ function print_expr(io::IO, ex, ps::PrintState, theme::Color)
             println(io, ps)
             print_stmts(io, body, ps, theme)
             print_end(io, ps, theme)
+        @case Expr(:macro, call, body)
+            within_line(io, ps) do
+                print_kw(io, "macro ", ps, theme)
+                print_expr(io, call, ps, theme)
+            end
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            print_end(io, ps, theme)
         @case Expr(:macrocall, &(GlobalRef(Core, Symbol("@doc"))), line, doc, code)
             print_expr(io, line, ps, theme)
             println(io, ps)
@@ -136,16 +152,19 @@ function print_expr(io::IO, ex, ps::PrintState, theme::Color)
             printstyled(io, "\"\"\""; color=theme.string)
             println(io, ps)
             print_expr(io, code, ps, theme)
-        @case Expr(:macrocall, name, line, xs...)
-            print_expr(io, line, ps, theme)
-            println(io, ps)
-            within_line(io, ps) do
-                with_color(theme.fn, ps) do
-                    print_expr(io, name, ps, theme)
-                end
-                print(io, tab(1))
-                print_collection(io, xs, ps, theme; delim=tab(1))
+        @case Expr(:macrocall, Symbol("@__MODULE__"), line)
+            with_color(theme.fn, ps) do
+                print_expr(io, Symbol("@__MODULE__"), ps, theme)
             end
+        @case Expr(:macrocall, name::Symbol, line, s::String)
+            if endswith(string(name), "_str")
+                printstyled(io, string(name)[2:end-4]; color=theme.fn)
+                print_expr(s)
+            else
+                print_macro(io, name, line, (s, ), ps, theme)
+            end
+        @case Expr(:macrocall, name, line, xs...)
+            print_macro(io, name, line, xs, ps, theme)
         @case Expr(:struct, ismutable, head, body)
             within_line(io, ps) do
                 if ismutable
@@ -170,6 +189,15 @@ function print_expr(io::IO, ex, ps::PrintState, theme::Color)
             print_catch(io, catch_var, catch_body, ps, theme)
             print_finally(io, finally_body, ps, theme)
             print_end(io, ps, theme)
+        @case Expr(:module, notbare, name, body)
+            if notbare
+                print_kw(io, "module", ps, theme)
+            else
+                print_kw(io, "baremodule", ps, theme)
+            end
+            println(io, ps)
+            print_stmts(io, body, ps, theme)
+            print_end(io, ps, theme)
         @case _
             print_within_line(io, ex, ps, theme)
     end
@@ -178,6 +206,18 @@ end
 function print_kw(io::IO, x, ps, theme::Color)
     print(io, tab(ps.line_indent))
     printstyled(io, x; color=theme.kw)
+end
+
+function print_macro(io, name, line, xs, ps, theme)
+    print_expr(io, line, ps, theme)
+    println(io, ps)
+    within_line(io, ps) do
+        with_color(theme.fn, ps) do
+            print_expr(io, name, ps, theme)
+        end
+        print(io, tab(1))
+        print_collection(io, xs, ps, theme; delim=tab(1))
+    end
 end
 
 print_end(io::IO, ps, theme) = print_kw(io, "end", ps, theme)
@@ -286,6 +326,9 @@ function print_within_line(io::IO, ex, ps::PrintState, theme::Color=Color())
                 print_expr(io, ex.name, ps, theme)
             @case ::LineNumberNode
                 printstyled(io, ex; color=theme.comment)
+            @case Expr(:export, xs...)
+                print_kw(io, "export ", ps, theme)
+                print_collection(io, xs, ps, theme)
             @case Expr(:tuple, Expr(:parameters, kwargs...), args...)
                 printstyled(io, "("; color=ps.color)
                 print_collection(io, args, ps, theme)
@@ -309,6 +352,14 @@ function print_within_line(io::IO, ex, ps::PrintState, theme::Color=Color())
                 with_color(theme.type, ps) do
                     print_expr(io, type, ps, theme)
                 end
+            @case Expr(:., a, b::QuoteNode)
+                print_expr(io, a, ps, theme)
+                printstyled(io, "."; color=ps.color)
+                print_expr(io, b.value, ps, theme)
+            @case Expr(:., a, b)
+                print_expr(io, a, ps, theme)
+                printstyled(io, "."; color=ps.color)
+                print_expr(io, b, ps, theme)
             @case Expr(:(<:), name, type)
                 print_expr(io, name, ps, theme)
                 printstyled(io, " <: "; color=ps.color)
@@ -366,6 +417,8 @@ function print_within_line(io::IO, ex, ps::PrintState, theme::Color=Color())
                 else
                     print_call_expr(io, name, [x], ps, theme)
                 end
+            @case Expr(:call, :+, xs...)
+                print_collection(io, xs, ps, theme; delim=" + ")
             @case Expr(:call, name, lhs, rhs)
                 func_prec = Base.operator_precedence(name_only(name))
                 if func_prec > 0

@@ -42,6 +42,16 @@ function rm_include(path::String, ex)
     end
 end
 
+function insert_toplevel(ex, code)
+    @switch ex begin
+        @case Expr(:module, bare, name, Expr(:block, stmts...))
+            stmts = map(x->insert_toplevel(x, code), stmts)
+            return Expr(:module, bare, name, Expr(:block, code, stmts...))
+        @case _
+            return ex
+    end
+end
+
 function expand_macro(m::Module, ex; macronames=[])
     @switch ex begin
         @case Expr(:macrocall, name, line, xs...)
@@ -75,7 +85,6 @@ Base.@kwdef struct ExpandOptions
     src_dont_touch::Vector{String} = String[] # src/* not touch
 end
 
-const __INCLUDE_GENERATED_LOCK__ = Ref(true)
 # NOTE:
 # this should not be an API
 # it should be part of the implement detail
@@ -94,28 +103,48 @@ function _replace_include(ex, options::ExpandOptions)
     end
 end
 
-function _xinclude_generated(path)
+function _insert_include_generated(ex)
     include_generated_def = quote
         @static if !isdefined(@__MODULE__(), :include_generated)
-            function include_generated(m::Module, path::String)
-                raw = read(path, String)
-                ex = Base.include_string(m, "quote $raw end", path)
-                m.eval(m.eval(ex))
-                return
+            function _include_generated(_path::String)
+                Base.@_noinline_meta
+                mod = @__MODULE__()
+                path, prev = Base._include_dependency(mod, _path)
+                code = read(path, String)
+                tls = task_local_storage()
+                tls[:SOURCE_PATH] = path
+                try
+                    ex = include_string(mod, "quote $code end", path)
+                    mod.eval(mod.eval(ex))
+                    return
+                finally
+                    if prev === nothing
+                        delete!(tls, :SOURCE_PATH)
+                    else
+                        tls[:SOURCE_PATH] = prev
+                    end
+                end
+            end
+        end
+    end
+    return insert_toplevel(ex, include_generated_def)
+end
+
+function _insert_var_str(ex)
+    var_str = quote
+        @static if VERSION < v"1.3"
+            macro var_str(x)
+                Symbol(x)
             end
         end
     end
 
-    if __INCLUDE_GENERATED_LOCK__[]
-        __INCLUDE_GENERATED_LOCK__[] = false
-        return quote
-            $include_generated_def
-            include_generated(@__MODULE__(), joinpath(@__DIR__, $path))
-        end
-    else
-        return quote
-            include_generated(@__MODULE__(), joinpath(@__DIR__, $path))
-        end
+    return insert_toplevel(ex, var_str)
+end
+
+function _xinclude_generated(path)
+    return quote
+        _include_generated($path)
     end
 end
 
@@ -124,27 +153,30 @@ function expand_file(src, dst; kw...)
     expand_file(src, dst, ExpandOptions(;kw...))
 end
 
-function expand_file(src, dst, options::ExpandOptions)
+function parse_file(src)
     raw = read(src, String)
     ex = Meta.parse("begin $raw end")
+    return prettify(ex)
+end
+
+function expand_file(src, dst, options::ExpandOptions)
+    ex = parse_file(src)
     ispath(dirname(dst)) || mkpath(dirname(dst))
-    # make sure we have at least one definition
-    # of include_generated per file
-    __INCLUDE_GENERATED_LOCK__[] = true
+
+    @info "substitute module identifier"
+    old_mod = options.project
+    new_mod = Symbol(options.project, options.postfix)
+    ex = subtitute(ex, old_mod=>new_mod)
+    ex = expand_macro(options.mod, ex; macronames=options.macronames)
+    ex = rm_include(options.exclude_src, ex)
+    ex = rm_include(options.exclude_paths, ex)
+    ex = rm_using(options.exclude_modules, ex)
+    ex = _insert_var_str(ex)
+    ex = _insert_include_generated(ex)
+    ex = _replace_include(ex, options)
+    ex = prettify(ex)
+
     open(dst, "w+") do io
-        @info "substitute module identifier"
-        old_mod = options.project
-        new_mod = Symbol(options.project, options.postfix)
-        ex = subtitute(ex, old_mod=>new_mod)
-        ex = expand_macro(options.mod, ex; macronames=options.macronames)
-        ex = rm_include(options.exclude_src, ex)
-        ex = rm_include(options.exclude_paths, ex)
-        ex = rm_using(options.exclude_modules, ex)
-        ex = _replace_include(ex, options)
-        ex = prettify(ex)
-        if ex isa Expr && ex.head === :block && length(ex.args) == 1
-            ex = ex.args[1]
-        end
         println(io, ex)
     end
 end
@@ -219,8 +251,6 @@ function expand_project(options::ExpandOptions)
         delete!(d["deps"], package)
         delete!(d["compat"], package)
     end
-    compat = d["compat"]
-    compat["julia"] = "1.3"
 
     open(joinpath(options.build_dir, options.project_toml), "w+") do io
         TOML.print(io, d; sorted=true, by=key -> (Pkg.Types.project_key_order(key), key))
