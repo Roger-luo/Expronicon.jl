@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #=
-exec julia --color=yes --startup-file=no -q --project -O0 "${BASH_SOURCE[0]}"
+exec julia --color=yes --startup-file=no -q --project -O0 "${BASH_SOURCE[0]}" "$@"
 =#
 
 using Expronicon
@@ -40,14 +40,16 @@ cd(dirname(dirname(pathof(Expronicon)))) do
         exclude_modules=[:TOML, :Pkg, :MLStyle]
     )
 
-    cd(build_dir) do
-        if LibGit2.isdirty(LibGit2.GitRepo("."))
-            run(`git add .gitignore`)
-            run(`git add -A`)
-            run(`git commit -m"generated from Expronicon"`)
-            run(`git push origin master`)
+    if "release" in ARGS
+        cd(build_dir) do
+            if LibGit2.isdirty(LibGit2.GitRepo("."))
+                run(`git add .gitignore`)
+                run(`git add -A`)
+                run(`git commit -m"generated from Expronicon"`)
+                run(`git push origin master`)
+            end
+            run(`ion release current`)
         end
-        run(`ion release current`)
     end
     # rm("build"; force=true, recursive=true)
 end # cd project
