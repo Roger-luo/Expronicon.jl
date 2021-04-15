@@ -33,3 +33,23 @@ cd(build_dir) do
 end
 
 rm(build_dir; force=true, recursive=true)
+
+options = ExpandOptions(
+    mod=Expronicon,
+    uuid="55351af7-c7e9-48d6-89ff-24e801d99491",
+    macronames=[Symbol("@match"), Symbol("@switch"), Symbol("@λ")],
+    exclude_src=["match.jl", "expand.jl", "patches.jl"],
+    src_dont_touch=["types.jl", "codegen.jl"],
+    exclude_paths=[
+        "README.md",
+        joinpath("test", "match.jl"),
+        joinpath("test", "expand.jl"),
+        "generate.jl",
+        joinpath("docs", "Manifest.toml"),
+        joinpath("docs", "build"),
+        "Manifest.toml", "build",
+        ".git", "bin", ".vscode",
+        ".github",
+    ],
+    exclude_modules=[:TOML, :Pkg, :MLStyle]
+)

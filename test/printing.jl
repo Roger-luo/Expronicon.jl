@@ -166,3 +166,37 @@ ex = quote
 end
 
 print_expr(ex)
+
+function broutine2x2_m_kernel_expr(idx_1, idx_2)
+    return quote
+        ST1 = U11 * st[b, $idx_1] + U12 * st[b, $idx_2]
+        ST2 = U21 * st[b, $idx_1] + U22 * st[b, $idx_2]
+    
+        st[b, $idx_1] = ST1
+        st[b, $idx_2] = ST2
+    end
+end
+
+ex = quote
+    Base.Cartesian.@nexprs 16 k->begin
+    $(broutine2x2_m_kernel_expr(:(i+k), :(i+step_1+k)))
+    end
+end
+
+print_expr(ex)
+
+ex = quote
+    try
+        ex = include_string(mod, "quote $code end", path)
+        mod.eval(mod.eval(ex))
+        return nothing
+    finally
+        if prev === nothing
+            delete!(tls, :SOURCE_PATH)
+        else
+            tls[:SOURCE_PATH] = prev
+        end
+    end
+end
+
+print_expr(ex)
