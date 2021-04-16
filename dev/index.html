@@ -140,20 +140,44 @@ quote
     error(&quot;some error msg&quot;)
 end</code></pre><p>imagine how would you construct such expression from scratch, or how would you access all the conditions. Thus <a href="reference/#Expronicon.JLIfElse"><code>JLIfElse</code></a> allows you to access/manipulate <code>ifelse</code> statements directly as a dict-like object</p><pre><code class="language-julia-repl">julia&gt; jl = JLIfElse(ex);
 
-julia&gt; jl.map
-ERROR: type JLIfElse has no field map
+julia&gt; jl
+if x &gt; 100
+    x + 1      #= none:2 =#
+elseif x &gt; 90  #= none:3 =#
+    x + 2      #= none:4 =#
+elseif x &gt; 80  #= none:5 =#
+    x + 3      #= none:6 =#
+else
+    #= none:8 =#
+    error(&quot;some error msg&quot;)
+end
 
 julia&gt; jl.otherwise
 quote
     #= none:8 =#
     error(&quot;some error msg&quot;)
-end</code></pre><p>you can access to each condition and its action using the condition as your key</p><pre><code class="language-julia-repl">julia&gt; jl.map[:(x &gt; 100)]
-ERROR: type JLIfElse has no field map</code></pre><p>similarly, we can easily construct a <code>JLIfElse</code></p><pre><code class="language-">jl = JLIfElse()
-jl.map[:(x &gt; 100)] = :(x + 1)
-jl.map[:(x &gt; 80)] = :(x + 2)
+end</code></pre><p>you can access to each condition and its action using the condition as your key</p><pre><code class="language-julia-repl">julia&gt; jl[:(x &gt; 100)]
+quote
+    #= none:2 =#
+    x + 1
+end</code></pre><p>similarly, we can easily construct a <code>JLIfElse</code></p><pre><code class="language-julia">jl = JLIfElse()
+jl[:(x &gt; 100)] = :(x + 1)
+jl[:(x &gt; 80)] = :(x + 2)
 jl.otherwise = :(error(&quot;some error msg&quot;))
-jl
-show_ascii(jl) # hide</code></pre><p>now let&#39;s generate back to <code>Expr</code> so that we can give Julia back some executable expression</p><pre><code class="language-julia-repl">julia&gt; codegen_ast(jl)</code></pre><p>You can find available syntax types in <a href="reference/#Syntax-Types">Syntax Types</a></p><h2 id="Pattern-Matching"><a class="docs-heading-anchor" href="#Pattern-Matching">Pattern Matching</a><a id="Pattern-Matching-1"></a><a class="docs-heading-anchor-permalink" href="#Pattern-Matching" title="Permalink"></a></h2><p>Since <code>Expronicon</code> serves as the meta programming stdlib for MLStyle, you can also use the syntax types along with MLStyle, e.g</p><pre><code class="language-julia">using MLStyle
+jl</code></pre><pre class="terminal-output">if x &gt; 100
+    x + 1
+elseif x &gt; 80
+    x + 2
+else
+    error(&quot;some error msg&quot;)
+end</pre><p>now let&#39;s generate back to <code>Expr</code> so that we can give Julia back some executable expression</p><pre><code class="language-julia-repl">julia&gt; codegen_ast(jl)
+:(if x &gt; 100
+      x + 1
+  elseif x &gt; 80
+      x + 2
+  else
+      error(&quot;some error msg&quot;)
+  end)</code></pre><p>You can find available syntax types in <a href="reference/#Syntax-Types">Syntax Types</a></p><h2 id="Pattern-Matching"><a class="docs-heading-anchor" href="#Pattern-Matching">Pattern Matching</a><a id="Pattern-Matching-1"></a><a class="docs-heading-anchor-permalink" href="#Pattern-Matching" title="Permalink"></a></h2><p>Since <code>Expronicon</code> serves as the meta programming stdlib for MLStyle, you can also use the syntax types along with MLStyle, e.g</p><pre><code class="language-julia">using MLStyle
 using Expronicon
 
 f = @λ begin
@@ -172,7 +196,7 @@ end</code></pre><p>then we can check if our match function gives the right resul
 (Any[:(x::Int), :(y::T)],)
 
 julia&gt; f(ex_boo)
-(Any[:(x::Int)],)</code></pre><p>You can use <strong>any</strong> syntax types builtin as your expression template to match using MLStyle. If you define your own syntax type, you can also support pattern matching via <a href="#Expronicon.@syntax_pattern"><code>@syntax_pattern</code></a>.</p><article class="docstring"><header><a class="docstring-binding" id="Expronicon.@syntax_pattern" href="#Expronicon.@syntax_pattern"><code>Expronicon.@syntax_pattern</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@syntax_pattern &lt;syntax type&gt; &lt;syntax checker&gt;</code></pre><p><strong>Example</strong></p><pre><code class="language-julia">struct MyFunction
+(Any[:(x::Int)],)</code></pre><p>You can use <strong>any</strong> syntax types builtin as your expression template to match using MLStyle. If you define your own syntax type, you can also support pattern matching via <a href="#Expronicon.@syntax_pattern"><code>@syntax_pattern</code></a>.</p><article class="docstring"><header><a class="docstring-binding" id="Expronicon.@syntax_pattern" href="#Expronicon.@syntax_pattern"><code>Expronicon.@syntax_pattern</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@syntax_pattern &lt;syntax type&gt; &lt;syntax checker&gt;</code></pre><p>Bundle a syntax type as MLStyle pattern.</p><div class="admonition is-success"><header class="admonition-header">Tip</header><div class="admonition-body"><p>this is not available in ExproniconLite since it depends on MLStyle&#39;s pattern matching functionality.</p></div></div><p><strong>Example</strong></p><pre><code class="language-julia">struct MyFunction
     ex :: Expr
     test_field :: Any
 end
@@ -186,7 +210,7 @@ julia&gt; @syntax_pattern(MyFunction, is_xxx)
 julia&gt; @match :(function f() end) begin
         MyFunction(;test_field) =&gt; test_field
     end
-:aaa</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Roger-luo/Expronicon.jl/blob/073695296f0692b9be732f898da74c4cf3b1260e/src/match.jl#L214-L236">source</a></section></article><h2 id="Analysis-Functions"><a class="docs-heading-anchor" href="#Analysis-Functions">Analysis Functions</a><a id="Analysis-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis-Functions" title="Permalink"></a></h2><p><code>Expronicon</code> provides a lot common analysis functions, you can find the list of them in <a href="reference/#Analysis">Analysis</a>. you can use them to check if the expression satisfy certain property, e.g you can check if a given object is a struct definition via <a href="reference/#Expronicon.is_struct-Tuple{Any}"><code>is_struct</code></a>, or check if a given function definition supports keyword arguments via <a href="reference/#Expronicon.is_kw_function-Tuple{Any}"><code>is_kw_function</code></a>.</p><h2 id="Transform-Functions"><a class="docs-heading-anchor" href="#Transform-Functions">Transform Functions</a><a id="Transform-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Transform-Functions" title="Permalink"></a></h2><p>You can find the list of them in <a href="reference/#Transform">Transform</a>.</p><p>Transform functions usually takes an expression and returns an expression e.g sometimes you only want the name symbol of your function arguments</p><pre><code class="language-julia">def = @expr JLFunction function foo(x::Int, y::Real=2)
+:aaa</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Roger-luo/Expronicon.jl/blob/cc4e852cbfd53b9a808b3f0dfbf2dbc6293df105/src/match.jl#L222-L250">source</a></section></article><h2 id="Analysis-Functions"><a class="docs-heading-anchor" href="#Analysis-Functions">Analysis Functions</a><a id="Analysis-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis-Functions" title="Permalink"></a></h2><p><code>Expronicon</code> provides a lot common analysis functions, you can find the list of them in <a href="reference/#Analysis">Analysis</a>. you can use them to check if the expression satisfy certain property, e.g you can check if a given object is a struct definition via <a href="reference/#Expronicon.is_struct-Tuple{Any}"><code>is_struct</code></a>, or check if a given function definition supports keyword arguments via <a href="reference/#Expronicon.is_kw_function-Tuple{Any}"><code>is_kw_function</code></a>.</p><h2 id="Transform-Functions"><a class="docs-heading-anchor" href="#Transform-Functions">Transform Functions</a><a id="Transform-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Transform-Functions" title="Permalink"></a></h2><p>You can find the list of them in <a href="reference/#Transform">Transform</a>.</p><p>Transform functions usually takes an expression and returns an expression e.g sometimes you only want the name symbol of your function arguments</p><pre><code class="language-julia">def = @expr JLFunction function foo(x::Int, y::Real=2)
 end</code></pre><pre><code class="language-julia-repl">julia&gt; def.args
 2-element Vector{Any}:
  :(x::Int)
@@ -195,4 +219,4 @@ end</code></pre><pre><code class="language-julia-repl">julia&gt; def.args
 julia&gt; name_only.(def.args)
 2-element Vector{Symbol}:
  :x
- :y</code></pre><h2 id="Code-Generation-Functions"><a class="docs-heading-anchor" href="#Code-Generation-Functions">Code Generation Functions</a><a id="Code-Generation-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Code-Generation-Functions" title="Permalink"></a></h2><p>The code generation functions help you generate other target expressions, e.g <a href="reference/#Expronicon.codegen_ast-Tuple{Any}"><code>codegen_ast</code></a> generates the Julia AST object <code>Expr</code>. All the syntax type can use <a href="reference/#Expronicon.codegen_ast-Tuple{Any}"><code>codegen_ast</code></a> to generate the corresponding <code>Expr</code>, there are also some other functions start with name <code>codegen</code> in <a href="reference/#CodeGen">CodeGen</a> you may find useful.</p><h2 id="Pretty-Printing"><a class="docs-heading-anchor" href="#Pretty-Printing">Pretty Printing</a><a id="Pretty-Printing-1"></a><a class="docs-heading-anchor-permalink" href="#Pretty-Printing" title="Permalink"></a></h2><p>Sometimes, when you define your own intermediate representation, you may want to pretty print your expression with colors and indents. <code>Expronicon</code> also provide some tools for this in <a href="reference/#Printings">Printings</a>.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="case/">Case Study »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 15 April 2021 19:43">Thursday 15 April 2021</span>. Using Julia version 1.6.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ :y</code></pre><h2 id="Code-Generation-Functions"><a class="docs-heading-anchor" href="#Code-Generation-Functions">Code Generation Functions</a><a id="Code-Generation-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Code-Generation-Functions" title="Permalink"></a></h2><p>The code generation functions help you generate other target expressions, e.g <a href="reference/#Expronicon.codegen_ast-Tuple{Any}"><code>codegen_ast</code></a> generates the Julia AST object <code>Expr</code>. All the syntax type can use <a href="reference/#Expronicon.codegen_ast-Tuple{Any}"><code>codegen_ast</code></a> to generate the corresponding <code>Expr</code>, there are also some other functions start with name <code>codegen</code> in <a href="reference/#CodeGen">CodeGen</a> you may find useful.</p><h2 id="Pretty-Printing"><a class="docs-heading-anchor" href="#Pretty-Printing">Pretty Printing</a><a id="Pretty-Printing-1"></a><a class="docs-heading-anchor-permalink" href="#Pretty-Printing" title="Permalink"></a></h2><p>Sometimes, when you define your own intermediate representation, you may want to pretty print your expression with colors and indents. <code>Expronicon</code> also provide some tools for this in <a href="reference/#Printings">Printings</a>.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="case/">Case Study »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Friday 16 April 2021 20:19">Friday 16 April 2021</span>. Using Julia version 1.6.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
