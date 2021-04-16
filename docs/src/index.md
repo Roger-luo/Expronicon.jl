@@ -177,22 +177,22 @@ access all the conditions. Thus [`JLIfElse`](@ref) allows you to access/manipula
 
 ```@repl jlfn
 jl = JLIfElse(ex);
-jl.map
+jl
 jl.otherwise
 ```
 
 you can access to each condition and its action using the condition as your key
 
 ```@repl jlfn
-jl.map[:(x > 100)]
+jl[:(x > 100)]
 ```
 
 similarly, we can easily construct a `JLIfElse`
 
 ```@example jlfn
 jl = JLIfElse()
-jl.map[:(x > 100)] = :(x + 1)
-jl.map[:(x > 80)] = :(x + 2)
+jl[:(x > 100)] = :(x + 1)
+jl[:(x > 80)] = :(x + 2)
 jl.otherwise = :(error("some error msg"))
 jl
 show_ascii(jl) # hide

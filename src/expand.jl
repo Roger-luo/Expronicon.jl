@@ -71,6 +71,12 @@ function expand_macro(m::Module, ex; macronames=[])
     end
 end
 
+"""
+    ExpandOptions(;kw...)
+
+An option type to specify available options for [`expand_project`](@ref).
+See [`expand_project`](@ref) documentation for detailed kwargs.
+"""
 Base.@kwdef struct ExpandOptions
     mod::Module
     macronames::Vector{Any}=[]
@@ -181,10 +187,34 @@ function expand_file(src, dst, options::ExpandOptions)
     end
 end
 
+"""
+    expand_project(; kw...)
+
+Expand a list of macros for a given Julia project.
+
+# Kwargs
+
+- `mod::Module`: **require** package module to expand.
+- `macronames::Vector{Any}`: macro names to expand, should be either a `Symbol` or `GlobalRef`.
+- `project::Symbol`: Project name, default is `nameof(mod)`.
+- `project_toml::String`: `Project.toml` name, should be either `Project.toml` or `JuliaProject.toml`.
+- `postfix::Symbol`: the generated project postfix, default is `:Lite`.
+- `build_dir::String`: the build directory to put generated proejct into.
+- `uuid::String`: **require** generated project UUID.
+- `exclude_src::Vector{String}`: list of file to exclude inside `<project>/src/`.
+- `exclude_paths::Vector{String}`: misc paths to exclude inside `<project>`.
+- `exclude_modules::Vector{Symbol}`: modules/packages to remove.
+- `src_dont_touch::Vector{String}`: list files in `<project>/src/` that should not be manipulated but direct copied.
+"""
 function expand_project(; kw...)
     expand_project(ExpandOptions(;kw...))
 end
 
+"""
+    expand_project(options::ExpandOptions)
+
+Expand given macros in a Julia project with given `options`.
+"""
 function expand_project(options::ExpandOptions)
     if Sys.iswindows()
         error("expand_project does not support windows")

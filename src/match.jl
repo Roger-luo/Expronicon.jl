@@ -8,6 +8,10 @@ export JLMatch, @syntax_pattern, codegen_match
 one to construct such expression by simply assign each code block
 to the corresponding pattern expression.
 
+!!! tip
+    `JLMatch` is not available in ExproniconLite since it depends
+    on MLStyle's pattern matching functionality.
+
 # Example
 
 One can construct a `MLStyle` pattern matching expression
@@ -184,6 +188,10 @@ end
 Generate a zero dependency match expression using MLStyle code generator,
 the syntax is identical to MLStyle.
 
+!!! tip
+    `codegen_match` is not available in ExproniconLite since it depends
+    on MLStyle's pattern matching functionality.
+
 # Example
 
 ```julia
@@ -213,6 +221,12 @@ end
 
 """
     @syntax_pattern <syntax type> <syntax checker>
+
+Bundle a syntax type as MLStyle pattern.
+
+!!! tip
+    this is not available in ExproniconLite since it depends
+    on MLStyle's pattern matching functionality.
 
 # Example
 
