@@ -29,7 +29,7 @@ export
     codegen_ast_struct_head,
     codegen_ast_struct_body,
     construct_method_plain,
-    construct_method_inferable,
+    construct_method_infer,
     struct_name_plain,
     struct_name_without_inferable,
     # x functions

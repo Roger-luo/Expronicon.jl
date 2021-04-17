@@ -223,7 +223,7 @@ end
     println(def)
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{S}; x = 1) where {N, T, S <: Foo}
+        function create(::Type{S}; x = 1) where {N, T, S <: Foo{N, T}}
             Foo1{N, T}(x)
         end
         function create(::Type{S}; x = 1) where {N, S <: Foo{N}}

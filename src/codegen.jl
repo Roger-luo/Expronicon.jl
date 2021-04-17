@@ -174,7 +174,7 @@ function codegen_ast_kwfn_plain(def, name = nothing)
     else
         @gensym T
         args = [:(::Type{$T}), ]
-        whereparams = [name_only.(def.typevars)..., :($T <: $(def.name))]
+        whereparams = [name_only.(def.typevars)..., :($T <: $struct_name)]
     end
 
     # do not generate kwfn if it's defined by the user
@@ -307,6 +307,7 @@ julia> struct_name_without_inferable(def; leading_inferable=false)
 function struct_name_without_inferable(def; leading_inferable::Bool=true)
     isempty(def.typevars) && return def.name
     required_typevars = uninferrable_typevars(def; leading_inferable=leading_inferable)
+    isempty(required_typevars) && return def.name
     return Expr(:curly, def.name, required_typevars...)
 end
 
