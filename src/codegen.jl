@@ -205,6 +205,8 @@ function codegen_ast_kwfn_infer(def, name = nothing)
     isempty(def.typevars) && return
     struct_name = struct_name_without_inferable(def)
     requires = uninferrable_typevars(def)
+    # all uninferrable, use plain constructor
+    length(requires) == length(def.typevars) && return
 
     if name === nothing # constructor method
         name = struct_name

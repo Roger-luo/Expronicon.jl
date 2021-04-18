@@ -291,6 +291,18 @@ end
             Foo3(; a = 1) = new(a)
         end
     end
+
+    def = @expr JLKwStruct struct Potts{Q}
+        L::Int
+        beta::Float64=1.0
+        neighbors::Neighbors = square_lattice_neighbors(L)
+    end
+
+    @test_expr codegen_ast_kwfn(def, :create) == quote
+        function create(::Type{S}; L, beta = 1.0, neighbors = square_lattice_neighbors(L)) where {Q, S <: Potts{Q}}
+            Potts{Q}(L, beta, neighbors)
+        end
+    end
 end
 
 @test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
