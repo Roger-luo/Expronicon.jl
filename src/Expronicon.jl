@@ -15,7 +15,10 @@ export
     split_function, split_function_head, split_struct,
     split_struct_name, split_ifelse, annotations,
     uninferrable_typevars, has_symbol,
-    is_literal, has_kwfn_constructor, has_plain_constructor,
+    is_literal, is_gensym,
+    alias_gensym,
+    has_kwfn_constructor,
+    has_plain_constructor,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     rm_annotations, rm_single_block, rm_nothing,

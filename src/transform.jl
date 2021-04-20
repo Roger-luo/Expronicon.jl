@@ -101,11 +101,29 @@ function rm_lineinfo(ex)
     end
 end
 
+Base.@kwdef struct PrettifyOptions
+    rm_lineinfo::Bool = true
+    flatten_blocks::Bool = true
+    rm_nothing::Bool = true
+    rm_single_block::Bool = true
+    alias_gensym::Bool = true
+end
+
 """
-    prettify(ex)
+    prettify(ex; kw...)
 
 Prettify given expression, remove all `LineNumberNode` and
 extra code blocks.
+
+# Options (Kwargs)
+
+All the options are `true` by default.
+
+- `rm_lineinfo`: remove `LineNumberNode`.
+- `flatten_blocks`: flatten `begin ... end` code blocks.
+- `rm_nothing`: remove `nothing` in the `begin ... end`.
+- `rm_single_block`: remove single `begin ... end`.
+- `alias_gensym`: replace `##<name>#<num>` with `<name>_<id>`.
 
 !!! tips
 
@@ -113,21 +131,26 @@ extra code blocks.
     the `macrocall` expression requires a `LineNumberNode`. See also
     [issues/#9](https://github.com/Roger-luo/Expronicon.jl/issues/9).
 """
-function prettify(ex)
+function prettify(ex; kw...)
+    prettify(ex, PrettifyOptions(;kw...))
+end
+
+function prettify(ex, options::PrettifyOptions)
     ex isa Expr || return ex
+    ex = options.alias_gensym ? alias_gensym(ex) : ex
     for _ in 1:10
-        curr = prettify_pass(ex)
+        curr = prettify_pass(ex, options)
         ex == curr && break
         ex = curr
     end
     return ex
 end
 
-function prettify_pass(ex)
-    ex = rm_lineinfo(ex)
-    ex = flatten_blocks(ex)
-    ex = rm_nothing(ex)
-    ex = rm_single_block(ex)
+function prettify_pass(ex, options::PrettifyOptions)
+    ex = options.rm_lineinfo ? rm_lineinfo(ex) : ex
+    ex = options.flatten_blocks ? flatten_blocks(ex) : ex
+    ex = options.rm_nothing ? rm_nothing(ex) : ex
+    ex = options.rm_single_block ? rm_single_block(ex) : ex
     return ex
 end
 
@@ -226,4 +249,32 @@ function rm_annotations(x)
     else
         return Expr(x.head, map(rm_annotations, x.args)...)
     end
+end
+
+"""
+    alias_gensym(ex)
+
+Replace gensym with `<name>_<id>`.
+
+!!! note
+    Borrowed from [MacroTools](https://github.com/FluxML/MacroTools.jl).
+"""
+alias_gensym(ex) = alias_gensym!(Dict{Symbol, Symbol}(), Dict{Symbol, Int}(), ex)
+
+function alias_gensym!(d::Dict{Symbol, Symbol}, count::Dict{Symbol, Int}, ex)
+    if is_gensym(ex)
+        haskey(d, ex) && return d[ex]
+        name = Symbol(gensym_name(ex))
+        id = get(count, name, 0) + 1
+        d[ex] = Symbol(name, :_, id)
+        count[name] = id
+        return d[ex]
+    end
+
+    ex isa Expr || return ex
+    args = map(ex.args) do x
+        alias_gensym!(d, count, x)
+    end
+
+    return Expr(ex.head, args...)
 end

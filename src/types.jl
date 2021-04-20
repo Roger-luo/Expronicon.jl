@@ -74,13 +74,13 @@ julia> codegen_ast(jl)
 mutable struct JLFunction <: JLExpr
     head::Symbol  # function def must have a head
     name::Any  # name can be nothing, Symbol, Expr
-    args::Vector{Any} 
+    args::Vector{Any}
     kwargs::Maybe{Vector{Any}}
     rettype::Any
     whereparams::Maybe{Vector{Any}} 
     body::Any
-    line::Maybe{LineNumberNode} 
-    doc::Maybe{String} 
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
 end
 
 function JLFunction(;
