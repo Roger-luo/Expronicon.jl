@@ -202,6 +202,10 @@ end
 end
 
 @testset "JLKwStruct" begin
+    def = @expr JLKwStruct struct Trait end
+    @test_expr prettify(codegen_ast_kwfn(def)) == quote
+    end
+
     @test JLKwField(;name=:x).name === :x
     @test JLKwField(;name=:x).type === Any
     @test JLKwStruct(;name=:Foo).name === :Foo
