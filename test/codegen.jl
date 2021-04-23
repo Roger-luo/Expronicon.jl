@@ -13,5 +13,6 @@ using Expronicon
     @test_expr xmap(:f, :coll) == :($Base.map(f, coll))
     @test_expr xmapreduce(:f, :op, :coll) == :($Base.mapreduce(f, op, coll))
     @test_expr xiterate(:it) == :($Base.iterate(it))
-    @test_expr xiterate(:it, :st) == :($Base.iterate(it, st))        
+    @test_expr xiterate(:it, :st) == :($Base.iterate(it, st))
+    @test_expr xgetindex(:locs, 1) == :($Base.getindex(locs, 1))
 end
