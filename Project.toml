@@ -1,7 +1,7 @@
 name = "Expronicon"
 uuid = "6b7a57c9-7cc1-4fdf-b7f5-e857abae3636"
 authors = ["Roger-luo <rogerluo.rl18@gmail.com> and contributors"]
-version = "0.6.5"
+version = "0.6.6"
 
 [deps]
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
