@@ -397,7 +397,7 @@ function codegen_ast_struct_body(def)
     end
 
     body = flatten_blocks(body)
-    append!(body.args, def.misc)
+    def.misc === nothing || append!(body.args, def.misc)
     return body
 end
 
