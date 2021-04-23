@@ -307,6 +307,16 @@ end
             Potts{Q}(L, beta, neighbors)
         end
     end
+
+    def = @expr JLKwStruct struct Flatten
+        x = 1
+        begin
+            y = 1
+        end
+    end
+
+    @test def.fields[1].name === :x
+    @test def.fields[2].name === :y
 end
 
 @test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."

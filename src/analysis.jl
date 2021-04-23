@@ -563,6 +563,8 @@ function JLStruct(ex::Expr)
     fields, constructors, misc = JLField[], JLFunction[], []
     field_doc, field_line = nothing, nothing
 
+    body = flatten_blocks(body)
+
     for each in body.args
         @switch each begin
             @case :($name::$type)
@@ -610,7 +612,7 @@ function JLKwStruct(ex::Expr, typealias=nothing)
 
     fields, constructors, misc = JLKwField[], JLFunction[], []
     field_doc, field_line = nothing, nothing
-
+    body = flatten_blocks(body)
     for each in body.args
         @switch each begin
             @case :($name::$type = $default)
