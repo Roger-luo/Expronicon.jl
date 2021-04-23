@@ -497,6 +497,12 @@ function xcall(m::Module, name::Symbol, args...; kw...)
     xcall(Expr(:., m, QuoteNode(name)), args...; kw...)
 end
 
+"""
+    xgetindex(collection, key...)
+
+Create a function call expression to `Base.getindex`.
+"""
+xgetindex(coll, key...) = xcall(Base, :getindex, coll, key...)
 
 """
     xpush(collection, items...)

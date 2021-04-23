@@ -40,6 +40,7 @@ export
     xnamedtuple,
     xcall,
     xpush,
+    xgetindex,
     xfirst,
     xlast,
     xprint,
