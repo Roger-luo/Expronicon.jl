@@ -287,3 +287,26 @@ the corresponding `Expr`, there are also some other functions start with name `c
 Sometimes, when you define your own intermediate representation, you may want to pretty print
 your expression with colors and indents. `Expronicon` also provide some tools for this in
 [Printings](@ref).
+
+## Common Gotchas
+
+Use `&` operator inside the pattern if you are referring a specific value, e.g
+
+```julia
+stmt = Expr(:call, GlobalRef(Base, :sin), QuoteNode(1))
+@match stmt begin
+    Expr(:call, GlobalRef(Core, name), args...) => true
+    _ => false
+end # true
+```
+
+without `&`, `@match` may treat `Core` as a variable, thus the first pattern
+matches and return `true`, which is incorrect, if we add `&`, we have the expected
+behaviour
+
+```julia
+@match stmt begin
+    Expr(:call, GlobalRef(&Core, name), args...) => true
+    _ => false
+end # false
+```
