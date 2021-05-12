@@ -6,6 +6,7 @@ using Expronicon
     @test name_only(:(T <: Int)) == :T
     @test name_only(:(Foo{T} where T)) == :Foo
     @test name_only(:(Foo{T})) == :Foo
+    @test name_only(:(module Foo end)) == :Foo
     @test_throws ErrorException name_only(Expr(:fake))
 end
 
