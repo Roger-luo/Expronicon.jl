@@ -437,11 +437,27 @@ function codegen_ast_struct(def)
     return codegen_ast_docstring(def, ex)
 end
 
-function codegen_ast(def::Union{JLField, JLKwField})
+function codegen_ast(def::JLField)
     return if def.type === Any
         def.name
     else
         :($(def.name)::$(def.type))
+    end
+end
+
+function codegen_ast(def::JLKwField)
+    return if def.type === Any
+        if def.default isa NoDefault
+            def.name
+        else
+            :($(def.name) = $(def.default))
+        end
+    else
+        if def.default isa NoDefault
+            :($(def.name)::$(def.type))
+        else
+            :($(def.name)::$(def.type) = $(def.default))
+        end
     end
 end
 
