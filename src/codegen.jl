@@ -75,7 +75,7 @@ function codegen_ast(fn::JLFunction)
         end
 
         if fn.kwargs !== nothing
-            push!(call.args, Expr(:parameters, fn.kwargs...))
+            push!(call.args, Expr(:parameters, codegen_ast.(fn.kwargs, from_function=true)...))
         end
         append!(call.args, fn.args)
     end
@@ -445,15 +445,15 @@ function codegen_ast(def::JLField)
     end
 end
 
-function codegen_ast(def::JLKwField)
+function codegen_ast(def::JLKwField; from_function=false)
     return if def.type === Any
-        if def.default isa NoDefault
+        if def.default isa NoDefault || !from_function
             def.name
         else
             Expr(:kw, def.name, def.default)
         end
     else
-        if def.default isa NoDefault
+        if def.default isa NoDefault || !from_function
             :($(def.name)::$(def.type))
         else
             a = :($(def.name)::$(def.type))
