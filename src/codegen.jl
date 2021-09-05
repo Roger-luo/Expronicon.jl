@@ -450,13 +450,14 @@ function codegen_ast(def::JLKwField)
         if def.default isa NoDefault
             def.name
         else
-            :($(def.name) = $(def.default))
+            Expr(:kw, def.name, def.default)
         end
     else
         if def.default isa NoDefault
             :($(def.name)::$(def.type))
         else
-            :($(def.name)::$(def.type) = $(def.default))
+            a = :($(def.name)::$(def.type))
+            Expr(:kw, a, def.default)
         end
     end
 end
