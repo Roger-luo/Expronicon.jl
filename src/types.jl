@@ -26,6 +26,37 @@ abstract type JLExpr end
     JLFunction <: JLExpr
 
 Type describes a Julia function declaration expression.
+"""
+mutable struct JLFunction <: JLExpr
+    head::Symbol  # function def must have a head
+    name::Any  # name can be nothing, Symbol, Expr
+    args::Vector{Any}
+    kwargs::Maybe{Vector{Any}}
+    rettype::Any
+    whereparams::Maybe{Vector{Any}} 
+    body::Any
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
+end
+
+"""
+    JLFunction(;kw...)
+
+Create the syntax object `JLFunction` that corresponding to a Julia function expression.
+
+# Keyword Arguments
+
+- `head`: optional, function head, can be `:function`, `:(=)` or `:(->)`.
+- `name`: optional, function name, can has type `Nothing`, `Symbol` or `Expr`, default is `nothing`.
+- `args`: optional, function arguments, a list of `Expr` or `Symbol`.
+- `kwargs`: optional, function keyword arguments, a list of `Expr(:kw, name, default)`.
+- `rettype`: optional, the explicit return type of a function,
+    can be a `Type`, `Symbol`, `Expr` or just `nothing`, default is `nothing`.
+- `whereparams`: optional, type variables, can be a list of `Type`,
+    `Expr` or `nothing`, default is `nothing`.
+- `body`: optional, function body, an `Expr`, default is `Expr(:block)`.
+- `line`: a `LineNumberNode` of the function definition.
+- `doc`: the docstring of this function definition.
 
 # Example
 
@@ -71,18 +102,6 @@ julia> codegen_ast(jl)
   end)
 ```
 """
-mutable struct JLFunction <: JLExpr
-    head::Symbol  # function def must have a head
-    name::Any  # name can be nothing, Symbol, Expr
-    args::Vector{Any}
-    kwargs::Maybe{Vector{Any}}
-    rettype::Any
-    whereparams::Maybe{Vector{Any}} 
-    body::Any
-    line::Maybe{LineNumberNode}
-    doc::Maybe{String}
-end
-
 function JLFunction(;
         head=:function, name=nothing,
         args=[], kwargs=nothing,
@@ -90,6 +109,15 @@ function JLFunction(;
         whereparams=nothing, body=Expr(:block),
         line=nothing, doc=nothing
     )
+    head in [:function, :(=), :(->)] ||
+        throw(ArgumentError("function head can only take `:function`, `:(=)` or `:(->)`"))
+    name isa Union{Nothing, Symbol, Expr} ||
+        throw(ArgumentError("function name can only be a `Nothing`, `Symbol` or `Expr`, got a $(typeof(name))."))
+    rettype isa Union{Nothing, Symbol, Expr, Type} ||
+        throw(ArgumentError("function rettype can only be a `Type`, `Symbol`, `Expr` or just `nothing`, got a $(typeof(rettype))."))
+    line isa Maybe{LineNumberNode} ||
+        throw(ArgumentError("function line must be a `LineNumberNode` or just `nothing`, got a $(typeof(line))."))
+
     JLFunction(head, name, args, kwargs, rettype, whereparams, body, line, doc)
 end
 
