@@ -96,6 +96,26 @@ end
     ))
 end
 
+@testset "JLKwField" begin
+    kw = JLKwField(;name=:arg)
+    @test codegen_ast(kw) == :arg
+
+    kw = JLKwField(;name=:arg, type=:Int)
+    @test codegen_ast(kw) == :(arg::Int)
+
+    kw = JLKwField(;name=:arg, default=10)
+    @test codegen_ast(kw; from_function=true) == :($(Expr(:kw, :arg, 10)))
+
+    kw = JLKwField(;name=:arg, type=:Int, default=10)
+    @test codegen_ast(kw; from_function=true) == :($(Expr(:kw, :(arg::Int), 10)))
+
+    kw = JLKwField(;name=:arg, default=10)
+    @test codegen_ast(kw; from_function=false) == :(arg)
+
+    kw = JLKwField(;name=:arg, type=:Int, default=10)
+    @test codegen_ast(kw; from_function=false) == :(arg::Int)
+end
+
 @testset "JLFunction(ex)" begin
     jlfn = JLFunction()
     @test jlfn.name === nothing
