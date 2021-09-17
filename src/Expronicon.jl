@@ -13,7 +13,7 @@ export
     AnalysisError, is_function, is_kw_function, is_struct,
     is_ifelse, is_for, is_field, is_field_default,
     split_function, split_function_head, split_struct,
-    split_struct_name, split_ifelse, annotations,
+    split_struct_name, split_ifelse,
     uninferrable_typevars, has_symbol,
     is_literal, is_gensym,
     alias_gensym,
@@ -31,8 +31,6 @@ export
     codegen_ast_struct,
     codegen_ast_struct_head,
     codegen_ast_struct_body,
-    construct_method_plain,
-    construct_method_infer,
     struct_name_plain,
     struct_name_without_inferable,
     # x functions
