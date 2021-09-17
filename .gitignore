@@ -11,3 +11,4 @@ docs/src/assets/indigo.css
 .vscode
 lcov.info
 build/
+/test/Manifest.toml

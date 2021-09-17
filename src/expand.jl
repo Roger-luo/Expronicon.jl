@@ -273,11 +273,16 @@ function expand_project(options::ExpandOptions)
     d = TOML.parsefile(joinpath(project_dir, options.project_toml))
     d["name"] = string(options.project, options.postfix)
     d["uuid"] = options.uuid
+    target = get!(d, "targets", Dict("test"=>[]))
+    test_target = get!(target, "test", String[])
 
     # NOTE:
     # we don't need to care about test deps
     for each in options.exclude_modules
         package = string(each)
+        extra = get!(d, "extras", Dict{String, String}())
+        extra[package] = d["deps"][package]
+        push!(test_target, package)
         delete!(d["deps"], package)
         delete!(d["compat"], package)
     end
