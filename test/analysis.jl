@@ -10,6 +10,7 @@ end
     @test is_datatype_expr(:name)
     @test is_datatype_expr(GlobalRef(Main, :name))
     @test is_datatype_expr(:(Main.Reflected.OptionA))
+    @test is_datatype_expr(Expr(:curly, :(Main.Reflected.OptionC), :(Core.Int64)))
     @test is_datatype_expr(:(struct Foo end)) == false
     @test is_datatype_expr(:(Foo{T} where T)) == false
 end

@@ -384,6 +384,7 @@ function is_datatype_expr(@nospecialize(ex))
         ::GlobalRef => true
         :($_{$_...}) => true
         :($_.$b) => is_datatype_expr(b)
+        Expr(:curly, args...) => all(is_datatype_expr, args)
         _ => false
     end
 end
