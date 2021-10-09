@@ -6,6 +6,14 @@ using Expronicon
     @test is_function(:(x -> 2x))
 end
 
+@testset "is_datatype_expr" begin
+    @test is_datatype_expr(:name)
+    @test is_datatype_expr(GlobalRef(Main, :name))
+    @test is_datatype_expr(:(Main.Reflected.OptionA))
+    @test is_datatype_expr(:(struct Foo end)) == false
+    @test is_datatype_expr(:(Foo{T} where T)) == false
+end
+
 @testset "uninferrable_typevars" begin
     def = @expr JLKwStruct struct Inferable1{T}
         x::Constaint{T, <(2)}

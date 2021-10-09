@@ -373,6 +373,22 @@ function is_field_default(@nospecialize(ex))
 end
 
 """
+    is_datatype_expr(ex)
+
+Check if `ex` is an expression for a concrete `DataType`, e.g
+`where` is not allowed in the expression.
+"""
+function is_datatype_expr(@nospecialize(ex))
+    @match ex begin
+        ::Symbol => true
+        ::GlobalRef => true
+        :($_{$_...}) => true
+        :($_.$b) => is_datatype_expr(b)
+        _ => false
+    end
+end
+
+"""
     split_doc(ex::Expr) -> line, doc, expr
 
 Split doc string from given expression.

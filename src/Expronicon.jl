@@ -11,7 +11,7 @@ export
     # analysis
     @expr, @test_expr, compare_expr, compare_vars,
     AnalysisError, is_function, is_kw_function, is_struct,
-    is_ifelse, is_for, is_field, is_field_default,
+    is_ifelse, is_for, is_field, is_field_default, is_datatype_expr,
     split_function, split_function_head, split_struct,
     split_struct_name, split_ifelse,
     uninferrable_typevars, has_symbol,
