@@ -1,5 +1,13 @@
 const Maybe{T} = Union{Nothing, T}
 
+const __DEFAULT_KWARG_DOC__ = """
+All the following fields are valid as keyword arguments `kw` in the constructor, and can
+be access via `<object>.<field>`.
+"""
+
+const __DEF_DOC__ = "`doc::String`: the docstring of this definition."
+const __LINENO_DOC__ = "`line::LineNumberNode`: a `LineNumberNode` to indicate the line information."
+
 """
     NoDefault
 
@@ -23,28 +31,16 @@ Abstract type for Julia syntax type.
 abstract type JLExpr end
 
 """
-    JLFunction <: JLExpr
-
-Type describes a Julia function declaration expression.
-"""
-mutable struct JLFunction <: JLExpr
-    head::Symbol  # function def must have a head
-    name::Any  # name can be nothing, Symbol, Expr
-    args::Vector{Any}
-    kwargs::Maybe{Vector{Any}}
-    rettype::Any
-    whereparams::Maybe{Vector{Any}} 
-    body::Any
-    line::Maybe{LineNumberNode}
-    doc::Maybe{String}
-end
-
-"""
+    mutable struct JLFunction <: JLExpr
     JLFunction(;kw...)
 
-Create the syntax object `JLFunction` that corresponding to a Julia function expression.
+Type describes a Julia function declaration expression.
 
-# Keyword Arguments
+# Fields and Keyword Arguments
+
+$__DEFAULT_KWARG_DOC__
+The only required keyword argument for the constructor
+is `name`, the rest are all optional.
 
 - `head`: optional, function head, can be `:function`, `:(=)` or `:(->)`.
 - `name`: optional, function name, can has type `Nothing`, `Symbol` or `Expr`, default is `nothing`.
@@ -55,8 +51,8 @@ Create the syntax object `JLFunction` that corresponding to a Julia function exp
 - `whereparams`: optional, type variables, can be a list of `Type`,
     `Expr` or `nothing`, default is `nothing`.
 - `body`: optional, function body, an `Expr`, default is `Expr(:block)`.
-- `line`: a `LineNumberNode` of the function definition.
-- `doc`: the docstring of this function definition.
+- $__LINENO_DOC__
+- $__DEF_DOC__
 
 # Example
 
@@ -102,6 +98,18 @@ julia> codegen_ast(jl)
   end)
 ```
 """
+mutable struct JLFunction <: JLExpr
+    head::Symbol  # function def must have a head
+    name::Any  # name can be nothing, Symbol, Expr
+    args::Vector{Any}
+    kwargs::Maybe{Vector{Any}}
+    rettype::Any
+    whereparams::Maybe{Vector{Any}} 
+    body::Any
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
+end
+
 function JLFunction(;
         head=:function, name=nothing,
         args=[], kwargs=nothing,
@@ -122,9 +130,21 @@ function JLFunction(;
 end
 
 """
-    JLField <: JLExpr
+    mutable struct JLField <: JLExpr
+    JLField(;kw...)
 
 Type describes a Julia field in a Julia struct.
+
+# Fields and Keyword Arguments
+
+$__DEFAULT_KWARG_DOC__
+The only required keyword argument for the constructor
+is `name`, the rest are all optional.
+
+- `name::Symbol`: the name of the field.
+- `type`: the type of the field.
+- $__LINENO_DOC__
+- $__DEF_DOC__
 """
 mutable struct JLField <: JLExpr
     name::Symbol
@@ -133,19 +153,30 @@ mutable struct JLField <: JLExpr
     line::Maybe{LineNumberNode}
 end
 
-"""
-    JLField(;name, type=Any, doc=nothing, line=nothing)
-
-Create a `JLField` instance.
-"""
 function JLField(;name, type=Any, doc=nothing, line=nothing)
     JLField(name, type, doc, line)
 end
 
 """
-    JLKwField <: JLExpr
+    mutable struct JLKwField <: JLExpr
 
 Type describes a Julia field that can have a default value in a Julia struct.
+
+    JLKwField(;kw...)
+
+Create a `JLKwField` instance.
+
+# Fields and Keyword Arguments
+
+$__DEFAULT_KWARG_DOC__
+The only required keyword argument for the constructor
+is `name`, the rest are all optional.
+
+- `name::Symbol`: the name of the field.
+- `type`: the type of the field.
+- `default`: default value of the field, default is [`no_default`](@ref).
+- $__LINENO_DOC__
+- $__DEF_DOC__
 """
 mutable struct JLKwField <: JLExpr
     name::Symbol
@@ -155,19 +186,35 @@ mutable struct JLKwField <: JLExpr
     default::Any
 end
 
-"""
-    JLKwField(;kw...)
-
-Create a `JLKwField` instance.
-"""
 function JLKwField(;name, type=Any, doc=nothing, line=nothing, default=no_default)
     JLKwField(name, type, doc, line, default)
 end
 
 """
-    JLStruct <: JLExpr
+    mutable struct JLStruct <: JLExpr
 
 Type describes a Julia struct.
+
+    JLStruct(;kw...)
+
+Create a `JLStruct` instance.
+
+# Available Fields and Keyword Arguments
+
+$__DEFAULT_KWARG_DOC__
+The only required keyword argument for the constructor
+is `name`, the rest are all optional.
+
+- `name::Symbol`: name of the struct, this is the only required keyword argument.
+- `ismutable::Bool`: if the struct definition is mutable.
+- `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
+- `supertype`: supertype of the struct definition.
+- `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](@ref).
+- `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](@ref).
+- `line::LineNumberNode`: a `LineNumberNode` to indicate the definition position for error report etc.
+- `doc::String`: documentation string of the struct.
+- `misc`: other things that happens inside the struct body, by definition this will
+    just fall through and is equivalent to eval them outside the struct body.
 
 # Example
 
@@ -220,28 +267,6 @@ mutable struct JLStruct <: JLExpr
     misc::Any
 end
 
-"""
-    JLStruct(;kw...)
-
-Create a `JLStruct` instance.
-
-# Available Fields and Keyword Arguments
-
-All the following fields are valid as keyword arguments `kw` in the constructor, and can
-be access via `<JLStruct object>.<field>`. The only required keyword argument for the constructor
-is `name`, the rest are all optional.
-
-- `name::Symbol`: name of the struct, this is the only required keyword argument.
-- `ismutable::Bool`: if the struct definition is mutable.
-- `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
-- `supertype`: supertype of the struct definition.
-- `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](@ref).
-- `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](@ref).
-- `line::LineNumberNode`: a `LineNumberNode` to indicate the definition position for error report etc.
-- `doc::String`: documentation string of the struct.
-- `misc`: other things that happens inside the struct body, by definition this will
-    just fall through and is equivalent to eval them outside the struct body.
-"""
 function JLStruct(;
     name::Symbol, ismutable::Bool=false,
     typevars=[], supertype=nothing,
@@ -251,34 +276,17 @@ function JLStruct(;
 end
 
 """
-    JLKwStruct <: JLExpr
-
-Type describes a Julia struct that allows keyword definition of defaults.
-"""
-mutable struct JLKwStruct <: JLExpr
-    name::Symbol
-    typealias::Maybe{String}
-    ismutable::Bool
-    typevars::Vector{Any}
-    supertype::Any
-    fields::Vector{JLKwField}
-    constructors::Vector{JLFunction}
-    line::Maybe{LineNumberNode}
-    doc::Maybe{String}
-    misc::Any
-end
-
-"""
+    mutable struct JLKwStruct <: JLExpr
     JLKwStruct(;kw...)
 
-Create a `JLKwStruct` instance. This syntax is similar to [`JLStruct`](@ref) except
+Type describes a Julia struct that allows keyword definition of defaults.
+This syntax is similar to [`JLStruct`](@ref) except
 the the fields are of type [`JLKwField`](@ref).
 
+# Fields and Keyword Arguments
 
-# Available Fields and Keyword Arguments
-
-All the following fields are valid as keyword arguments `kw` in the constructor, and can
-be access via `<JLKwStruct object>.<field>`. The only required keyword argument for the constructor
+$__DEFAULT_KWARG_DOC__
+The only required keyword argument for the constructor
 is `name`, the rest are all optional.
 
 - `name::Symbol`: name of the struct, this is the only required keyword argument.
@@ -294,6 +302,19 @@ is `name`, the rest are all optional.
 - `misc`: other things that happens inside the struct body, by definition this will
     just fall through and is equivalent to eval them outside the struct body.
 """
+mutable struct JLKwStruct <: JLExpr
+    name::Symbol
+    typealias::Maybe{String}
+    ismutable::Bool
+    typevars::Vector{Any}
+    supertype::Any
+    fields::Vector{JLKwField}
+    constructors::Vector{JLFunction}
+    line::Maybe{LineNumberNode}
+    doc::Maybe{String}
+    misc::Any
+end
+
 function JLKwStruct(;name::Symbol, typealias::Maybe{String}=nothing,
     ismutable::Bool=false, typevars=[], supertype=nothing,
     fields=JLKwField[], constructors=JLFunction[],
@@ -303,9 +324,20 @@ end
 
 """
     JLIfElse <: JLExpr
+    JLIfElse(;kw...)
 
 `JLIfElse` describes a Julia `if ... elseif ... else ... end` expression. It allows one to easily construct
 such expression by inserting condition and code block via a map.
+
+# Fields and Keyword Arguments
+
+$__DEFAULT_KWARG_DOC__
+The only required keyword argument for the constructor
+is `name`, the rest are all optional.
+
+- `conds::Vector{Any}`: expression for the conditions.
+- `stmts::Vector{Any}`: expression for the statements for corresponding condition.
+- `otherwise`: the `else` body.
 
 # Example
 
@@ -357,12 +389,7 @@ mutable struct JLIfElse <: JLExpr
     otherwise::Any
 end
 
-"""
-    JLIfElse()
-
-Create an emptry `ifelse` syntax type instance.
-"""
-JLIfElse() = JLIfElse([], [], nothing)
+JLIfElse(;conds=[], stmts=[], otherwise=nothing) = JLIfElse(conds, stmts, otherwise)
 
 function Base.getindex(jl::JLIfElse, cond)
     idx = findfirst(jl.conds) do x
