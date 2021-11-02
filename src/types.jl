@@ -282,6 +282,8 @@ be access via `<JLKwStruct object>.<field>`. The only required keyword argument 
 is `name`, the rest are all optional.
 
 - `name::Symbol`: name of the struct, this is the only required keyword argument.
+- `typealias::String`: an alias of the [`JLKwStruct`](@ref),
+    see also the `@option` macro in [Configurations.jl](https://github.com/Roger-luo/Configurations.jl).
 - `ismutable::Bool`: if the struct definition is mutable.
 - `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
 - `supertype`: supertype of the struct definition.
@@ -292,8 +294,8 @@ is `name`, the rest are all optional.
 - `misc`: other things that happens inside the struct body, by definition this will
     just fall through and is equivalent to eval them outside the struct body.
 """
-function JLKwStruct(;name, typealias=nothing,
-    ismutable=false, typevars=[], supertype=nothing,
+function JLKwStruct(;name::Symbol, typealias::Maybe{String}=nothing,
+    ismutable::Bool=false, typevars=[], supertype=nothing,
     fields=JLKwField[], constructors=JLFunction[],
     line=nothing, doc=nothing, misc=nothing)
     JLKwStruct(name, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
