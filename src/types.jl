@@ -224,9 +224,26 @@ end
     JLStruct(;kw...)
 
 Create a `JLStruct` instance.
+
+# Available Fields and Keyword Arguments
+
+All the following fields are valid as keyword arguments `kw` in the constructor, and can
+be access via `<JLStruct object>.<field>`. The only required keyword argument for the constructor
+is `name`, the rest are all optional.
+
+- `name::Symbol`: name of the struct, this is the only required keyword argument.
+- `ismutable::Bool`: if the struct definition is mutable.
+- `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
+- `supertype`: supertype of the struct definition.
+- `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](@ref).
+- `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](@ref).
+- `line::LineNumberNode`: a `LineNumberNode` to indicate the definition position for error report etc.
+- `doc::String`: documentation string of the struct.
+- `misc`: other things that happens inside the struct body, by definition this will
+    just fall through and is equivalent to eval them outside the struct body.
 """
 function JLStruct(;
-    name, ismutable=false,
+    name::Symbol, ismutable::Bool=false,
     typevars=[], supertype=nothing,
     fields=JLField[], constructors=JLFunction[],
     line=nothing, doc=nothing, misc=nothing)
@@ -254,11 +271,30 @@ end
 """
     JLKwStruct(;kw...)
 
-Create a `JLKwStruct` instance.
+Create a `JLKwStruct` instance. This syntax is similar to [`JLStruct`](@ref) except
+the the fields are of type [`JLKwField`](@ref).
+
+
+# Available Fields and Keyword Arguments
+
+All the following fields are valid as keyword arguments `kw` in the constructor, and can
+be access via `<JLKwStruct object>.<field>`. The only required keyword argument for the constructor
+is `name`, the rest are all optional.
+
+- `name::Symbol`: name of the struct, this is the only required keyword argument.
+- `ismutable::Bool`: if the struct definition is mutable.
+- `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
+- `supertype`: supertype of the struct definition.
+- `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](@ref).
+- `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](@ref).
+- `line::LineNumberNode`: a `LineNumberNode` to indicate the definition position for error report etc.
+- `doc::String`: documentation string of the struct.
+- `misc`: other things that happens inside the struct body, by definition this will
+    just fall through and is equivalent to eval them outside the struct body.
 """
 function JLKwStruct(;name, typealias=nothing,
     ismutable=false, typevars=[], supertype=nothing,
-    fields=JLField[], constructors=JLFunction[],
+    fields=JLKwField[], constructors=JLFunction[],
     line=nothing, doc=nothing, misc=nothing)
     JLKwStruct(name, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
 end
