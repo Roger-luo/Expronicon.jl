@@ -389,6 +389,34 @@ function is_datatype_expr(@nospecialize(ex))
     end
 end
 
+
+"""
+is_tuple(ex)
+
+Check if `ex` is a tuple expression, i.e. `:((a,b,c))`
+"""
+is_tuple(x) = Meta.isexpr(x, :tuple)
+
+"""
+is_splat(ex)
+
+Check if `ex` is a splat expression, i.e. `:(f(x)...)`
+"""
+is_splat(x) = Meta.isexpr(x, :(...))
+
+"""
+is_annot(ex)
+is_annot(ex, t)
+
+Check if `ex` is a type annotation expression. 
+If `t` is given, check if `ex` is a type annotation expression with type `t`, i.e. `ex::t`
+"""
+is_annot(ex) = Meta.isexpr(ex, :(::))
+is_annot(ex, t) = is_annot(ex) && x.args[2] == t
+is_annot(ex::JLField) = ex.type != Any
+is_annot(ex::JLField, t) = ex.type == t
+
+
 """
     split_doc(ex::Expr) -> line, doc, expr
 

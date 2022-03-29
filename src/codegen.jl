@@ -498,6 +498,27 @@ function xcall(m::Module, name::Symbol, args...; kw...)
 end
 
 """
+    xblock(x)
+
+Create a block expression around `x`.
+"""
+xblock(x) = Expr(:block, x)
+
+"""
+    xsplat(x)
+
+Create a splatting expression around `x`, i.e. `x...`.
+"""
+xsplat(x) = Expr(:(...), x)
+
+"""
+    xannot(x, t)
+
+Create a type annotation expression around `x` for type `t`, i.e. `x::t`.
+"""
+xannot(x, y) = Expr(:(::), x, y)
+
+"""
     xgetindex(collection, key...)
 
 Create a function call expression to `Base.getindex`.
