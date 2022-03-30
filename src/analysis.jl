@@ -405,16 +405,16 @@ Check if `ex` is a splat expression, i.e. `:(f(x)...)`
 is_splat(x) = Meta.isexpr(x, :(...))
 
 """
-is_annot(ex)
-is_annot(ex, t)
+is_annotation(ex)
+is_annotation(ex, t)
 
 Check if `ex` is a type annotation expression. 
 If `t` is given, check if `ex` is a type annotation expression with type `t`, i.e. `ex::t`
 """
-is_annot(ex) = Meta.isexpr(ex, :(::))
-is_annot(ex, t) = is_annot(ex) && x.args[2] == t
-is_annot(ex::JLField) = ex.type != Any
-is_annot(ex::JLField, t) = ex.type == t
+is_annotation(ex) = Meta.isexpr(ex, :(::))
+is_annotation(ex, t) = is_annotation(ex) && x.args[2] == t
+is_annotation(ex::JLField) = ex.type != Any
+is_annotation(ex::JLField, t) = ex.type == t
 
 
 """
