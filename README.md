@@ -7,7 +7,7 @@
 [![GitHub commits since tagged version](https://img.shields.io/github/commits-since/Roger-luo/Expronicon.jl/v0.6.10.svg)](https://Roger-luo.github.io/Expronicon.jl)
 [![Aqua QA](https://img.shields.io/badge/Aqua.jl-%F0%9F%8C%A2-aqua.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-Collective tools for metaprogramming on Julia Expr.
+Collective tools for metaprogramming on Julia Expr. See also [ExproniconLite](https://github.com/Roger-luo/ExproniconLite.jl)
 
 ## Installation
 
