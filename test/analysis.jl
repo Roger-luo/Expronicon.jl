@@ -367,3 +367,26 @@ end
     @test jl.vars == [:i]
     @test jl.iterators == [:(1:10)]
 end
+
+@testset "is_matrix_expr" begin
+    ex = @expr [1 2;3 4]
+    @test is_matrix_expr(ex) == true
+    ex = @expr [1 2 3 4]
+    @test is_matrix_expr(ex) == true
+
+    ex = @expr Float64[1 2;3 4]
+    @test is_matrix_expr(ex) == true
+    ex = @expr [1 2 3 4]
+    @test is_matrix_expr(ex) == true
+
+    # false case
+    for ex in [
+        @expr([1,2,3,4]),
+        @expr([1,2,3,4]),
+        @expr(Float64[1,2,3,4]),
+        @expr([1 2 ;;; 3 4 ;;; 4 5]),
+        @expr(Float64[1 2 ;;; 3 4 ;;; 4 5]),
+    ]
+        @test is_matrix_expr(ex) == false
+    end
+end

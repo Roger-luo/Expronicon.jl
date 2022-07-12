@@ -390,6 +390,30 @@ function is_datatype_expr(@nospecialize(ex))
 end
 
 """
+    is_matrix_expr(ex)
+
+Check if `ex` is an expression for a `Matrix`.
+"""
+function is_matrix_expr(@nospecialize(ex))
+    # row vector is also a Matrix
+    Meta.isexpr(ex, :hcat) && return true
+
+    # or it's a typed_vcat
+    if Meta.isexpr(ex, :typed_vcat)
+        args = ex.args[2:end]
+    elseif Meta.isexpr(ex, :vcat)
+        args = ex.args
+    else
+        return false
+    end
+
+    for row in args
+        Meta.isexpr(row, :row) || return false
+    end
+    return true
+end
+
+"""
     split_doc(ex::Expr) -> line, doc, expr
 
 Split doc string from given expression.
