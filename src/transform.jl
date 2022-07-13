@@ -84,6 +84,18 @@ function name_only(@nospecialize(ex))
 end
 
 """
+    annotations_only(ex)
+
+Return type annotations only. See also [`name_only`](@ref).
+"""
+function annotations_only(@nospecialize(ex))
+    ex isa Symbol && return :()
+    ex isa Expr || error("unsupported expression $ex")
+    Meta.isexpr(ex, :(::)) && return ex.args[end]
+    error("unsupported expression $ex")
+end
+
+"""
     rm_lineinfo(ex)
 
 Remove `LineNumberNode` in a given expression.
@@ -279,3 +291,60 @@ function alias_gensym!(d::Dict{Symbol, Symbol}, count::Dict{Symbol, Int}, ex)
 
     return Expr(ex.head, args...)
 end
+
+"""
+    expr_map(f, c...)
+
+Similar to `Base.map`, but expects `f` to return an expression,
+and will concanate these expression as a `Expr(:block, ...)`
+expression.
+
+# Example
+
+```jldoctest
+julia> expr_map(1:10, 2:11) do i,j
+           :(1 + \$i + \$j)
+       end
+quote
+    1 + 1 + 2
+    1 + 2 + 3
+    1 + 3 + 4
+    1 + 4 + 5
+    1 + 5 + 6
+    1 + 6 + 7
+    1 + 7 + 8
+    1 + 8 + 9
+    1 + 9 + 10
+    1 + 10 + 11
+end
+```
+"""
+function expr_map(f, c...)
+    ex = Expr(:block)
+    for args in zip(c...)
+        push!(ex.args, f(args...))
+    end
+    return ex
+end
+
+"""
+    nexprs(f, n::Int)
+
+Create `n` similar expressions by evaluating `f`.
+
+# Example
+
+```jldoctest
+julia> nexprs(5) do k
+           :(1 + \$k)
+       end
+quote
+    1 + 1
+    1 + 2
+    1 + 3
+    1 + 4
+    1 + 5
+end
+```
+"""
+nexprs(f, k::Int) = expr_map(f, 1:k)

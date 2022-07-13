@@ -41,4 +41,5 @@ end
     end
 end
 
+DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
 doctest(Expronicon)

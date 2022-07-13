@@ -110,3 +110,32 @@ end
     @test subtitute(:(x + 1), :x=>:y) == :(y + 1)
     @test subtitute(:(for i in 1:10;x += i;end), :x => :y) == :(for i in 1:10;y += i;end)
 end
+
+@testset "expr_map" begin
+    @test_expr expr_map(1:10, 2:11) do i,j
+        :(1 + $i + $j)
+    end == quote
+        1 + 1 + 2
+        1 + 2 + 3
+        1 + 3 + 4
+        1 + 4 + 5
+        1 + 5 + 6
+        1 + 6 + 7
+        1 + 7 + 8
+        1 + 8 + 9
+        1 + 9 + 10
+        1 + 10 + 11
+    end
+end
+
+@testset "nexprs" begin
+    @test_expr nexprs(5) do k
+        :(1 + $k)
+    end == quote
+        1 + 1
+        1 + 2
+        1 + 3
+        1 + 4
+        1 + 5
+    end
+end
