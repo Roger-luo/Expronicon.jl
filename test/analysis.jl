@@ -384,9 +384,18 @@ end
         @expr([1,2,3,4]),
         @expr([1,2,3,4]),
         @expr(Float64[1,2,3,4]),
+    ]
+        @test is_matrix_expr(ex) == false
+    end
+
+    for ex in [
         @expr([1 2 ;;; 3 4 ;;; 4 5]),
         @expr(Float64[1 2 ;;; 3 4 ;;; 4 5]),
     ]
-        @test is_matrix_expr(ex) == false
+        @static if VERSION > v"1.7-"
+            @test is_matrix_expr(ex) == false 
+        else
+            @test is_matrix_expr(ex) == true
+        end
     end
 end
