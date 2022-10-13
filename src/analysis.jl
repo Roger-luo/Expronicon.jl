@@ -776,3 +776,31 @@ function JLFor(ex::Expr)
     vars, itrs, body = split_forloop(ex)
     return JLFor(vars, itrs, body)
 end
+
+function Base.:(==)(lhs::JLKwField, rhs::JLKwField)
+    lhs.name === rhs.name || return false
+    compare_expr(lhs.type, rhs.type) || return false
+    return compare_expr(lhs.default, rhs.default)
+end
+
+# function Base.:(==)(lhs::JLFunction, rhs::JLFunction)
+#     lhs.name == rhs.name || return false
+#     mapreduce(&, lhs.args, rhs.args) do x, y
+#         return compare_expr(x, y)
+#     end || return false
+#     compare_maybe_list(lhs.kwargs, rhs.kwargs) || return false
+#     compare_maybe_list(lhs.whereparams, rhs.whereparams) || return false
+#     compare_expr(prettify(lhs.body), prettify(rhs.body)) || return false
+#     return true
+# end
+
+# function compare_maybe_list(lhs, rhs)
+#     @match (lhs, rhs) begin
+#         (::Vector, nothing) || (nothing, ::Vector) => false
+#         (::Vector, ::Vector) => mapreduce(&, lhs, rhs.kwargs) do x, y
+#             return compare_expr(x, y)
+#         end
+#         (nothing, nothing) => true
+#         _ => false
+#     end
+# end
