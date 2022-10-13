@@ -1,7 +1,7 @@
 using Test
 using MLStyle
 using Expronicon
-using Expronicon.ADT: ADTTypeDef, @adt, @type
+using Expronicon.ADT: ADTTypeDef, @adt, @type, adt_property_masks
 
 @enum Domain begin
     OP
@@ -80,6 +80,19 @@ end
 end
 
 t = subscript(;term=sym(name=:test), indices=[])
+
+@testset "test reflection" begin
+    @test adt_property_masks(sym) == (2, 3, 4)
+    @test adt_property_masks(subscript) == (2, 4, 5)
+    @test adt_property_masks(builtin) == (2, 4, 5)
+end
+
+@testset "test @type throw" begin
+    ex = @expr begin
+        struct wrong end
+    end
+    @test_throws ArgumentError ADTTypeDef(Main, ex)    
+end
 
 @testset "test patterns" begin
     t = subscript(;term=sym(name=:test), indices=[])
