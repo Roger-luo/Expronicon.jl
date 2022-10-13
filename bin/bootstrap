@@ -1,56 +1,75 @@
 #!/usr/bin/env bash
 #=
-exec julia --color=yes --startup-file=no -q --project -O0 "${BASH_SOURCE[0]}" "$@"
+exec julia --color=yes --compile=min --startup-file=no -q --project -O0 "${BASH_SOURCE[0]}" "$@"
 =#
 
 using Expronicon
 using LibGit2
 
-cd(dirname(dirname(pathof(Expronicon)))) do
-    rm("build"; force=true, recursive=true)
-    mkpath("build")
+const help_msg = """
+Boostrap CLI for Expronicon
 
-    cd("build") do
-        run(`ion clone ExproniconLite`)
+    boostrap [release]
+
+This CLI creates the package ExproniconLite that has zero dependency
+by expanding all MLStyle macros. if `release` is feeded it will use
+`ion` to release a new version for `ExproniconLite`.
+"""
+
+function main(ARGS=ARGS)
+    if "-h" in ARGS || "--help" in ARGS
+        println(help_msg)
+        return
     end
-    build_dir = joinpath("build", "ExproniconLite")
 
-    misc = map(splitpath.(String.(split(read(".gitignore", String))))) do xs
-        joinpath(xs...)
-    end
-
-    expand_project(;
-        mod=Expronicon,
-        build_dir=build_dir,
-        uuid="55351af7-c7e9-48d6-89ff-24e801d99491",
-        macronames=[Symbol("@match"), Symbol("@switch"), Symbol("@λ")],
-        exclude_src=["match.jl", "expand.jl", "patches.jl", "adt.jl"],
-        src_dont_touch=["types.jl", "codegen.jl"],
-        exclude_paths=[
-            "README.md",
-            joinpath("test", "match.jl"),
-            joinpath("test", "expand.jl"),
-            joinpath("test", "adt.jl"),
-            "generate.jl",
-            joinpath("docs", "Manifest.toml"),
-            joinpath("docs", "build"),
-            "Manifest.toml", "build",
-            ".git", "bin", ".vscode",
-            ".github",
-        ],
-        exclude_modules=[:TOML, :Pkg, :MLStyle]
-    )
-
-    if "release" in ARGS
-        cd(build_dir) do
-            if LibGit2.isdirty(LibGit2.GitRepo("."))
-                run(`git add .gitignore`)
-                run(`git add -A`)
-                run(`git commit -m"generated from Expronicon"`)
-                run(`git push origin master`)
-            end
-            run(`ion release current`)
+    cd(dirname(dirname(pathof(Expronicon)))) do
+        rm("build"; force=true, recursive=true)
+        mkpath("build")
+    
+        cd("build") do
+            run(`ion clone ExproniconLite`)
         end
-    end
-    # rm("build"; force=true, recursive=true)
-end # cd project
+        build_dir = joinpath("build", "ExproniconLite")
+    
+        misc = map(splitpath.(String.(split(read(".gitignore", String))))) do xs
+            joinpath(xs...)
+        end
+    
+        expand_project(;
+            mod=Expronicon,
+            build_dir=build_dir,
+            uuid="55351af7-c7e9-48d6-89ff-24e801d99491",
+            macronames=[Symbol("@match"), Symbol("@switch"), Symbol("@λ")],
+            exclude_src=["match.jl", "expand.jl", "patches.jl", "adt.jl"],
+            src_dont_touch=["types.jl", "codegen.jl"],
+            exclude_paths=[
+                "README.md",
+                joinpath("test", "match.jl"),
+                joinpath("test", "expand.jl"),
+                joinpath("test", "adt.jl"),
+                "generate.jl",
+                joinpath("docs", "Manifest.toml"),
+                joinpath("docs", "build"),
+                "Manifest.toml", "build",
+                ".git", "bin", ".vscode",
+                ".github",
+            ],
+            exclude_modules=[:TOML, :Pkg, :MLStyle]
+        )
+    
+        if "release" in ARGS
+            cd(build_dir) do
+                if LibGit2.isdirty(LibGit2.GitRepo("."))
+                    run(`git add .gitignore`)
+                    run(`git add -A`)
+                    run(`git commit -m"generated from Expronicon"`)
+                    run(`git push origin master`)
+                end
+                run(`ion release current`)
+            end
+        end
+        # rm("build"; force=true, recursive=true)
+    end # cd project    
+end
+
+main()
