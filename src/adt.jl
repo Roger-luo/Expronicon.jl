@@ -494,8 +494,8 @@ function compile_adt_pattern(t::Type, self, type_params, type_args, args)
         @case if length(args) == 0 end # kwargs pattern
             # skip
         @case if length(args) !== length(all_field_names) end
-            error("count of positional fields should be same as \
-            the fields: $(join(all_field_names, ", "))")
+            error("count of positional fields should be same as "*
+            "the fields: $(join(all_field_names, ", "))")
         @case _
     end
 
