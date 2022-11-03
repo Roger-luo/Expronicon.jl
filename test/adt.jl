@@ -3,6 +3,64 @@ using MLStyle
 using Expronicon
 using Expronicon.ADT: ADTTypeDef, @adt, @type, adt_property_masks
 
+@macroexpand @adt begin
+    
+    @type struct Term end
+    struct sym
+        value::Symbol
+    end
+
+    struct expr
+        head::Symbol
+        args::Vector{Any}
+    end
+end
+
+@adt Message begin
+    Quit
+    struct Move
+        x::Int32
+        y::Int32
+    end
+
+    Write(::String)
+    ChangeColor(::Int32, ::Int32, ::Int32)
+end
+
+struct Message
+    type::Int32
+    d1::Int32
+    d2::Int32
+    d4::Int32
+    d3::Ptr{Cvoid}
+end
+
+Write(s::String) = Message(2, 0, 0, 0, pointer(s))
+
+
+Quit = Message(QuitType, nothing, nothing, nothing)
+Move = Message(MoveType, 1, 2, nothing)
+Write = Message(WriteType, "Hello", nothing, nothing)
+
+
+x = expr(:+, Any[1, 2, 3])
+
+
+
+macroexpand(Main, :(@match x begin
+    ::Term.sym => 1
+    ::Term.expr => 0
+end); recursive=false)
+
+@match x begin
+    ::Term.sym => 1
+    ::Term.expr => 0
+end
+
+Term(type=expr, head=:+, args=Any[1, 2, 3])
+
+
+
 @enum Domain begin
     OP
     INDEX # operator index place holder
