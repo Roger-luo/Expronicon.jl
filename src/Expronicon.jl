@@ -62,6 +62,6 @@ include("codegen.jl")
 include("printing.jl")
 include("match.jl")
 include("expand.jl")
-include("adt.jl")
+include("adt/adt.jl")
 
 end
