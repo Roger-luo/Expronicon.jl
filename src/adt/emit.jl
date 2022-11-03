@@ -1,5 +1,6 @@
 struct EmitInfo
     typename::Symbol
+    ismutable::Bool
     fieldnames::Vector{Symbol}
     fieldtypes::Vector{Any}
     variant_masks::Dict{Variant, Vector{Int}} # variant masks
@@ -29,9 +30,9 @@ function guess_type(m::Module, ex)
     end
 end
 
-function EmitInfo(typename::Symbol)
+function EmitInfo(typename::Symbol, ismutable::Bool=false)
     return EmitInfo(
-        typename,
+        typename, ismutable,
         Symbol[], [],
         Dict{Variant, Vector{Int}}(),
         Dict{Variant, Vector{Any}}()
@@ -117,7 +118,8 @@ function scan_fields!(info::EmitInfo, def::ADTTypeDef)
 end
 
 function EmitInfo(def::ADTTypeDef)
-    info = EmitInfo(Symbol(def.name, "#Type"))
+    ismutable = any(x->x.ismutable, def.variants)
+    info = EmitInfo(Symbol(def.name, "#Type"), ismutable)
     guess_type!(info, def)
     scan_fields!(info, def)
     return info
@@ -225,8 +227,7 @@ end
 
 function emit_struct(def::ADTTypeDef, info::EmitInfo)
     def = JLStruct(;
-        name=def.name,
-        typevars=def.typevars,
+        def.name, def.typevars, info.ismutable,
         fields=map(info.fieldnames, info.fieldtypes) do name, type
             JLField(;name, type)
         end,

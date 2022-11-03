@@ -1,4 +1,5 @@
 tab(n) = " "^n
+splitlines(s::String) = split(s, '\n')
 
 function Base.show(io::IO, mime::MIME"text/plain", def::ADTTypeDef)
     printstyled(io, "@adt "; color=:cyan)
@@ -70,22 +71,52 @@ end
 function Base.show(io::IO, ::MIME"text/plain", info::EmitInfo)
     color = get(io, :color, false)
     println(io, "EmitInfo:")
-    println(io, tab(2), "Fields: ")
+    print(io, tab(2), "typename: ")
+    printstyled(io, info.typename; color=:cyan)
+    println(io)
+    print(io, tab(2), "ismutable: ")
+    printstyled(io, info.ismutable; color=:light_magenta)
+    println(io)
+    println(io, tab(2), "fields: ")
     for (name, type) in zip(info.fieldnames, info.fieldtypes)
-        println(io, tab(4), name, "::", type)
+        print(io, tab(4), name)
+        printstyled(io, "::"; color=:light_black)
+        printstyled(io, type; color=:cyan)
+        println(io)
     end
 
     println(io)
-    println(io, tab(2), "Variants:")
+    println(io, tab(2), "variants:")
 
     variants = sort(collect(keys(info.variant_masks)); by=x->x.name)
+
+    # find max line width
+    variant_lines_nocolor = map(variants) do variant
+        buf = IOBuffer()
+        show(IOContext(buf, :color=>false), MIME"text/plain"(), variant)
+        splitlines(String(take!(buf)))
+    end
+
+    max_line_width = maximum(variant_lines_nocolor) do lines
+        maximum(length, lines)
+    end
+
+    # then we need to split out the color again
     for (idx, variant) in enumerate(variants)
-        mask = info.variant_masks[variant]
+        # split the lines with color so we can insert the mask print
         buf = IOBuffer()
         show(IOContext(buf, :color=>color), MIME"text/plain"(), variant)
-        lines = split(String(take!(buf)), '\n')
+        lines = splitlines(String(take!(buf))) # lines with color
+        padding = max_line_width - length(variant_lines_nocolor[idx][1]) + 4
 
-        print(io, tab(4), lines[1], " => ", mask)
+        mask = info.variant_masks[variant]
+        print(io, tab(4), lines[1], tab(1))
+        printstyled(io, '-'^(padding-2); color=:light_black)
+
+        print(io, " [")
+        join(io, mask, ", ")
+        print(io, "]")
+        # don't print newline if last line
         if !(length(lines) == 1 && idx == length(variants))
             println(io)
         end
@@ -93,6 +124,7 @@ function Base.show(io::IO, ::MIME"text/plain", info::EmitInfo)
         for line_idx in 2:length(lines)
             print(io, tab(4), lines[line_idx])
 
+            # don't print newline if last line
             if !(idx == length(variants) && line_idx == length(lines))
                 println(io)
             end
