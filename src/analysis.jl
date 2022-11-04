@@ -90,7 +90,10 @@ macro test_expr(type, ex)
         $Base.show(stdout, MIME"text/plain"(), $def)
         $generated_expr = $codegen_ast($def)
         $original_expr = $(Expr(:quote, ex))
-        @test $check_expr_equal($__module__, $generated_expr, $original_expr)
+        @test $(Expr(
+            :block, __source__,
+            :($check_expr_equal($__module__, $generated_expr, $original_expr))
+        ))
         $def
     end |> esc
 end
