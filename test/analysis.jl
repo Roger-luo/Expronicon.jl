@@ -1,6 +1,7 @@
 using Test
 using Expronicon
-using Expronicon: check_expr_equal, ExprNotEqual
+using Expronicon: check_expr_equal, ExprNotEqual,
+    empty_line, guess_module, is_valid_typevar
 
 @testset "is_function" begin
     @test is_function(:(foo(x) = x))
@@ -333,6 +334,29 @@ end
 
     @test def.fields[1].name === :x
     @test def.fields[2].name === :y
+
+    @static if VERSION > v"1.8-"
+        @test_expr JLStruct mutable struct Mutable
+            const x::Int
+            y::Int
+        end
+
+        def = @expr JLKwStruct mutable struct MutableKw
+            const x::Int = 1
+            y::Int = 2
+        end
+
+        @test_expr codegen_ast(def) == quote
+            mutable struct MutableKw
+                const x::Int
+                y::Int
+            end
+            function MutableKw(; x = 1, y = 2)
+                MutableKw(x, y)
+            end
+            nothing
+        end
+    end
 end
 
 @test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
@@ -422,4 +446,41 @@ end
     end
 
     @test_throws ExprNotEqual check_expr_equal(Main, lhs, rhs)
+
+    buf = IOBuffer()
+    showerror(buf, ExprNotEqual(Int, :Int))
+    @test String(take!(buf)) == """
+    expression not equal due to:
+      lhs: Int64
+      rhs: Int"""
+
+    buf = IOBuffer()
+    showerror(buf, ExprNotEqual(empty_line, :Int))
+    @test String(take!(buf)) == """
+    expression not equal due to:
+      lhs: <empty line>
+      rhs: Int"""
+end
+
+@testset "compare_expr" begin
+    @test compare_expr(:(Vector{Int}), Vector{Int})
+    @test compare_expr(:(Vector{Int}), :(Vector{$(nameof(Int))}))
+    @test compare_expr(:(NotDefined{Int}), :(NotDefined{$(nameof(Int))}))
+    @test compare_expr(:(NotDefined{Int, Float64}), :(NotDefined{$(nameof(Int)), Float64}))
+    @test compare_expr(LineNumberNode(1, :foo), LineNumberNode(1, :foo))
+end
+
+@testset "guess_module" begin
+    @test guess_module(Main, Base) === Base
+    @test guess_module(Main, :Base) === Base
+    @test guess_module(Main, :(1+1)) === nothing
+end
+
+@testset "guess_type" begin
+    @test guess_type(Main, Int) === Int
+    @test guess_type(Main, :Int) === Int
+    @test guess_type(Main, :Foo) === :Foo
+    @test guess_type(Main, :(Array{Int, 1})) === Array{Int, 1}
+    # only head is guessed, returns a curly expr
+    @test guess_type(Main, :(Array{<:Real, 1})) == :($Array{<:Real, 1})
 end

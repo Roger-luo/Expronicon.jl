@@ -257,13 +257,24 @@ function guess_type(m::Module, ex)
                 guess_type(m, typevar)
             end
 
-            if all(x->x isa Type, typevars)
+            if all(is_valid_typevar, typevars)
                 return type{typevars...}
             else
                 return Expr(:curly, type, typevars...)
             end
         @case _
             return ex
+    end
+end
+
+function is_valid_typevar(typevar)
+    @match typevar begin
+        ::TypeVar => true
+        ::Symbol => true
+        ::Type => true
+        if isbitstype(typeof(typevar)) end => true
+        ::Tuple => all(x->x isa Symbol || isbitstype(typeof(x)), typevar)
+        _ => false
     end
 end
 
