@@ -8,20 +8,28 @@ Base.@kwdef struct Variant
 
     # only for struct
     ismutable::Bool = false
-    fields::Vector{Symbol} = Symbol[] # maybe empty
+    fieldnames::Vector{Symbol} = Symbol[] # maybe empty
+    field_defaults::Vector{Any} = map(_->no_default, fieldnames)
 
-    fieldtypes::Vector{Any} = map(_->Any, fields)
+    fieldtypes::Vector{Any} = map(_->Any, fieldnames)
 
-    function Variant(type, name, ismutable, fields, fieldtypes)
+    lineinfo::Maybe{LineNumberNode} = nothing
+
+    function Variant(type, name, ismutable, fieldnames, field_defaults, fieldtypes, lineinfo)
         if type == :struct
-            if length(fields) != length(fieldtypes)
-                throw(ArgumentError("length of fields and fieldtypes must be equal"))
+            if length(fieldnames) != length(fieldtypes)
+                throw(ArgumentError("length of fieldnames and fieldtypes must be equal"))
+            end
+
+            if length(fieldnames) != length(field_defaults)
+                throw(ArgumentError("length of fieldnames and field_defaults must be equal"))
             end
         elseif type == :call
             isempty(fieldtypes) && throw(ArgumentError("call type must have at least one fieldtype"))
-            isempty(fields) || throw(ArgumentError("cannot have named fields for call syntax variant"))
+            isempty(fieldnames) || throw(ArgumentError("cannot have named field for call syntax variant"))
+            isempty(field_defaults) || throw(ArgumentError("cannot have default value for call syntax variant"))
         end
-        new(type, name, ismutable, fields, fieldtypes)
+        new(type, name, ismutable, fieldnames, field_defaults, fieldtypes, lineinfo)
     end
 end
 
@@ -39,7 +47,7 @@ Base.@kwdef struct ADTTypeDef
     variants::Vector{Variant}
 end
 
-function Variant(ex)
+function Variant(ex, lineinfo = nothing)
     @switch ex begin
         @case ::Symbol
             Variant(type=:singleton, name=ex)
@@ -50,13 +58,15 @@ function Variant(ex)
             end                
             Variant(type=:call, name=name, fieldtypes=annotations_only.(args))
         @case Expr(:struct, _...)
-            def = JLStruct(ex)
+            def = JLKwStruct(ex)
             Variant(;
                 type=:struct,
                 name=def.name,
                 ismutable=def.ismutable,
-                fields=map(x->x.name, def.fields),
-                fieldtypes=map(x->x.type, def.fields)
+                fieldnames=map(x->x.name, def.fields),
+                field_defaults=map(x->x.default, def.fields),
+                fieldtypes=map(x->x.type, def.fields),
+                lineinfo
             )
         @case _
             throw(ArgumentError("unknown variant syntax: $ex"))
@@ -81,13 +91,20 @@ function adt_split_head(head)
 end
 
 function ADTTypeDef(m::Module, head, body::Expr)
-    return ADTTypeDef(
-        m, adt_split_head(head)...,
-        Variant.(filter(x->!(x isa LineNumberNode), body.args)),
-    )
+    variants = Variant[]
+    lineinfo = nothing
+    for ex in body.args
+        if ex isa LineNumberNode
+            lineinfo = ex
+        else
+            push!(variants, Variant(ex, lineinfo))
+            lineinfo = nothing
+        end
+    end
+    return ADTTypeDef(m, adt_split_head(head)..., variants)
 end
 
 function Base.:(==)(a::Variant, b::Variant)
     a.type == b.type && a.name == b.name && a.ismutable == b.ismutable &&
-        a.fields == b.fields && a.fieldtypes == b.fieldtypes
+        a.fieldnames == b.fieldnames && a.fieldtypes == b.fieldtypes
 end

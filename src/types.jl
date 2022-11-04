@@ -143,18 +143,21 @@ is `name`, the rest are all optional.
 
 - `name::Symbol`: the name of the field.
 - `type`: the type of the field.
+- `isconst`: if the field is annotated with `const`.
 - $__LINENO_DOC__
 - $__DEF_DOC__
 """
 mutable struct JLField <: JLExpr
     name::Symbol
     type::Any
+    isconst::Bool # v1.8
     doc::Maybe{String}
     line::Maybe{LineNumberNode}
 end
 
-function JLField(;name, type=Any, doc=nothing, line=nothing)
-    JLField(name, type, doc, line)
+function JLField(;name, isconst=false, type=Any,
+        doc=nothing, line=nothing)
+    JLField(name, type, isconst, doc, line)
 end
 
 """
@@ -174,6 +177,7 @@ is `name`, the rest are all optional.
 
 - `name::Symbol`: the name of the field.
 - `type`: the type of the field.
+- `isconst`: if the field is annotated with `const`.
 - `default`: default value of the field, default is [`no_default`](@ref).
 - $__LINENO_DOC__
 - $__DEF_DOC__
@@ -181,13 +185,15 @@ is `name`, the rest are all optional.
 mutable struct JLKwField <: JLExpr
     name::Symbol
     type::Any
+    isconst::Bool # v1.8
     doc::Maybe{String}
     line::Maybe{LineNumberNode}
     default::Any
 end
 
-function JLKwField(;name, type=Any, doc=nothing, line=nothing, default=no_default)
-    JLKwField(name, type, doc, line, default)
+function JLKwField(;name, isconst=false, type=Any,
+        doc=nothing, line=nothing, default=no_default)
+    JLKwField(name, type, isconst, doc, line, default)
 end
 
 """

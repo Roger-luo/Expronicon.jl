@@ -35,15 +35,15 @@ end
 end
 
 @testset "adt" begin
-    include("adt.jl")
+    include("adt/adt.jl")
 end
 
 # this feature is only available for 1.6+
-@static if VERSION > v"1.6-" && Sys.isunix()
-    @testset "expand" begin
-        include("expand.jl")
-    end
-end
+# @static if VERSION > v"1.6-" && Sys.isunix()
+#     @testset "expand" begin
+#         include("expand.jl")
+#     end
+# end
 
 DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
 doctest(Expronicon)

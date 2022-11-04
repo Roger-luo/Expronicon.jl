@@ -20,6 +20,7 @@ export
     alias_gensym,
     has_kwfn_constructor,
     has_plain_constructor,
+    guess_type,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     annotations_only, rm_annotations, rm_single_block, rm_nothing,

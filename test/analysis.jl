@@ -212,7 +212,8 @@ end
 
 @testset "JLKwStruct" begin
     def = @expr JLKwStruct struct Trait end
-    @test_expr prettify(codegen_ast_kwfn(def)) == quote
+    @test_expr codegen_ast_kwfn(def) == quote
+        nothing
     end
 
     @test JLKwField(;name=:x).name === :x
@@ -228,6 +229,7 @@ end
         function create(::Type{S}; include_defaults = false, exclude_nothing = false) where S <: ConvertOption
             ConvertOption(include_defaults, exclude_nothing)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Foo1{N, T}
@@ -254,6 +256,7 @@ end
         function Foo1{N}(; x = 1) where N
             Foo1{N}(x)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Foo2 <: AbstractFoo
@@ -269,6 +272,7 @@ end
         function Foo2(; x = 1, y)
             Foo2(x, y)
         end
+        nothing
     end
 
     ex = quote
@@ -303,6 +307,7 @@ end
             a::Int
             Foo3(; a = 1) = new(a)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Potts{Q}
@@ -315,6 +320,7 @@ end
         function create(::Type{S}; L, beta = 1.0, neighbors = square_lattice_neighbors(L)) where {Q, S <: Potts{Q}}
             Potts{Q}(L, beta, neighbors)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Flatten

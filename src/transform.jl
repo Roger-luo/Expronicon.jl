@@ -118,8 +118,10 @@ Base.@kwdef struct PrettifyOptions
     rm_lineinfo::Bool = true
     flatten_blocks::Bool = true
     rm_nothing::Bool = true
+    preserve_last_nothing::Bool = false
     rm_single_block::Bool = true
     alias_gensym::Bool = true
+    renumber_gensym::Bool = true
 end
 
 """
@@ -135,8 +137,10 @@ All the options are `true` by default.
 - `rm_lineinfo`: remove `LineNumberNode`.
 - `flatten_blocks`: flatten `begin ... end` code blocks.
 - `rm_nothing`: remove `nothing` in the `begin ... end`.
+- `preserve_last_nothing`: preserve the last `nothing` in the `begin ... end`.
 - `rm_single_block`: remove single `begin ... end`.
 - `alias_gensym`: replace `##<name>#<num>` with `<name>_<id>`.
+- `renumber_gensym`: renumber the gensym id.
 
 !!! tips
 
@@ -150,6 +154,7 @@ end
 
 function prettify(ex, options::PrettifyOptions)
     ex isa Expr || return ex
+    ex = options.renumber_gensym ? renumber_gensym(ex) : ex
     ex = options.alias_gensym ? alias_gensym(ex) : ex
     for _ in 1:10
         curr = prettify_pass(ex, options)
@@ -162,7 +167,7 @@ end
 function prettify_pass(ex, options::PrettifyOptions)
     ex = options.rm_lineinfo ? rm_lineinfo(ex) : ex
     ex = options.flatten_blocks ? flatten_blocks(ex) : ex
-    ex = options.rm_nothing ? rm_nothing(ex) : ex
+    ex = options.rm_nothing ? rm_nothing(ex; options.preserve_last_nothing) : ex
     ex = options.rm_single_block ? rm_single_block(ex) : ex
     return ex
 end
@@ -206,10 +211,21 @@ end
     rm_nothing(ex)
 
 Remove the constant value `nothing` in given expression `ex`.
+
+# Keyword Arguments
+
+- `preserve_last_nothing`: if `true`, the last `nothing`
+    will be preserved.
 """
-function rm_nothing(ex)
+function rm_nothing(ex; preserve_last_nothing::Bool=false)
     @match ex begin
-        Expr(:block, args...) => Expr(:block, filter(x->x!==nothing, args)...)
+        Expr(:block, args...) => begin
+            if preserve_last_nothing && !isempty(args) && isnothing(last(args))
+                Expr(:block, filter(x->x!==nothing, args)..., nothing)
+            else
+                Expr(:block, filter(x->x!==nothing, args)...)
+            end
+        end
         Expr(head, args...) => Expr(head, map(rm_nothing, args)...)
         _ => ex
     end
@@ -287,6 +303,40 @@ function alias_gensym!(d::Dict{Symbol, Symbol}, count::Dict{Symbol, Int}, ex)
     ex isa Expr || return ex
     args = map(ex.args) do x
         alias_gensym!(d, count, x)
+    end
+
+    return Expr(ex.head, args...)
+end
+
+"""
+    renumber_gensym(ex)
+
+Re-number gensym with counter from this expression.
+Produce a deterministic gensym name for testing etc.
+See also: [`alias_gensym`](@ref)
+"""
+renumber_gensym(ex) = renumber_gensym!(Dict{Symbol, Symbol}(), Dict{Symbol, Int}(), ex)
+
+function renumber_gensym!(d::Dict{Symbol, Symbol}, count::Dict{Symbol, Int}, ex)
+    function renumber(head, m)
+        name = Symbol(m.captures[1])
+        id = count[name] = get(count, name, 0) + 1
+        return d[ex] = Symbol(head, name, "#", id)
+    end
+
+    if is_gensym(ex)
+        haskey(d, ex) && return d[ex]
+        gensym_str = String(ex)
+        m = Base.match(r"##(.+)#\d+", gensym_str)
+        m === nothing || return renumber("##", m)
+        m = Base.match(r"#\d+#(.+)", gensym_str)
+        m === nothing || return renumber("#", m)
+        # might not be a gensym, ignore it
+    end
+
+    ex isa Expr || return ex
+    args = map(ex.args) do x
+        renumber_gensym!(d, count, x)
     end
 
     return Expr(ex.head, args...)

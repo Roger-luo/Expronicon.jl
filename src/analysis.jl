@@ -37,7 +37,7 @@ macro test_expr(type, ex)
         println($def)
         $generated_expr = $prettify($codegen_ast($def))
         $original_expr = $prettify($(Expr(:quote, ex)))
-        @test $compare_expr($generated_expr, $original_expr)
+        @test $compare_expr($__module__, $generated_expr, $original_expr)
         $def
     end |> esc
 end
@@ -54,7 +54,7 @@ macro test_expr(ex::Expr)
     lhs, rhs = ex.args[2], ex.args[3]
     quote
         $__source__
-        @test $compare_expr($prettify($lhs), $prettify($rhs))
+        @test $compare_expr($lhs, $rhs)
     end |> esc
 end
 
@@ -93,34 +93,116 @@ function Base.show(io::IO, e::AnalysisError)
 end
 
 """
-    compare_expr(lhs, rhs)
+    compare_expr([m=Main], lhs, rhs)
 
 Compare two expression of type `Expr` or `Symbol` semantically, which:
 
 1. ignore the detail value `LineNumberNode` in comparision
 2. ignore the detailed name of typevars in `Expr(:curly, ...)` or `Expr(:where, ...)`
+3. ignore the nested begin ... end blocks
 
 This gives a way to compare two Julia expression semantically which means
 although some details of the expression is different but they should
 produce the same lowered code.
 """
-function compare_expr(lhs, rhs)
+function compare_expr(lhs, rhs; preserve_last_nothing=true, kw...)
+    return compare_expr(Main, lhs, rhs; preserve_last_nothing, kw...)
+end
+
+function compare_expr(m::Module, lhs, rhs; preserve_last_nothing=true, kw...)
+    lhs = prettify(lhs;
+        preserve_last_nothing,
+        alias_gensym=false,
+        kw...
+    )
+    rhs = prettify(rhs;
+        preserve_last_nothing,
+        alias_gensym=false,
+        kw...
+    )
+
     @switch (lhs, rhs) begin
         @case (::Symbol, ::Symbol)
             lhs === rhs
+        @case (a::Module, b) || (b, a::Module)
+            mod = guess_module(m, b)
+            isnothing(mod) && return false
+            return a === mod
+        @case (a::QuoteNode, :(Symbol($b))) || (:(Symbol($b)), a::QuoteNode)
+            # Symbol is not imported, e.g baremodule
+            isdefined(m, :Symbol) || return false
+            return a.value === Symbol(b)
         @case (Expr(:curly, name, lhs_vars...), Expr(:curly, &name, rhs_vars...))
             all(map(compare_vars, lhs_vars, rhs_vars))
         @case (Expr(:where, lbody, lparams...), Expr(:where, rbody, rparams...))
-            compare_expr(lbody, rbody) &&
+            compare_expr(m, lbody, rbody) &&
                 all(map(compare_vars, lparams, rparams))
+        @case (:($name_a::$type_a), :($name_b::$type_b))
+            compare_expr(m, name_a, name_b) &&
+                compare_expr(m, guess_type(m, type_a), guess_type(m, type_b))
+        @case (:(::$(type_a)), :(::$(type_b)))
+            compare_expr(m, guess_type(m, type_a), guess_type(m, type_b))
+        @case (:($name_a.$sub_a), :($name_b.$sub_b))
+            mod_a = guess_module(m, name_a)
+            mod_b = guess_module(m, name_b)
+            return mod_a === mod_b && compare_expr(mod_a, sub_a, sub_b)
         @case (Expr(head, largs...), Expr(&head, rargs...))
                 isempty(largs) && isempty(rargs) ||
-            (length(largs) == length(rargs) && all(map(compare_expr, largs, rargs)))
+            (length(largs) == length(rargs) &&
+                all(map((l,r)->compare_expr(m, l, r), largs, rargs)))
         # ignore LineNumberNode
         @case (::LineNumberNode, ::LineNumberNode)
             true
+        @case (:nothing, nothing) || (nothing, :nothing) ||
+            (:missing, missing) || (missing, :missing) ||
+            (:true, true) || (true, :true) ||
+            (:false, false) || (false, :false) # literals
+            return true
+        @case (a, b::Expr) || (b::Expr, a)
+            a == Base.eval(m, b)
         @case _
             lhs == rhs
+    end
+end
+
+function guess_module(m::Module, ex)
+    @switch ex begin
+        @case ::Module
+            return ex
+        @case ::Symbol && if isdefined(m, ex) end
+            return getproperty(m, ex)
+        @case :($name.$sub)
+            mod = guess_module(m, name)
+            if mod isa Module
+                return guess_module(mod, sub)
+            else
+                return
+            end
+        @case _
+            return
+    end
+end
+
+function guess_type(m::Module, ex)
+    @switch ex begin
+        @case ::Type
+            return ex
+        @case ::Symbol
+            isdefined(m, ex) || return ex
+            return getproperty(m, ex)
+        @case :($name{$(typevars...)})
+            type = guess_type(m, name)
+            typevars = map(typevars) do typevar
+                guess_type(m, typevar)
+            end
+
+            if all(x->x isa Type, typevars)
+                return type{typevars...}
+            else
+                return Expr(:curly, type, typevars...)
+            end
+        @case _
+            return ex
     end
 end
 
@@ -607,23 +689,18 @@ function JLStruct(ex::Expr)
     body = flatten_blocks(body)
 
     for each in body.args
-        @switch each begin
-            @case :($name::$type)
-                push!(fields, JLField(name, type, field_doc, field_line))
-            @case name::Symbol
-                push!(fields, JLField(name, Any, field_doc, field_line))
-            @case ::String
-                field_doc = each
-            @case ::LineNumberNode
-                field_line = each
-            @case GuardBy(is_function)
-                if name_only(each) === typename
-                    push!(constructors, JLFunction(each))
-                else
-                    push!(misc, each)
-                end
-            @case _
-                push!(misc, each)
+        m = parse_field_if_match(typename, each)
+        if m isa String
+            field_doc = m
+        elseif m isa LineNumberNode
+            field_line = m
+        elseif m isa NamedTuple
+            push!(fields, JLField(;m..., doc=field_doc, line=field_line))
+            field_doc, field_line = nothing, nothing
+        elseif m isa JLFunction
+            push!(constructors, m)
+        else
+            push!(misc, m)
         end
     end
     JLStruct(typename, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
@@ -655,27 +732,19 @@ function JLKwStruct(ex::Expr, typealias=nothing)
     field_doc, field_line = nothing, nothing
     body = flatten_blocks(body)
     for each in body.args
-        @switch each begin
-            @case :($name::$type = $default)
-                push!(fields, JLKwField(name, type, field_doc, field_line, default))
-            @case :($(name::Symbol) = $default)
-                push!(fields, JLKwField(name, Any, field_doc, field_line, default))
-            @case name::Symbol
-                push!(fields, JLKwField(name, Any, field_doc, field_line, no_default))
-            @case :($name::$type)
-                push!(fields, JLKwField(name, type, field_doc, field_line, no_default))
-            @case ::String
-                field_doc = each
-            @case ::LineNumberNode
-                field_line = each
-            @case GuardBy(is_function)
-                if name_only(each) === typename
-                    push!(constructors, JLFunction(each))
-                else
-                    push!(misc, each)
-                end
-            @case _
-                push!(misc, each)
+        m = parse_field_if_match(typename, each, true)
+        if m isa String
+            field_doc = m
+        elseif m isa LineNumberNode
+            field_line = m
+        elseif m isa NamedTuple
+            field = JLKwField(;m..., doc=field_doc, line=field_line)
+            push!(fields, field)
+            field_doc, field_line = nothing, nothing
+        elseif m isa JLFunction
+            push!(constructors, m)
+        else
+            push!(misc, m)
         end
     end
     JLKwStruct(typename, typealias, ismutable, typevars, supertype, fields, constructors, line, doc, misc)
@@ -804,3 +873,42 @@ end
 #         _ => false
 #     end
 # end
+
+function parse_field_if_match(typename::Symbol, expr, default::Bool=false)
+    @switch expr begin
+        @case Expr(:const, :($(name::Symbol)::$type = $value))
+            default && return (;name, type, isconst=true, default=value)
+            throw(ArgumentError("default value syntax is not allowed"))
+        @case Expr(:const, :($(name::Symbol) = $value))
+            default && return (;name, type=Any, isconst=true, default=value)
+            throw(ArgumentError("default value syntax is not allowed"))
+        @case :($(name::Symbol)::$type = $value)
+            default && return (;name, type, isconst=false, default=value)
+            throw(ArgumentError("default value syntax is not allowed"))
+        @case :($(name::Symbol) = $value)
+            default && return (;name, type=Any, isconst=false, default=value)
+            throw(ArgumentError("default value syntax is not allowed"))
+        @case Expr(:const, :($(name::Symbol)::$type))
+            default && return (;name, type, isconst=true, default=no_default)
+            return (;name, type, isconst=true)
+        @case Expr(:const, name::Symbol)
+            default && return (;name, type=Any, isconst=true, default=no_default)
+            return (;name, type=Any, isconst=true)
+        @case :($(name::Symbol)::$type)
+            default && return (;name, type, isconst=false, default=no_default)
+            return (;name, type, isconst=false)
+        @case name::Symbol
+            default && return (;name, type=Any, isconst=false, default=no_default)
+            return (;name, type=Any, isconst=false)
+        @case ::String || ::LineNumberNode
+            return expr
+        @case if is_function(expr) end
+            if name_only(expr) === typename
+                return JLFunction(expr)
+            else
+                return expr
+            end
+        @case _
+            return expr
+    end
+end

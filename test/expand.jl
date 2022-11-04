@@ -11,7 +11,7 @@ cd(project_dir) do
         build_dir=build_dir,
         uuid="55351af7-c7e9-48d6-89ff-24e801d99491",
         macronames=[Symbol("@match"), Symbol("@switch"), Symbol("@λ")],
-        exclude_src=["match.jl", "expand.jl", "patches.jl", "adt.jl"],
+        exclude_src=["match.jl", "expand.jl", "patches.jl"],
         src_dont_touch=["types.jl", "codegen.jl"],
         exclude_paths=[
             "README.md",

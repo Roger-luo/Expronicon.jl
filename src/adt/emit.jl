@@ -7,29 +7,6 @@ struct EmitInfo
     type_guess::Dict{Variant, Vector{Any}}
 end
 
-function guess_type(m::Module, ex)
-    @switch ex begin
-        @case ::Type
-            return ex
-        @case ::Symbol
-            isdefined(m, ex) || return ex
-            return getproperty(m, ex)
-        @case :($name{$(typevars...)})
-            type = guess_type(m, name)
-            typevars = map(typevars) do typevar
-                guess_type(m, typevar)
-            end
-
-            if all(x->x isa Type, typevars)
-                return type{typevars...}
-            else
-                return Expr(:curly, type, typevars...)
-            end
-        @case _
-            return ex
-    end
-end
-
 function EmitInfo(typename::Symbol, ismutable::Bool=false)
     return EmitInfo(
         typename, ismutable,
@@ -135,10 +112,12 @@ function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
         primitive type $(info.typename) 32 end
 
         $(emit_struct(def, info))
+        $(emit_variant_cons(def, info))
         $(emit_variant_binding(def, info))
         $(emit_reflection(def, info))
         $(emit_getproperty(def, info))
         $(emit_propertynames(def, info))
+        $(emit_pattern_uncall(def, info))
         $(emit_show(def, info))
     end
 end
@@ -177,7 +156,7 @@ function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
     end
 end
 
-function struct_constructor(def::ADTTypeDef, info::EmitInfo)
+function struct_cons(def::ADTTypeDef, info::EmitInfo)
     construct_body = JLIfElse()
     for (variant_idx, variant) in enumerate(def.variants)
         nargs = length(variant.fieldtypes)
@@ -202,7 +181,7 @@ function struct_constructor(def::ADTTypeDef, info::EmitInfo)
             end
         end
 
-        type_expr = :(Core.bitcast($(info.typename), $(UInt32(variant_idx))))
+        type_expr = xvariant_type(info, variant_idx)
         construct_body[:(type == $(type_expr))] = quote
             length(args) == $nargs ||
                 throw(ArgumentError($msg))
@@ -231,15 +210,55 @@ function emit_struct(def::ADTTypeDef, info::EmitInfo)
         fields=map(info.fieldnames, info.fieldtypes) do name, type
             JLField(;name, type)
         end,
-        constructors=[struct_constructor(def, info)]
+        constructors=[struct_cons(def, info)]
     )
 
     return quote
         Core.@__doc__ $(codegen_ast(def))
+    end
+end
 
+function emit_variant_cons(def::ADTTypeDef, info::EmitInfo)
+    kwarg_body = JLIfElse()
+    for (idx, variant) in enumerate(def.variants)
+        variant.type === :struct || continue
+        nfields = length(variant.fieldtypes)
+        assign_kwargs = expr_map(1:nfields,
+            variant.fieldnames, variant.field_defaults) do idx, name, default
+            var = Symbol("#kw#", idx)
+            msg = "missing keyword argument: $(name)"
+            throw_ex = Expr(:block, variant.lineinfo, :(throw(ArgumentError($msg))))
+            if default === no_default
+                quote
+                    if haskey(kwargs, $(QuoteNode(name)))
+                        $(var) = kwargs[$(QuoteNode(name))]
+                    else
+                        $throw_ex
+                    end
+                end
+            else
+                :($var = get(kwargs, $(QuoteNode(name)), $(default)))
+            end
+        end
+        kwarg_body[:(t == $(xvariant_type(info, idx)))] = Expr(:block,
+            variant.lineinfo,
+            :(length(args) == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))),
+            :(valid_keys = $(xtuple(QuoteNode.(variant.fieldnames)...))),
+            :(others = filter(!in(valid_keys), keys(kwargs))),
+            :(isempty(others) || throw(ArgumentError("unknown keyword argument: $(join(others, ", "))"))),
+            assign_kwargs,
+            :(return $(def.name)(t, $([Symbol("#kw#", idx) for idx in 1:nfields]...)))
+        )
+    end
+    kwarg_body.otherwise = quote
+        throw(ArgumentError("invalid variant type"))
+    end
+
+    return quote
         # NOTE: make sure struct definition is available
-        function (t::$(info.typename))(args...)
-            $(def.name)(t, args...)
+        function (t::$(info.typename))(args...; kwargs...)
+            isempty(kwargs) && return $(def.name)(t, args...)
+            $(codegen_ast(kwarg_body))
         end
     end
 end
@@ -254,7 +273,7 @@ function emit_getproperty(def::ADTTypeDef, info::EmitInfo)
         else
             jl = JLIfElse()
             mask = info.variant_masks[variant]
-            for (idx, field) in enumerate(variant.fields)
+            for (idx, field) in enumerate(variant.fieldnames)
                 jl[:(name === $(QuoteNode(field)))] = quote
                     return $Base.getfield(value, $(mask[idx]))
                 end
@@ -279,55 +298,13 @@ function emit_propertynames(def::ADTTypeDef, info::EmitInfo)
         if variant.type === :singleton || variant.type === :call
             :(return ())
         else
-            :(return $(xtuple(map(QuoteNode, variant.fields)...)))
+            :(return $(xtuple(map(QuoteNode, variant.fieldnames)...)))
         end
     end
 
     return quote
         function $Base.propertynames(value::$(def.name), private::Bool=false)
             $(codegen_ast(propertynames_body))
-        end
-    end
-end
-
-function emit_reflection(def::ADTTypeDef, info::EmitInfo)
-    variant_masks_body = JLIfElse()
-    for (variant, mask) in info.variant_masks
-        variant_masks_body[:(t == $(variant.name))] = xtuple(mask...)
-    end
-    variant_masks_body.otherwise = quote
-        throw(ArgumentError("invalid variant type"))
-    end
-
-    variant_fieldnames_body = JLIfElse()
-    for variant in def.variants
-        if variant.type === :singleton || variant.type === :call
-            variant_fieldnames_body[:(t == $(variant.name))] = quote
-                throw(ArgumentError("singleton variant or call variant has no field names"))
-            end
-        else
-            variant_fieldnames_body[:(t == $(variant.name))] = xtuple(QuoteNode.(variant.fields)...)
-        end
-    end
-    variant_fieldnames_body.otherwise = quote
-        throw(ArgumentError("invalid variant type"))
-    end
-
-    quote
-        @inline function $ADT.variant_type(x::$(def.name))
-            return $(xvariant_type(:x))
-        end
-
-        @inline function $ADT.variant_masks(t::$(info.typename))
-            $(codegen_ast(variant_masks_body))
-        end
-
-        @inline function $ADT.variant_fieldnames(t::$(info.typename))
-            $(codegen_ast(variant_fieldnames_body))
-        end
-
-        @inline function $ADT.variant_fieldname(t::$(info.typename), idx::Int)
-            return $ADT.variant_fieldnames(t)[idx]
         end
     end
 end
@@ -379,13 +356,27 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     end
 end
 
+function emit_pattern_uncall(::ADTTypeDef, info::EmitInfo)
+    return quote
+        function $MLStyle.pattern_uncall(t::$(info.typename), self, type_params, type_args, args)
+            return $ADT.compile_adt_pattern(t, self, type_params, type_args, args)
+        end
+    end
+end
+
+include("reflection.jl")
+
 function foreach_variant(f, value::Symbol, def::ADTTypeDef, info::EmitInfo)
-    body = JLIfElse()
     value_type = :($ADT.variant_type($value))
+    return foreach_variant_type(f, value_type, def, info)
+end
+
+function foreach_variant_type(f, type, def::ADTTypeDef, info::EmitInfo)
+    body = JLIfElse()
 
     for (idx, variant) in enumerate(def.variants)
         type_expr = xvariant_type(info, idx)
-        body[:($value_type == $type_expr)] = quote
+        body[:($type == $type_expr)] = quote
             $(f(variant))
         end
     end

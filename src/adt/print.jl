@@ -54,13 +54,19 @@ function Base.show(io::IO, ::MIME"text/plain", def::Variant)
         end
         printstyled(io, "struct "; color=:light_red)
         println(io, def.name)
-        for (i, field) in enumerate(def.fields)
+        for (i, fieldname) in enumerate(def.fieldnames)
             type = def.fieldtypes[i]
-            print(io, tab(indent+4), field)
+            print(io, tab(indent+4), fieldname)
             if type != Any
                 printstyled(io, "::"; color=:light_black)
                 printstyled(io, type; color=:cyan)
             end
+
+            default = def.field_defaults[i]
+            if default !== no_default
+                print(io, " = ")
+                print(io, default)
+            end 
             println(io)
         end
         printstyled(io, tab(indent), "end"; color=:light_red)
