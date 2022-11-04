@@ -50,7 +50,7 @@ end
     @test info.variant_masks[def.variants[4]] == [5, 6]
     @test info.variant_masks[def.variants[5]] == [2, 3, 4]
 
-    @test info.fieldtypes == [Symbol("Message#Type"), Int, Int, Int, Any, Any]
+    @test info.fieldtypes == [Symbol("Message#Type"), Int64, Int64, Int64, Any, Any]
     @test length(info.fieldnames) == 6
 
     io = IOBuffer()
