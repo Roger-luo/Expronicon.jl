@@ -189,6 +189,18 @@ function compare_expr(m::Module, lhs, rhs)
                 compare_expr(m, guess_type(m, type_a), guess_type(m, type_b))
         @case (:(::$(type_a)), :(::$(type_b)))
             compare_expr(m, guess_type(m, type_a), guess_type(m, type_b))
+        @case (:($name_a{$(typevars_a...)}), :($name_b{$(typevars_b...)}))
+            type_a = guess_type(m, lhs)
+            type_b = guess_type(m, rhs)
+            if type_a isa Type || type_b isa Type
+                return type_a === type_b
+            else
+                compare_expr(m, guess_type(m, name_a),
+                    guess_type(m, name_b)) || return false
+                return all(map(typevars_a, typevars_b) do l, r
+                    compare_expr(m, guess_type(m, l), guess_type(m, r))
+                end)
+            end
         @case (:($name_a.$sub_a), :($name_b.$sub_b))
             mod_a = guess_module(m, name_a)
             mod_b = guess_module(m, name_b)

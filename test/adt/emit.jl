@@ -68,17 +68,17 @@ end
         #Any##6::Any
     
       variants:
-        struct Aka ------------------------ [5, 6]
-            x::Vector{Int}
-            y::Vector{Int}
+        struct Aka ------------------------------ [5, 6]
+            x::Vector{Int64}
+            y::Vector{Int64}
         end
-        ChangeColor(::Int, ::Int, ::Int) -- [2, 3, 4]
-        struct Move ----------------------- [2, 3]
-            x::Int
-            y::Int
+        ChangeColor(::Int64, ::Int64, ::Int64) -- [2, 3, 4]
+        struct Move ----------------------------- [2, 3]
+            x::Int64
+            y::Int64
         end
-        Quit ------------------------------ []
-        Write(::String) ------------------- [5]"""
+        Quit ------------------------------------ []
+        Write(::String) ------------------------- [5]"""
 end
 
 def = ADTTypeDef(Main, :Message, body)
@@ -321,13 +321,13 @@ end
         if t == Core.bitcast(var"Message#Type", 0x00000001)
             ()
         elseif t == Core.bitcast(var"Message#Type", 0x00000002)
-            (Int, Int)
+            (Int64, Int64)
         elseif t == Core.bitcast(var"Message#Type", 0x00000003)
             (String,)
         elseif t == Core.bitcast(var"Message#Type", 0x00000004)
-            (Vector{Int}, Vector{Int})
+            (Vector{Int64}, Vector{Int64})
         elseif t == Core.bitcast(var"Message#Type", 0x00000005)
-            (Int, Int, Int)
+            (Int64, Int64, Int64)
         else
             throw(ArgumentError("invalid variant type"))
         end
