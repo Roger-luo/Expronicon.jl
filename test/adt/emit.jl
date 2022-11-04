@@ -26,18 +26,18 @@ body = quote
     Quit
 
     struct Move
-        x::Int
-        y::Int
+        x::Int64
+        y::Int64
     end
 
     Write(::String)
 
     struct Aka
-        x::Vector{Int}
-        y::Vector{Int}
+        x::Vector{Int64}
+        y::Vector{Int64}
     end
 
-    ChangeColor(::Int, ::Int, ::Int)
+    ChangeColor(::Int64, ::Int64, ::Int64)
 end
 
 
