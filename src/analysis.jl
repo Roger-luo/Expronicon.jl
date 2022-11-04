@@ -60,8 +60,8 @@ function locate_non_equal_expr(m::Module, lhs, rhs)
 end
 
 function check_expr_equal(m::Module, lhs, rhs)
-    lhs = prettify(lhs; preserve_last_nothing=true, alias_gensym=false, rm_single_block=false)
-    rhs = prettify(rhs; preserve_last_nothing=true, alias_gensym=false, rm_single_block=false)
+    lhs = prettify(lhs; preserve_last_nothing=true, alias_gensym=false)
+    rhs = prettify(rhs; preserve_last_nothing=true, alias_gensym=false)
     compare_expr(m, lhs, rhs) && return true
     lhs, rhs = locate_non_equal_expr(m, lhs, rhs)
     throw(ExprNotEqual(lhs, rhs))
