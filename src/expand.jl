@@ -155,8 +155,8 @@ function _xinclude_generated(path)
 end
 
 
-function expand_file(src, dst; kw...)
-    expand_file(src, dst, ExpandOptions(;kw...))
+function expand_file(src, dst, excluded_files; kw...)
+    expand_file(src, dst, ExpandOptions(;kw...), excluded_files)
 end
 
 function parse_file(src)
@@ -165,7 +165,40 @@ function parse_file(src)
     return prettify(ex)
 end
 
-function expand_file(src, dst, options::ExpandOptions)
+function file_to_exclude(options::ExpandOptions)
+    project_dir = pkgdir(options.mod)
+    src_dir = joinpath(project_dir, "src")
+    excluded_files = String[]
+
+    for path in options.exclude_src
+        path = joinpath(src_dir, path)
+        if isfile(path)
+            push!(excluded_files, path)
+        else
+            for (root, _, files) in walkdir(path)
+                for file in files
+                    push!(excluded_files, joinpath(root, file))
+                end
+            end
+        end
+    end
+
+    for path in options.exclude_paths
+        path = joinpath(project_dir, path)
+        if isfile(path)
+            push!(excluded_files, path)
+        else
+            for (root, _, files) in walkdir(path)
+                for file in files
+                    push!(excluded_files, joinpath(root, file))
+                end
+            end
+        end
+    end
+    return excluded_files
+end
+
+function expand_file(src, dst, options::ExpandOptions, excluded_paths = file_to_exclude(options))
     ex = parse_file(src)
     ispath(dirname(dst)) || mkpath(dirname(dst))
 
@@ -174,8 +207,14 @@ function expand_file(src, dst, options::ExpandOptions)
     new_mod = Symbol(options.project, options.postfix)
     ex = subtitute(ex, old_mod=>new_mod)
     ex = expand_macro(options.mod, ex; macronames=options.macronames)
-    ex = rm_include(options.exclude_src, ex)
-    ex = rm_include(options.exclude_paths, ex)
+
+    rel_excluded_paths = map(excluded_paths) do path
+        relpath(path, dirname(src))
+    end
+
+    ex = rm_include(excluded_paths, ex)
+    ex = rm_include(rel_excluded_paths, ex)
+
     ex = rm_using(options.exclude_modules, ex)
     ex = _insert_var_str(ex)
     ex = _insert_include_generated(ex)
@@ -221,10 +260,13 @@ function expand_project(options::ExpandOptions)
     end
 
     pathof(options.mod) === nothing && error("not a project module")
-    project_dir = dirname(dirname(pathof(options.mod)))
+    project_dir = pkgdir(options.mod)
     @info "expanding macro"
     src_dir = joinpath(project_dir, "src")
-    for (root, dirs, files) in walkdir(src_dir)
+    rel_build_dir = relpath(options.build_dir, project_dir)
+    excluded_files = file_to_exclude(options)
+    for (root, _, files) in walkdir(src_dir)
+        relpath(root, src_dir) in options.exclude_src && continue # skip excluded src folder
         for file in files
             src = joinpath(root, file)
             relsrc = relpath(src, src_dir)
@@ -240,7 +282,7 @@ function expand_project(options::ExpandOptions)
                 cp(src, dst; force=true)
             else
                 @info "expanding..." src dst
-                expand_file(src, dst, options)
+                expand_file(src, dst, options, excluded_files)
             end
         end
     end
@@ -254,15 +296,17 @@ function expand_project(options::ExpandOptions)
 
         if isfile(src)
             dst = joinpath(options.build_dir, each)
-            _cp(src, dst, options)
+            _cp(src, dst, options, excluded_files)
         else
             # check if there are files to exclude
-            for (root, dirs, files) in walkdir(src)
+            for (root, _, files) in walkdir(src)
+                startswith(root, abspath(options.build_dir)) && continue
                 for file in files
                     path = joinpath(root, file)
-                    relpath(path, project_dir) in options.exclude_paths && continue
-                    dst = joinpath(options.build_dir, relpath(path, project_dir))
-                    _cp(path, dst, options)
+                    path in excluded_files && continue
+                    rel_file_path = relpath(path, project_dir)
+                    dst = joinpath(options.build_dir, rel_file_path)
+                    _cp(path, dst, options, excluded_files)
                 end
             end
         end
@@ -293,7 +337,7 @@ function expand_project(options::ExpandOptions)
     return
 end
 
-function _cp(src, dst, options::ExpandOptions)
+function _cp(src, dst, options::ExpandOptions, excluded_files)
     @info "copying..." src dst
     raw = read(src, String)
     # replace project module name
@@ -301,10 +345,11 @@ function _cp(src, dst, options::ExpandOptions)
     new = string(options.mod, options.postfix)
     raw = replace(raw, old=>new)
 
-    for each in options.exclude_paths
+    for each in excluded_files
         # use local path
         path = normpath(relpath(each, dirname(src)))
         raw = replace(raw, "include(\"$path\")"=>"nothing")
+        raw = replace(raw, "include(\"$each\")"=>"nothing")
     end
     dst_dir = dirname(dst)
     ispath(dst_dir) || mkpath(dst_dir)
