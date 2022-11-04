@@ -1,5 +1,6 @@
 using Test
 using Expronicon
+using Expronicon: check_expr_equal, ExprNotEqual
 
 @testset "is_function" begin
     @test is_function(:(foo(x) = x))
@@ -404,4 +405,21 @@ end
             @test is_matrix_expr(ex) == true
         end
     end
+end
+
+@testset "check_expr_equal" begin
+    lhs = quote
+        function foo(x)
+            x + 1
+        end
+    end
+
+    rhs = quote
+        function foo(x)
+            x + 1
+        end
+        nothing
+    end
+
+    @test_throws ExprNotEqual check_expr_equal(Main, lhs, rhs)
 end

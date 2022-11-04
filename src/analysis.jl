@@ -14,6 +14,59 @@ macro expr(ex)
     return QuoteNode(ex)
 end
 
+struct ExprNotEqual <: Exception
+    lhs
+    rhs
+end
+
+function Base.showerror(io::IO, err::ExprNotEqual)
+    printstyled(io, "expression not equal due to:"; color=:red)
+    println(io)
+    println(io, "  lhs: ", err.lhs)
+    print(io, "  rhs: ", err.rhs)
+end
+
+struct EmptyLine end
+const empty_line = EmptyLine()
+Base.show(io::IO, ::EmptyLine) = print(io, "<empty line>")
+
+function locate_non_equal_expr(m::Module, lhs, rhs)
+    lhs isa Expr && rhs isa Expr || return lhs, rhs
+
+    # always make sure the lhs is the one has less args
+    if length(lhs.args) > length(rhs.args)
+        lhs, rhs = rhs, lhs
+    end
+
+    not_equals = Tuple{Any, Any}[]
+    for (l, r) in zip(lhs.args, rhs.args)
+        if !compare_expr(m, l, r)
+            push!(not_equals, (l, r))
+        end
+    end
+
+    append!(not_equals, map(rhs.args[length(lhs.args)+1:end]) do r
+        return empty_line, r
+    end)
+
+    @show not_equals
+    # all args are not equal
+    # cannot narrow down the location
+    if length(not_equals) == length(rhs.args)
+        return lhs, rhs
+    else # some args are equal
+        return locate_non_equal_expr(m, not_equals[1]...)
+    end
+end
+
+function check_expr_equal(m::Module, lhs, rhs)
+    lhs = prettify(lhs; preserve_last_nothing=true, alias_gensym=false, rm_single_block=false)
+    rhs = prettify(rhs; preserve_last_nothing=true, alias_gensym=false, rm_single_block=false)
+    compare_expr(m, lhs, rhs) && return true
+    lhs, rhs = locate_non_equal_expr(m, lhs, rhs)
+    throw(ExprNotEqual(lhs, rhs))
+end
+
 """
     @test_expr <type> <ex>
 
@@ -34,10 +87,10 @@ macro test_expr(type, ex)
     @gensym def generated_expr original_expr
     quote
         $def = Expronicon.@expr $type $ex
-        println($def)
-        $generated_expr = $prettify($codegen_ast($def))
-        $original_expr = $prettify($(Expr(:quote, ex)))
-        @test $compare_expr($__module__, $generated_expr, $original_expr)
+        $Base.show(stdout, MIME"text/plain"(), $def)
+        $generated_expr = $codegen_ast($def)
+        $original_expr = $(Expr(:quote, ex))
+        @test $check_expr_equal($__module__, $generated_expr, $original_expr)
         $def
     end |> esc
 end
@@ -54,7 +107,7 @@ macro test_expr(ex::Expr)
     lhs, rhs = ex.args[2], ex.args[3]
     quote
         $__source__
-        @test $compare_expr($lhs, $rhs)
+        @test $check_expr_equal($__module__, $lhs, $rhs)
     end |> esc
 end
 
@@ -99,28 +152,19 @@ Compare two expression of type `Expr` or `Symbol` semantically, which:
 
 1. ignore the detail value `LineNumberNode` in comparision
 2. ignore the detailed name of typevars in `Expr(:curly, ...)` or `Expr(:where, ...)`
-3. ignore the nested begin ... end blocks
+
+!!! tips
+
+    This function is usually combined with [`prettify`](@ref)
+    with `preserve_last_nothing=true` and `alias_gensym=false`.
 
 This gives a way to compare two Julia expression semantically which means
 although some details of the expression is different but they should
 produce the same lowered code.
 """
-function compare_expr(lhs, rhs; preserve_last_nothing=true, kw...)
-    return compare_expr(Main, lhs, rhs; preserve_last_nothing, kw...)
-end
+compare_expr(lhs, rhs) = compare_expr(Main, lhs, rhs)
 
-function compare_expr(m::Module, lhs, rhs; preserve_last_nothing=true, kw...)
-    lhs = prettify(lhs;
-        preserve_last_nothing,
-        alias_gensym=false,
-        kw...
-    )
-    rhs = prettify(rhs;
-        preserve_last_nothing,
-        alias_gensym=false,
-        kw...
-    )
-
+function compare_expr(m::Module, lhs, rhs)
     @switch (lhs, rhs) begin
         @case (::Symbol, ::Symbol)
             lhs === rhs
@@ -158,10 +202,12 @@ function compare_expr(m::Module, lhs, rhs; preserve_last_nothing=true, kw...)
             (:true, true) || (true, :true) ||
             (:false, false) || (false, :false) # literals
             return true
+        @case (::Expr, ::Expr) || (::Expr, ::Symbol) || (::Symbol, ::Expr)
+            return false
         @case (a, b::Expr) || (b::Expr, a)
-            a == Base.eval(m, b)
+            return a == Base.eval(m, b)
         @case _
-            lhs == rhs
+            return lhs == rhs
     end
 end
 
