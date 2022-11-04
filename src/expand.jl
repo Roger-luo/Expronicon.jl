@@ -186,6 +186,7 @@ function file_to_exclude(options::ExpandOptions)
 
     for path in options.exclude_paths
         path = joinpath(project_dir, path)
+        ispath(path) || continue # skip non-existing path
         if isfile(path)
             push!(excluded_files, path)
         else
