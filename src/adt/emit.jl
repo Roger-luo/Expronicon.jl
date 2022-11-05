@@ -71,7 +71,7 @@ function scan_fields!(info::EmitInfo, def::ADTTypeDef)
     end
 
     type_start[Any] = field_ptr
-    for _ in 1:typeset[Any]
+    haskey(typeset, Any) && for _ in 1:typeset[Any]
         push!(info.fieldnames, Symbol("#Any##", field_ptr))
         push!(info.fieldtypes, Any)
         field_ptr += 1
