@@ -424,7 +424,7 @@ end
 
     @test_throws ExprNotEqual assert_equal_expr(Main, lhs, rhs)
     
-    @test sprint(showerror, ExprNotEqual(Int, :Int)) == """
+    @test sprint(showerror, ExprNotEqual(Int64, :Int)) == """
     expression not equal due to:
       lhs: Int64::DataType
       rhs: :Int::Symbol
