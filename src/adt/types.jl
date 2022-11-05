@@ -87,6 +87,13 @@ function adt_split_head(head)
         @case _
             throw(ArgumentError("unknown ADT syntax: $head"))
     end
+    # TODO: use our custom constructor so we can
+    # partially initialize a struct type with selected fields
+    # to be #undef
+    # julia/src/datatype.c:jl_new_structv(jl_datatype_t *type, jl_value_t **args, size_t nargs)
+
+    # do not support generic ADT for now
+    isempty(typevars) || throw(ArgumentError("generic ADT is not supported yet"))
     return name, typevars, supertype
 end
 
