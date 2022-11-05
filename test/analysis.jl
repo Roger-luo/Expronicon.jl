@@ -1,5 +1,7 @@
 using Test
 using Expronicon
+using Expronicon: assert_equal_expr, ExprNotEqual,
+    empty_line, guess_module, is_valid_typevar
 
 @testset "is_function" begin
     @test is_function(:(foo(x) = x))
@@ -212,7 +214,8 @@ end
 
 @testset "JLKwStruct" begin
     def = @expr JLKwStruct struct Trait end
-    @test_expr prettify(codegen_ast_kwfn(def)) == quote
+    @test_expr codegen_ast_kwfn(def) == quote
+        nothing
     end
 
     @test JLKwField(;name=:x).name === :x
@@ -228,6 +231,7 @@ end
         function create(::Type{S}; include_defaults = false, exclude_nothing = false) where S <: ConvertOption
             ConvertOption(include_defaults, exclude_nothing)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Foo1{N, T}
@@ -236,10 +240,10 @@ end
     println(def)
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{S}; x = 1) where {N, T, S <: Foo{N, T}}
+        function create(::Type{S}; x = 1) where {N, T, S <: Foo1{N, T}}
             Foo1{N, T}(x)
         end
-        function create(::Type{S}; x = 1) where {N, S <: Foo{N}}
+        function create(::Type{S}; x = 1) where {N, S <: Foo1{N}}
             Foo1{N}(x)
         end
     end
@@ -254,6 +258,7 @@ end
         function Foo1{N}(; x = 1) where N
             Foo1{N}(x)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Foo2 <: AbstractFoo
@@ -269,6 +274,7 @@ end
         function Foo2(; x = 1, y)
             Foo2(x, y)
         end
+        nothing
     end
 
     ex = quote
@@ -303,6 +309,7 @@ end
             a::Int
             Foo3(; a = 1) = new(a)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Potts{Q}
@@ -315,6 +322,7 @@ end
         function create(::Type{S}; L, beta = 1.0, neighbors = square_lattice_neighbors(L)) where {Q, S <: Potts{Q}}
             Potts{Q}(L, beta, neighbors)
         end
+        nothing
     end
 
     def = @expr JLKwStruct struct Flatten
@@ -328,7 +336,7 @@ end
     @test def.fields[2].name === :y
 end
 
-@test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
+@test sprint(showerror, AnalysisError("a", "b")) == "expect a expression, got b."
 
 @testset "JLIfElse" begin
     jl = JLIfElse()
@@ -397,5 +405,63 @@ end
         else
             @test is_matrix_expr(ex) == true
         end
+    end
+end
+
+@testset "assert_equal_expr" begin
+    lhs = quote
+        function foo(x)
+            x + 1
+        end
+    end
+
+    rhs = quote
+        function foo(x)
+            x + 1
+        end
+        nothing
+    end
+
+    @test_throws ExprNotEqual assert_equal_expr(Main, lhs, rhs)
+    
+    @test sprint(showerror, ExprNotEqual(Int64, :Int)) == """
+    expression not equal due to:
+      lhs: Int64::DataType
+      rhs: :Int::Symbol
+    """
+
+    @test sprint(showerror, ExprNotEqual(empty_line, :Int)) == """
+    expression not equal due to:
+      lhs: <empty line>::Expronicon.EmptyLine
+      rhs: :Int::Symbol
+    """
+end
+
+@testset "compare_expr" begin
+    @test compare_expr(:(Vector{Int}), Vector{Int})
+    @test compare_expr(:(Vector{Int}), :(Vector{$(nameof(Int))}))
+    @test compare_expr(:(NotDefined{Int}), :(NotDefined{$(nameof(Int))}))
+    @test compare_expr(:(NotDefined{Int, Float64}), :(NotDefined{$(nameof(Int)), Float64}))
+    @test compare_expr(LineNumberNode(1, :foo), LineNumberNode(1, :foo))
+end
+
+@testset "guess_module" begin
+    @test guess_module(Main, Base) === Base
+    @test guess_module(Main, :Base) === Base
+    @test guess_module(Main, :(1+1)) == :(1+1)
+end
+
+@testset "guess_type" begin
+    @test guess_type(Main, Int) === Int
+    @test guess_type(Main, :Int) === Int
+    @test guess_type(Main, :Foo) === :Foo
+    @test guess_type(Main, :(Array{Int, 1})) === Array{Int, 1}
+    # only head is guessed, returns a curly expr
+    @test guess_type(Main, :(Array{<:Real, 1})) == :(Array{<:Real, 1})
+end
+
+@static if VERSION > v"1.8-"
+    @testset "const <field> = <value>" begin
+        include("analysis/const.jl")
     end
 end

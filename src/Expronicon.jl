@@ -9,7 +9,7 @@ export
     NoDefault, JLExpr, JLFor, JLIfElse,
     JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     # analysis
-    @expr, @test_expr, compare_expr, compare_vars,
+    @expr, @test_expr, compare_expr,
     AnalysisError, is_function, is_kw_function, is_struct,
     is_ifelse, is_for, is_field, is_field_default, is_datatype_expr,
     is_matrix_expr,
@@ -20,6 +20,7 @@ export
     alias_gensym,
     has_kwfn_constructor,
     has_plain_constructor,
+    guess_type,
     # transformations
     no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     annotations_only, rm_annotations, rm_single_block, rm_nothing,
@@ -57,11 +58,11 @@ export
 include("patches.jl")
 include("types.jl")
 include("transform.jl")
-include("analysis.jl")
+include("analysis/analysis.jl")
 include("codegen.jl")
 include("printing.jl")
 include("match.jl")
 include("expand.jl")
-include("adt.jl")
+include("adt/adt.jl")
 
 end

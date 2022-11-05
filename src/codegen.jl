@@ -93,13 +93,14 @@ function codegen_ast(fn::JLFunction)
 end
 
 function codegen_ast(def::JLStruct)
-    return codegen_ast_struct(def)    
+    return codegen_ast_struct(def)
 end
 
 function codegen_ast(def::JLKwStruct)
     quote
         $(codegen_ast_struct(def))
         $(codegen_ast_kwfn(def))
+        nothing
     end
 end
 
@@ -438,11 +439,16 @@ function codegen_ast_struct(def)
 end
 
 function codegen_ast(def::Union{JLField, JLKwField})
-    return if def.type === Any
+    expr = if def.type === Any
         def.name
     else
         :($(def.name)::$(def.type))
     end
+
+    @static if VERSION > v"1.8-"
+        def.isconst && return Expr(:const, expr)
+    end
+    return expr
 end
 
 # X functions, the x<name> functions from Zygote, IRTools etc.

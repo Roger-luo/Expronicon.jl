@@ -198,6 +198,12 @@ function print_expr(io::IO, ex, ps::PrintState, theme::Color)
             println(io, ps)
             print_stmts(io, body, ps, theme)
             print_end(io, ps, theme)
+        @case Expr(:const, body)
+            within_line(io, ps) do
+                print_kw(io, "const", ps, theme)
+                print(io, tab(1))
+                print_expr(io, body, ps, theme)
+            end
         @case _
             print_within_line(io, ex, ps, theme)
     end
