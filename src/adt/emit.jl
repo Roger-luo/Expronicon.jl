@@ -275,7 +275,8 @@ function emit_getproperty(def::ADTTypeDef, info::EmitInfo)
             mask = info.variant_masks[variant]
             for (idx, field) in enumerate(variant.fieldnames)
                 jl[:(name === $(QuoteNode(field)))] = quote
-                    return $Base.getfield(value, $(mask[idx]))
+                    # annotate type to avoid type instability
+                    return $Base.getfield(value, $(mask[idx]))::$(variant.fieldtypes[idx])
                 end
             end
             jl.otherwise = quote
