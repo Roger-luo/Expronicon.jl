@@ -334,29 +334,6 @@ end
 
     @test def.fields[1].name === :x
     @test def.fields[2].name === :y
-
-    @static if VERSION > v"1.8-"
-        @test_expr JLStruct mutable struct Mutable
-            const x::Int
-            y::Int
-        end
-
-        def = @expr JLKwStruct mutable struct MutableKw
-            const x::Int = 1
-            y::Int = 2
-        end
-
-        @test_expr codegen_ast(def) == quote
-            mutable struct MutableKw
-                const x::Int
-                y::Int
-            end
-            function MutableKw(; x = 1, y = 2)
-                MutableKw(x, y)
-            end
-            nothing
-        end
-    end
 end
 
 @test sprint(showerror, AnalysisError("a", "b")) == "expect a expression, got b."
@@ -481,4 +458,10 @@ end
     @test guess_type(Main, :(Array{Int, 1})) === Array{Int, 1}
     # only head is guessed, returns a curly expr
     @test guess_type(Main, :(Array{<:Real, 1})) == :(Array{<:Real, 1})
+end
+
+@static if VERSION > v"1.8-"
+    @testset "const <field> = <value>" begin
+        include("analysis/const.jl")
+    end
 end
