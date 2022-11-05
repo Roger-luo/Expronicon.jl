@@ -465,3 +465,7 @@ end
         include("analysis/const.jl")
     end
 end
+
+@testset "check" begin
+    include("analysis/check.jl")
+end
