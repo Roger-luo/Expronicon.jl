@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #=
-exec julia --color=yes --compile=min --startup-file=no -q --project -O0 "${BASH_SOURCE[0]}" "$@"
+exec julia --color=yes --startup-file=no -q --project "${BASH_SOURCE[0]}" "$@"
 =#
 
 using Expronicon
