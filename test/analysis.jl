@@ -1,6 +1,6 @@
 using Test
 using Expronicon
-using Expronicon: check_expr_equal, ExprNotEqual,
+using Expronicon: assert_equal_expr, ExprNotEqual,
     empty_line, guess_module, is_valid_typevar
 
 @testset "is_function" begin
@@ -240,10 +240,10 @@ end
     println(def)
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{S}; x = 1) where {N, T, S <: Foo{N, T}}
+        function create(::Type{S}; x = 1) where {N, T, S <: Foo1{N, T}}
             Foo1{N, T}(x)
         end
-        function create(::Type{S}; x = 1) where {N, S <: Foo{N}}
+        function create(::Type{S}; x = 1) where {N, S <: Foo1{N}}
             Foo1{N}(x)
         end
     end
@@ -359,7 +359,7 @@ end
     end
 end
 
-@test sprint(print, AnalysisError("a", "b")) == "expect a expression, got b."
+@test sprint(showerror, AnalysisError("a", "b")) == "expect a expression, got b."
 
 @testset "JLIfElse" begin
     jl = JLIfElse()
@@ -431,7 +431,7 @@ end
     end
 end
 
-@testset "check_expr_equal" begin
+@testset "assert_equal_expr" begin
     lhs = quote
         function foo(x)
             x + 1
@@ -445,21 +445,19 @@ end
         nothing
     end
 
-    @test_throws ExprNotEqual check_expr_equal(Main, lhs, rhs)
-
-    buf = IOBuffer()
-    showerror(buf, ExprNotEqual(Int, :Int))
-    @test String(take!(buf)) == """
+    @test_throws ExprNotEqual assert_equal_expr(Main, lhs, rhs)
+    
+    @test sprint(showerror, ExprNotEqual(Int, :Int)) == """
     expression not equal due to:
-      lhs: Int64
-      rhs: Int"""
+      lhs: Int64::DataType
+      rhs: :Int::Symbol
+    """
 
-    buf = IOBuffer()
-    showerror(buf, ExprNotEqual(empty_line, :Int))
-    @test String(take!(buf)) == """
+    @test sprint(showerror, ExprNotEqual(empty_line, :Int)) == """
     expression not equal due to:
-      lhs: <empty line>
-      rhs: Int"""
+      lhs: <empty line>::Expronicon.EmptyLine
+      rhs: :Int::Symbol
+    """
 end
 
 @testset "compare_expr" begin
@@ -473,7 +471,7 @@ end
 @testset "guess_module" begin
     @test guess_module(Main, Base) === Base
     @test guess_module(Main, :Base) === Base
-    @test guess_module(Main, :(1+1)) === nothing
+    @test guess_module(Main, :(1+1)) == :(1+1)
 end
 
 @testset "guess_type" begin
@@ -482,5 +480,5 @@ end
     @test guess_type(Main, :Foo) === :Foo
     @test guess_type(Main, :(Array{Int, 1})) === Array{Int, 1}
     # only head is guessed, returns a curly expr
-    @test guess_type(Main, :(Array{<:Real, 1})) == :($Array{<:Real, 1})
+    @test guess_type(Main, :(Array{<:Real, 1})) == :(Array{<:Real, 1})
 end

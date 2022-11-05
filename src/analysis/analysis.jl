@@ -1,0 +1,7 @@
+include("exception.jl")
+include("check.jl")
+include("cons.jl")
+include("guess.jl")
+include("reflection.jl")
+include("split.jl")
+include("compare.jl")

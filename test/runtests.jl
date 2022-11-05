@@ -4,6 +4,14 @@ using Test
 using Aqua
 Aqua.test_all(Expronicon)
 
+@test_expr quote
+    x + 1
+    $nothing
+end == quote
+    x + 1
+    $nothing
+end
+
 @testset "@test_expr" begin
     @test_expr quote
         x + 1
@@ -47,3 +55,5 @@ end
 
 DocMeta.setdocmeta!(Expronicon, :DocTestSetup, :(using Expronicon); recursive=true)
 doctest(Expronicon)
+
+@macroexpand @test 1 + x

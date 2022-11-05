@@ -1,0 +1,29 @@
+struct AnalysisError <: Exception
+    expect::String
+    got
+end
+
+anlys_error(expect, got) = throw(AnalysisError(expect, got))
+
+function Base.showerror(io::IO, e::AnalysisError)
+    print(io, "expect ", e.expect, " expression, got ", e.got, ".")
+end
+
+struct ExprNotEqual <: Exception
+    lhs
+    rhs
+end
+
+function Base.showerror(io::IO, err::ExprNotEqual)
+    printstyled(io, "expression not equal due to:"; color=:red)
+    println(io)
+    print(io, "  lhs: ")
+    show(io, err.lhs)
+    print(io)
+    printstyled(io, "::", typeof(err.lhs); color=:light_black)
+    println(io)
+    print(io, "  rhs: ")
+    show(io, err.rhs)
+    printstyled(io, "::", typeof(err.rhs); color=:light_black)
+    println(io)
+end

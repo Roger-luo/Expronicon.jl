@@ -222,9 +222,10 @@ function expand_file(src, dst, options::ExpandOptions, excluded_paths = file_to_
     ex = _insert_include_generated(ex)
     ex = _replace_include(ex, options)
     ex = prettify(ex)
+    ex = subtitute(ex, old_mod=>new_mod)
 
     open(dst, "w+") do io
-        println(io, ex)
+        println(IOContext(io, :module=>Expronicon), ex)
     end
 end
 

@@ -22,6 +22,7 @@ Constant instance for [`NoDefault`](@ref) that
 describes a field should have no default value.
 """
 const no_default = NoDefault()
+Base.show(io::IO, ::NoDefault) = print(io, "no_default")
 
 """
     abstract type JLExpr end
