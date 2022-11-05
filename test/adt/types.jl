@@ -5,8 +5,8 @@ using Expronicon.ADT: ADTTypeDef, Variant, adt_split_head
 @testset "adt_split_head" begin
     @test adt_split_head(:Message) == (:Message, Any[], nothing)
     @test adt_split_head(:(Message <: AbstractMessage)) == (:Message, Any[], :AbstractMessage)
-    @test adt_split_head(:(Message{T} <: AbstractMessage)) == (:Message, Any[:T], :AbstractMessage)
-    @test adt_split_head(:(Message{T <: Int} <: AbstractMessage)) == (:Message, Any[:(T <: Int)], :AbstractMessage)
+    @test_throws ArgumentError adt_split_head(:(Message{T} <: AbstractMessage)) # == (:Message, Any[:T], :AbstractMessage)
+    @test_throws ArgumentError adt_split_head(:(Message{T <: Int} <: AbstractMessage)) # == (:Message, Any[:(T <: Int)], :AbstractMessage)
 end
 
 @testset "ADTTypeDef(ex)" begin
@@ -63,20 +63,20 @@ end
         ChangeColor(::Int, ::Int, ::Int)
     end"""
 
-    def = ADTTypeDef(Main, :(Message{T <: Int, S} <: AbstractMessage), body)
-    io = IOBuffer()
-    show(io, MIME"text/plain"(), def)
-    @test String(take!(io)) == """
-    @adt Message{T <: Int, S} <: AbstractMessage begin
-        Quit
+    # def = ADTTypeDef(Main, :(Message{T <: Int, S} <: AbstractMessage), body)
+    # io = IOBuffer()
+    # show(io, MIME"text/plain"(), def)
+    # @test String(take!(io)) == """
+    # @adt Message{T <: Int, S} <: AbstractMessage begin
+    #     Quit
 
-        struct Move
-            x::Int
-            y::Int
-        end
+    #     struct Move
+    #         x::Int
+    #         y::Int
+    #     end
 
-        Write(::String)
+    #     Write(::String)
 
-        ChangeColor(::Int, ::Int, ::Int)
-    end"""
+    #     ChangeColor(::Int, ::Int, ::Int)
+    # end"""
 end
