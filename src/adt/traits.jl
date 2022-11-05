@@ -91,3 +91,7 @@ end
 function variant_typename(variant_type)
     throw(ArgumentError("expect a variant type, got $(typeof(variant_type))"))
 end
+
+function variant_kind(variant_type)
+    throw(ArgumentError("expect a variant type, got $(typeof(variant_type))"))
+end

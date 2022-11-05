@@ -11,6 +11,7 @@ function emit_reflection(def::ADTTypeDef, info::EmitInfo)
         $(emit_variant_fieldnames(def, info))
         $(emit_variant_fieldtypes(def, info))
         $(emit_variant_field_defaults(def, info))
+        $(emit_variant_kind(def, info))
     end
 end
 
@@ -153,6 +154,21 @@ function emit_variant_typename(def::ADTTypeDef, info::EmitInfo)
 
         @inline function $ADT.variant_typename(x::$(def.name))
             return $ADT.variant_typename($ADT.variant_type(x))
+        end
+    end
+end
+
+function emit_variant_kind(def::ADTTypeDef, info::EmitInfo)
+    body = foreach_variant_type(:t, def, info) do variant
+        QuoteNode(variant.type)
+    end
+    return quote
+        @inline function $ADT.variant_kind(t::$(info.typename))
+            return $(codegen_ast(body))
+        end
+
+        @inline function $ADT.variant_kind(x::$(def.name))
+            return $ADT.variant_kind($ADT.variant_type(x))
         end
     end
 end

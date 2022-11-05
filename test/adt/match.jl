@@ -52,4 +52,19 @@ end
         Move(;x, y=2) => x
         _ => false
     end
+
+    @match Move(1, 2) begin
+        Move(;x) => @test x == 1
+        _ => false
+    end
+
+    @match Write("abc") begin
+        Write(s) => @test s == "abc"
+        _ => false
+    end
+
+    @test @match Quit begin
+        Quit => true
+        _ => false
+    end
 end
