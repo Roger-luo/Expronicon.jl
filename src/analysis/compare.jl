@@ -94,19 +94,15 @@ end
 Test if two expression is equivalent semantically, this uses `compare_expr`
 to decide if they are equivalent, ignores things such as `LineNumberNode`
 generated `Symbol` in `Expr(:curly, ...)` or `Expr(:where, ...)`.
+
+!!! note
+
+    This macro requires one `using Test` to import the `Test` module
+    name.
 """
 macro test_expr(ex::Expr)
     esc(test_expr_m(__module__, __source__, ex))
 end
-
-# result = try
-#     Test.eval_test(Test.Expr(:comparison, 1 + 1, ==, 2), Test.Expr(:comparison, $(QuoteNode(:(1 + 1))), :(==), $(QuoteNode(2))), $(QuoteNode(:(()))), $(QuoteNode(false)))
-# catch x_2
-#     x_2 isa Test.InterruptException && Test.rethrow()
-#     Test.Threw(x_2, Test.Base.current_exceptions(), $(QuoteNode(:(()))))
-# end
-
-# Test.do_test(result, :(1 + 1 == 2))
 
 function test_expr_m(__module__, __source__, ex::Expr)
     ex.head === :call && ex.args[1] === :(==) || error("expect <expr> == <expr>, got $ex")
@@ -118,7 +114,7 @@ function test_expr_m(__module__, __source__, ex::Expr)
             Test.Returned($cmp_result, nothing, $(QuoteNode(__source__)))
         catch $err
             $err isa Test.InterruptException && Test.rethrow()
-            Test.Threw($err, Test.Base.current_exceptions(), $(QuoteNode(__source__)))
+            Test.Threw($err, $Base.current_exceptions(), $(QuoteNode(__source__)))
         end
         Test.do_test($result, $(QuoteNode(ex)))
     end
