@@ -365,9 +365,9 @@ end
             throw(ArgumentError("singleton variant Quit does not have a field name"))
         elseif (Expronicon.ADT).variant_type(value) == Core.bitcast(var"Message#Type", 0x00000002)
             if name === :x
-                return (Base).getfield(value, 2)
+                return (Base).getfield(value, 2)::Int64
             elseif name === :y
-                return (Base).getfield(value, 3)
+                return (Base).getfield(value, 3)::Int64
             else
                 throw(ArgumentError("invalid field name"))
             end
@@ -375,9 +375,9 @@ end
             throw(ArgumentError("call variant Write does not have a field name"))
         elseif (Expronicon.ADT).variant_type(value) == Core.bitcast(var"Message#Type", 0x00000004)
             if name === :x
-                return (Base).getfield(value, 5)
+                return (Base).getfield(value, 5)::Vector{Int64}
             elseif name === :y
-                return (Base).getfield(value, 6)
+                return (Base).getfield(value, 6)::Vector{Int64}
             else
                 throw(ArgumentError("invalid field name"))
             end
