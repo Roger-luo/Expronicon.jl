@@ -45,7 +45,10 @@ function guess_type(m::Module, ex)
                 guess_type(m, typevar)
             end
 
-            if type isa Type && all(is_valid_typevar, typevars)
+            if type === Union
+                all(x->isa(x,Type), typevars) || return ex
+                return Union{typevars...}
+            elseif type isa Type && all(is_valid_typevar, typevars)
                 return type{typevars...}
             else
                 return ex

@@ -22,9 +22,9 @@ export
     has_plain_constructor,
     guess_type,
     # transformations
-    no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
+    Substitute, no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     annotations_only, rm_annotations, rm_single_block, rm_nothing,
-    replace_symbol, subtitute, eval_interp, eval_literal,
+    substitute, eval_interp, eval_literal,
     expr_map, nexprs,
     # codegen
     codegen_ast,

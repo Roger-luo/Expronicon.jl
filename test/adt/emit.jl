@@ -44,11 +44,11 @@ end
 @testset "EmitInfo(::ADTTypeDef)" begin
     def = ADTTypeDef(Main, :Message, body)
     info = EmitInfo(def)
-    @test info.variant_masks[def.variants[1]] == Int[]
-    @test info.variant_masks[def.variants[2]] == [2, 3]
-    @test info.variant_masks[def.variants[3]] == [5]
-    @test info.variant_masks[def.variants[4]] == [5, 6]
-    @test info.variant_masks[def.variants[5]] == [2, 3, 4]
+    @test info.typeinfo[def.variants[1]].mask == Int[]
+    @test info.typeinfo[def.variants[2]].mask == [2, 3]
+    @test info.typeinfo[def.variants[3]].mask == [5]
+    @test info.typeinfo[def.variants[4]].mask == [5, 6]
+    @test info.typeinfo[def.variants[5]].mask == [2, 3, 4]
 
     @test info.fieldtypes == [Symbol("Message#Type"), Int64, Int64, Int64, Any, Any]
     @test length(info.fieldnames) == 6
@@ -85,32 +85,91 @@ def = ADTTypeDef(Main, :Message, body)
 info = EmitInfo(def)
 
 @test_expr emit_struct(def, info) == quote
-    Core.@__doc__ struct Message
-        var"#type"::var"Message#Type"
-        var"#Int64##2"::Int64
-        var"#Int64##3"::Int64
-        var"#Int64##4"::Int64
-        var"#Any##5"
-        var"#Any##6"
-        function Message(type::var"Message#Type", args...)
-            if type == Core.bitcast(var"Message#Type", 0x00000001)
-                length(args) == 0 || throw(ArgumentError("expect $(0) arguments, got $(length(args)) arguments"))
-                new(type, 0, 0, 0, nothing, nothing)
-            elseif type == Core.bitcast(var"Message#Type", 0x00000002)
-                length(args) == 2 || throw(ArgumentError("expect $(2) arguments, got $(length(args)) arguments"))
-                new(type, args[1], args[2], 0, nothing, nothing)
-            elseif type == Core.bitcast(var"Message#Type", 0x00000003)
-                length(args) == 1 || throw(ArgumentError("expect $(1) arguments, got $(length(args)) arguments"))
-                new(type, 0, 0, 0, args[1], nothing)
-            elseif type == Core.bitcast(var"Message#Type", 0x00000004)
-                length(args) == 2 || throw(ArgumentError("expect $(2) arguments, got $(length(args)) arguments"))
-                new(type, 0, 0, 0, args[1], args[2])
-            elseif type == Core.bitcast(var"Message#Type", 0x00000005)
-                length(args) == 3 || throw(ArgumentError("expect $(3) arguments, got $(length(args)) arguments"))
-                new(type, args[1], args[2], args[3], nothing, nothing)
+    #= /Users/roger/Code/Julia/Expronicon/src/adt/emit.jl:329 =# Core.@__doc__ struct Message
+            var"#type"::var"Message#Type"
+            var"#Int64##2"::Int64
+            var"#Int64##3"::Int64
+            var"#Int64##4"::Int64
+            var"#Any##5"
+            var"#Any##6"
+            function Message(type::var"Message#Type", args...)
+                if type == Core.bitcast(var"Message#Type", 0x00000001)
+                    length(args) == 0 || throw(ArgumentError("expect $(0) arguments, got $(length(args)) arguments"))
+                    var"#args#2" = 0
+                    var"#args#3" = 0
+                    var"#args#4" = 0
+                    var"#args#5" = nothing
+                    var"#args#6" = nothing
+                    new(type, var"#args#2", var"#args#3", var"#args#4", var"#args#5", var"#args#6")
+                elseif type == Core.bitcast(var"Message#Type", 0x00000002)
+                    length(args) == 2 || throw(ArgumentError("expect $(2) arguments, got $(length(args)) arguments"))
+                    if args[1] isa Int64
+                        var"#args#2" = args[1]
+                    else
+                        var"#args#2" = (Base).convert(Int64, args[1])
+                    end
+                    if args[2] isa Int64
+                        var"#args#3" = args[2]
+                    else
+                        var"#args#3" = (Base).convert(Int64, args[2])
+                    end
+                    var"#args#4" = 0
+                    var"#args#5" = nothing
+                    var"#args#6" = nothing
+                    new(type, var"#args#2", var"#args#3", var"#args#4", var"#args#5", var"#args#6")
+                elseif type == Core.bitcast(var"Message#Type", 0x00000003)
+                    length(args) == 1 || throw(ArgumentError("expect $(1) arguments, got $(length(args)) arguments"))
+                    var"#args#2" = 0
+                    var"#args#3" = 0
+                    var"#args#4" = 0
+                    if args[1] isa String
+                        var"#args#5" = args[1]
+                    else
+                        var"#args#5" = (Base).convert(String, args[1])
+                    end
+                    var"#args#6" = nothing
+                    new(type, var"#args#2", var"#args#3", var"#args#4", var"#args#5", var"#args#6")
+                elseif type == Core.bitcast(var"Message#Type", 0x00000004)
+                    length(args) == 2 || throw(ArgumentError("expect $(2) arguments, got $(length(args)) arguments"))
+                    var"#args#2" = 0
+                    var"#args#3" = 0
+                    var"#args#4" = 0
+                    if args[1] isa Vector{Int64}
+                        var"#args#5" = args[1]
+                    else
+                        var"#args#5" = (Base).convert(Vector{Int64}, args[1])
+                    end
+                    if args[2] isa Vector{Int64}
+                        var"#args#6" = args[2]
+                    else
+                        var"#args#6" = (Base).convert(Vector{Int64}, args[2])
+                    end
+                    new(type, var"#args#2", var"#args#3", var"#args#4", var"#args#5", var"#args#6")
+                elseif type == Core.bitcast(var"Message#Type", 0x00000005)
+                    length(args) == 3 || throw(ArgumentError("expect $(3) arguments, got $(length(args)) arguments"))
+                    if args[1] isa Int64
+                        var"#args#2" = args[1]
+                    else
+                        var"#args#2" = (Base).convert(Int64, args[1])
+                    end
+                    if args[2] isa Int64
+                        var"#args#3" = args[2]
+                    else
+                        var"#args#3" = (Base).convert(Int64, args[2])
+                    end
+                    if args[3] isa Int64
+                        var"#args#4" = args[3]
+                    else
+                        var"#args#4" = (Base).convert(Int64, args[3])
+                    end
+                    var"#args#5" = nothing
+                    var"#args#6" = nothing
+                    new(type, var"#args#2", var"#args#3", var"#args#4", var"#args#5", var"#args#6")
+                else
+                    throw(ArgumentError("invalid variant type"))
+                end
             end
         end
-    end
 end
 
 @test_expr emit_variant_cons(def, info) == quote
@@ -211,7 +270,6 @@ end
         end
     end
 end
-emit_reflection(def, info)
 
 @test_expr emit_variants(def, info) == quote
     function (Expronicon.ADT).variants(::Type{<:Message})
@@ -429,4 +487,23 @@ end
         end
         return
     end
+end
+
+
+@adt MubanLang begin
+    None
+    # reference to a Julia variable
+    Id(::Symbol)
+
+    # <object>.<fieldname>
+    struct Reference
+        object::Union{Id, Reference} # Id or Reference
+        fieldname::MubanLang # Id
+        some::None
+    end
+end
+
+@testset "variant as field type" begin
+    @test Reference(Id(:x), Id(:y), None).some == None
+    @test_throws ArgumentError Reference(None, Id(:y), None)
 end

@@ -106,9 +106,9 @@ end
     end))
 end
 
-@testset "subtitute" begin
-    @test subtitute(:(x + 1), :x=>:y) == :(y + 1)
-    @test subtitute(:(for i in 1:10;x += i;end), :x => :y) == :(for i in 1:10;y += i;end)
+@testset "substitute" begin
+    @test substitute(:(x + 1), :x=>:y) == :(y + 1)
+    @test substitute(:(for i in 1:10;x += i;end), :x => :y) == :(for i in 1:10;y += i;end)
 end
 
 @testset "expr_map" begin

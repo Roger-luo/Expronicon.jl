@@ -91,10 +91,12 @@ function Base.show(io::IO, ::MIME"text/plain", info::EmitInfo)
         println(io)
     end
 
+    isempty(info.typeinfo) && return
+
     println(io)
     println(io, tab(2), "variants:")
 
-    variants = sort(collect(keys(info.variant_masks)); by=x->x.name)
+    variants = sort(collect(keys(info.typeinfo)); by=x->x.name)
 
     # find max line width
     variant_lines_nocolor = map(variants) do variant
@@ -115,7 +117,7 @@ function Base.show(io::IO, ::MIME"text/plain", info::EmitInfo)
         lines = splitlines(String(take!(buf))) # lines with color
         padding = max_line_width - length(variant_lines_nocolor[idx][1]) + 4
 
-        mask = info.variant_masks[variant]
+        mask = info.typeinfo[variant].mask
         print(io, tab(4), lines[1], tab(1))
         printstyled(io, '-'^(padding-2); color=:light_black)
 
