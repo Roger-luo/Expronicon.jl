@@ -261,8 +261,9 @@ function expand_project(options::ExpandOptions)
     rel_build_dir = relpath(options.build_dir, project_dir)
     excluded_files = file_to_exclude(options)
     for (root, _, files) in walkdir(src_dir)
-        relpath(root, src_dir) in options.exclude_src && continue # skip excluded src folder
+        relpath(root, src_dir) in options.exclude_src && continue
         for file in files
+            file in excluded_files && continue # skip excluded files
             src = joinpath(root, file)
             relsrc = relpath(src, src_dir)
             relsrc in options.exclude_src && continue
@@ -274,6 +275,7 @@ function expand_project(options::ExpandOptions)
             end
 
             if relsrc in options.src_dont_touch
+                @info "copying file" src dst
                 cp(src, dst; force=true)
             else
                 @info "expanding..." src dst
