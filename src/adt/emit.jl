@@ -154,7 +154,7 @@ function scan_fields!(info::EmitInfo, def::ADTTypeDef)
         mask = typeinfo.mask = Vector{Int}(undef, length(variant.fieldtypes))
         variant_type_ptr = Dict{Any, Int}()
         for (idx, type) in enumerate(typeinfo.guess)
-            if isbitstype(type)
+            if type isa Type && isbitstype(type)
                 variant_type_ptr[type] = get(variant_type_ptr, type, 0) + 1
                 mask[idx] = type_start[type] + variant_type_ptr[type] - 1
             else
