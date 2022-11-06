@@ -9,7 +9,7 @@ Check if the given typevar is a valid typevar.
 function is_valid_typevar(typevar)
     @match typevar begin
         ::TypeVar => true
-        ::Symbol => true
+        ::QuoteNode => true # Symbol is QuoteNode inside Expr
         ::Type => true
         if isbitstype(typeof(typevar)) end => true
         ::Tuple => all(x->x isa Symbol || isbitstype(typeof(x)), typevar)

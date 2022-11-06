@@ -501,9 +501,27 @@ end
         fieldname::MubanLang # Id
         some::None
     end
+
+    struct Template
+        stmts::Vector{MubanLang}
+    end
 end
 
 @testset "variant as field type" begin
     @test Reference(Id(:x), Id(:y), None).some == None
+    @test Template([Id(:x), Id(:y), None]) isa MubanLang
     @test_throws ArgumentError Reference(None, Id(:y), None)
+end
+
+@testset "Vector{Variant}" begin
+    body = quote
+        Id(::Symbol)
+        struct Template
+            stmts::Vector{MubanLang}
+        end
+    end
+
+    def = ADTTypeDef(Main, :MubanLang, body)
+    info = EmitInfo(def)
+    @test_expr info.typeinfo[def.variants[2]].guess[1] == :(Vector{MubanLang})
 end

@@ -34,7 +34,7 @@ expression. This function is used in [`compare_expr`](@ref).
 """
 function guess_type(m::Module, ex)
     @switch ex begin
-        @case ::Type
+        @case ::Type || ::QuoteNode
             return ex
         @case ::Symbol
             isdefined(m, ex) || return ex
