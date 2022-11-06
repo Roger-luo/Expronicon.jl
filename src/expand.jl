@@ -17,14 +17,6 @@ function rm_include(paths::Vector{String}, ex)
     return ex
 end
 
-function substitute(f, ex, new)
-    @match ex begin
-        GuardBy(f) => new
-        Expr(head, args...) => Expr(head, map(x->substitute(f, x, new), args)...)
-        _ => ex
-    end
-end
-
 function rm_using(name::Symbol, ex)
     @match ex begin
         :(using $(&name)) => nothing
@@ -207,7 +199,7 @@ function expand_file(src, dst, options::ExpandOptions, excluded_paths = file_to_
     @info "substitute module identifier"
     old_mod = options.project
     new_mod = Symbol(options.project, options.postfix)
-    ex = subtitute(ex, old_mod=>new_mod)
+    ex = substitute(ex, old_mod=>new_mod)
     ex = expand_macro(options.mod, ex; macronames=options.macronames)
 
     rel_excluded_paths = map(excluded_paths) do path
@@ -222,7 +214,7 @@ function expand_file(src, dst, options::ExpandOptions, excluded_paths = file_to_
     ex = _insert_include_generated(ex)
     ex = _replace_include(ex, options)
     ex = prettify(ex)
-    ex = subtitute(ex, old_mod=>new_mod)
+    ex = substitute(ex, old_mod=>new_mod)
 
     open(dst, "w+") do io
         println(IOContext(io, :module=>Expronicon), ex)

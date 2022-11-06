@@ -430,3 +430,55 @@ end
         return
     end
 end
+
+
+using Expronicon.ADT: @adt
+@adt MubanLang begin
+    # reference to a Julia variable
+    Id(::Symbol)
+
+    # <object>.<fieldname>
+    struct Reference
+        object::Union{Id, Reference} # Id or Reference
+        fieldname::MubanLang # Id
+    end
+end
+
+body = quote
+    None
+    # reference to a Julia variable
+    Id(::Symbol)
+
+    # <object>.<fieldname>
+    struct Reference
+        object::Union{Id, Reference} # Id or Reference
+        fieldname::MubanLang # Id
+        some::None
+    end
+end
+def = ADTTypeDef(Main, :MubanLang, body)
+info = EmitInfo(def)
+emit_struct(def, info)
+
+@adt Message begin
+    # quit the program
+    Quit
+    # move the cursor to (x, y)
+    Move(::Int64, ::Int64)
+end
+
+@adt MubanLang begin
+    None
+    # reference to a Julia variable
+    Id(::Symbol)
+
+    # <object>.<fieldname>
+    struct Reference
+        object::Union{Id, Reference} # Id or Reference
+        fieldname::MubanLang # Id
+        some::None
+    end
+end
+
+Reference(Id(:x), Id(:y), None)
+MubanLang(Reference, Id(:x), Id(:y), None)

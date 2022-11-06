@@ -271,15 +271,9 @@ function compare_where(m::Module, lhs::Expr, rhs::Expr)
 end
 
 function mark_typevars(expr, typevars::Vector{Symbol})
-    if expr isa Symbol
-        if expr in typevars
-            return Variable(expr)
-        else
-            return expr
-        end
-    elseif expr isa Expr
-        return Expr(expr.head, map(x -> mark_typevars(x, typevars), expr.args)...)
-    else
-        return expr
+    sub = Substitute() do expr
+        expr isa Symbol && expr in typevars && return true
+        return false
     end
+    return sub(Variable, expr)
 end

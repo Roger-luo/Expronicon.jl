@@ -31,21 +31,17 @@ function eval_literal(m::Module, ex)
     return Expr(ex.head, map(x->eval_literal(m, x), ex.args)...)
 end
 
-replace_symbol(x::Symbol, name::Symbol, value) = x === name ? value : x
-replace_symbol(x, ::Symbol, value) = x # other expressions
-
-function replace_symbol(ex::Expr, name::Symbol, value)
-    Expr(ex.head, map(x->replace_symbol(x, name, value), ex.args)...)
-end
-
 """
-    subtitute(ex::Expr, old=>new)
+    substitute(ex::Expr, old=>new)
 
-Subtitute the old symbol `old` with `new`.
+Substitute the old symbol `old` with `new`.
 """
-function subtitute(ex::Expr, replace::Pair)
-    name, value = replace
-    return replace_symbol(ex, name, value)
+function substitute(ex::Expr, replace::Pair)
+    old, new = replace
+    sub = Substitute() do x
+        x == old
+    end
+    return sub(_->new, ex)
 end
 
 """
@@ -398,3 +394,38 @@ end
 ```
 """
 nexprs(f, k::Int) = expr_map(f, 1:k)
+
+"""
+    Substitute(condition) -> substitute(f(expr), expr)
+
+Returns a function that substitutes `expr` with
+`f(expr)` if `condition(expr)` is true. Applied
+recursively to all sub-expressions.
+
+# Example
+
+```jldoctest
+julia> sub = Substitute() do expr
+           expr isa Symbol && expr in [:x] && return true
+           return false
+       end;
+
+julia> sub(_->1, :(x + y))
+:(1 + y)
+```
+"""
+struct Substitute
+    condition
+end
+
+(sub::Substitute)(f) = Base.Fix1(sub, f)
+
+function (sub::Substitute)(f, expr)
+    if sub.condition(expr)
+        return f(expr)
+    elseif expr isa Expr
+        return Expr(expr.head, map(sub(f), expr.args)...)
+    else
+        return expr
+    end
+end

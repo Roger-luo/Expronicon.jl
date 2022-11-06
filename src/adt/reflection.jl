@@ -41,7 +41,7 @@ end
 
 function emit_variant_masks(def::ADTTypeDef, info::EmitInfo)
     body = foreach_variant_type(:t, def, info) do variant
-        xtuple(info.variant_masks[variant]...)
+        xtuple(info.typeinfo[variant].mask...)
     end
 
     return quote
