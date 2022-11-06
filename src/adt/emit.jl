@@ -385,10 +385,11 @@ function emit_getproperty(def::ADTTypeDef, info::EmitInfo)
         else
             jl = JLIfElse()
             mask = info.typeinfo[variant].mask
+            type_guess = info.typeinfo[variant].guess
             for (idx, field) in enumerate(variant.fieldnames)
                 jl[:(name === $(QuoteNode(field)))] = quote
                     # annotate type to avoid type instability
-                    return $Base.getfield(value, $(mask[idx]))::$(variant.fieldtypes[idx])
+                    return $Base.getfield(value, $(mask[idx]))::$(type_guess[idx])
                 end
             end
             jl.otherwise = quote
