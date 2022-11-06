@@ -103,7 +103,7 @@ function scan_fields!(info::EmitInfo, def::ADTTypeDef)
     for variant in def.variants
         variant_type_set = Dict{Any, Int}()
         for type in info.typeinfo[variant].guess
-            if isbitstype(type)
+            if type isa Type && isbitstype(type)
                 variant_type_set[type] = get(variant_type_set, type, 0) + 1
             else
                 variant_type_set[Any] = get(variant_type_set, Any, 0) + 1
