@@ -68,3 +68,39 @@ end
         _ => false
     end
 end
+
+
+@adt MubanLang begin
+    struct Template
+        stmts::Vector{MubanLang}
+    end
+
+    Text(::String)
+    Comment(::String)
+
+    # inline expr
+    # reference to a Julia variable
+    Id(::String)
+    Literal(::Any)
+
+    struct InlineExpr
+        head::Int
+        args::Vector{MubanLang}
+    end
+
+    struct Loop
+        indices::Vector{MubanLang} # list of Id
+        iterator::MubanLang # <inline expr>
+        body::Template # Template
+    end
+end
+
+@testset "variant type match" begin
+    x = Loop([Id("i"), Id("j")], InlineExpr(1, [Id("a"), Id("b")]), Template([]))
+
+    @match x begin
+        Text(s) => @test s == "abc"
+        Loop(indices, iterator, body) => @test true
+        _ => @test false
+    end
+end

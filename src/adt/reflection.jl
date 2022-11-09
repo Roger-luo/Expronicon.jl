@@ -113,8 +113,8 @@ end
 
 function emit_variant_fieldtypes(def::ADTTypeDef, info::EmitInfo)
     body = foreach_variant_type(:t, def, info) do variant
-        xtuple(variant.fieldtypes...)
-    end
+        xtuple(info.typeinfo[variant].guess...)
+    end # should return the real types
 
     return quote
         @inline function $ADT.variant_fieldtypes(t::$(info.typename))

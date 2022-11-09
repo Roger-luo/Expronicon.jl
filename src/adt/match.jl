@@ -22,6 +22,7 @@ end
 
 function uncall_call(t, self, args, kwargs, type_args)
     isempty(kwargs) || throw(ArgumentError("keyword arguments are not supported"))
+    @gensym type
     patterns = Function[]
     fieldtypes = variant_fieldtypes(t)
     nfields = length(fieldtypes)
@@ -37,14 +38,16 @@ function uncall_call(t, self, args, kwargs, type_args)
         @case _
     end
 
+    pushfirst!(patterns, self(t))
     ret = call_decons(t, patterns)
     isempty(type_args) && return ret
     return and([self(Expr(:(::), Expr(:curly, adt_type(t), type_args...))), ret])
 end
 
 function uncall_struct(t, self, args, kwargs, type_args)
-    partial_field_names = Symbol[]
-    patterns = Function[]
+    @gensym type
+    partial_field_names = Symbol[type]
+    patterns = Function[self(t)]
     all_field_names = variant_fieldnames(t)
     nfields = length(all_field_names)
     n_args = length(args)
@@ -101,8 +104,9 @@ function call_decons(t, ps, prepr::AbstractString = repr(t))
     mask = variant_masks(t)
     types = variant_fieldtypes(t)
     function extract(sub::Any, i::Int, ::Any, ::Any)
+        i == 1 && return :($ADT.variant_type($sub))
         quote
-            $(xcall(Base, :getfield, sub, mask[i]))::$(types[i])
+            $(xcall(Base, :getfield, sub, mask[i-1]))::$(types[i-1])
         end
     end
     MLStyle.Record.decons(comp, extract, ps)
@@ -120,6 +124,7 @@ function struct_decons(t, partial_fields, ps, prepr::AbstractString = repr(t))
     types = variant_fieldtypes(t)
     mask = variant_masks(t)
     function extract(sub::Any, i::Int, ::Any, ::Any)
+        i == 1 && return :($ADT.variant_type($sub))
         idx = findfirst(isequal(partial_fields[i]), names)::Int
         quote
             $(xcall(Base, :getfield, sub, mask[idx]))::$(types[idx])
