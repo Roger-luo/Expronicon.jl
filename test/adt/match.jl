@@ -70,9 +70,9 @@ end
 end
 
 
-@adt MubanLang begin
+@adt Muban begin
     struct Template
-        stmts::Vector{MubanLang}
+        stmts::Vector{Muban}
     end
 
     Text(::String)
@@ -85,12 +85,12 @@ end
 
     struct InlineExpr
         head::Int
-        args::Vector{MubanLang}
+        args::Vector{Muban}
     end
 
     struct Loop
-        indices::Vector{MubanLang} # list of Id
-        iterator::MubanLang # <inline expr>
+        indices::Vector{Muban} # list of Id
+        iterator::Muban # <inline expr>
         body::Template # Template
     end
 end
