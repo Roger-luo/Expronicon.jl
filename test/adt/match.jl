@@ -1,3 +1,5 @@
+module TestMatch
+
 using Test
 using MLStyle
 using Expronicon.ADT: ADT, @adt, ADTTypeDef, EmitInfo,
@@ -67,4 +69,42 @@ end
         Quit => true
         _ => false
     end
+end
+
+
+@adt Muban begin
+    struct Template
+        stmts::Vector{Muban}
+    end
+
+    Text(::String)
+    Comment(::String)
+
+    # inline expr
+    # reference to a Julia variable
+    Id(::String)
+    Literal(::Any)
+
+    struct InlineExpr
+        head::Int
+        args::Vector{Muban}
+    end
+
+    struct Loop
+        indices::Vector{Muban} # list of Id
+        iterator::Muban # <inline expr>
+        body::Template # Template
+    end
+end
+
+@testset "variant type match" begin
+    x = Loop([Id("i"), Id("j")], InlineExpr(1, [Id("a"), Id("b")]), Template([]))
+
+    @match x begin
+        Text(s) => @test s == "abc"
+        Loop(indices, iterator, body) => @test true
+        _ => @test false
+    end
+end
+
 end
