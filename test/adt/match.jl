@@ -1,3 +1,5 @@
+module TestMatch
+
 using Test
 using MLStyle
 using Expronicon.ADT: ADT, @adt, ADTTypeDef, EmitInfo,
@@ -103,4 +105,6 @@ end
         Loop(indices, iterator, body) => @test true
         _ => @test false
     end
+end
+
 end
