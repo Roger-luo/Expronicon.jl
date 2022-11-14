@@ -339,8 +339,6 @@ such expression by inserting condition and code block via a map.
 # Fields and Keyword Arguments
 
 $__DEFAULT_KWARG_DOC__
-The only required keyword argument for the constructor
-is `name`, the rest are all optional.
 
 - `conds::Vector{Any}`: expression for the conditions.
 - `stmts::Vector{Any}`: expression for the statements for corresponding condition.
