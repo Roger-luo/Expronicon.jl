@@ -4,7 +4,7 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://Roger-luo.github.io/Expronicon.jl/dev)
 [![Build Status](https://github.com/Roger-luo/Expronicon.jl/workflows/CI/badge.svg)](https://github.com/Roger-luo/Expronicon.jl/actions)
 [![Coverage](https://codecov.io/gh/Roger-luo/Expronicon.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Roger-luo/Expronicon.jl)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/Roger-luo/Expronicon.jl/v0.6.10.svg)](https://Roger-luo.github.io/Expronicon.jl)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/Roger-luo/Expronicon.jl/v0.7.6.svg)](https://Roger-luo.github.io/Expronicon.jl)
 [![Aqua QA](https://img.shields.io/badge/Aqua.jl-%F0%9F%8C%A2-aqua.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 Collective tools for metaprogramming on Julia Expr. See also [ExproniconLite](https://github.com/Roger-luo/ExproniconLite.jl)
