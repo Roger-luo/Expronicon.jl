@@ -343,5 +343,10 @@ function (p::Printer)(ex)
     return
 end
 
+"""
+    print_expr([io::IO], ex; kw...)
+
+Print a given expression. `ex` can be a `Expr` or a syntax type `JLExpr`.
+"""
 print_expr(io::IO, ex; kw...) = Printer(io; kw...)(ex)
 print_expr(ex; kw...) = print_expr(stdout, ex; kw...)
