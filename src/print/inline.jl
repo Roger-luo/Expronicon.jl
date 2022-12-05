@@ -1,15 +1,15 @@
 Base.@kwdef mutable struct InlinePrinterState
     type::Bool = false
-    variable::Bool = false
     symbol::Bool = false
     call::Bool = false
     macrocall::Bool = false
     quoted::Bool = false
     keyword::Bool = false
     block::Bool = true # show begin ... end by default
+    precedence::Int = 0 # precedence of the parent expression
 end
 
-function with(f::Function, p::InlinePrinterState, name::Symbol, new::Bool=true)
+function with(f::Function, p::InlinePrinterState, name::Symbol, new)
     old = getfield(p, name)
     setfield!(p, name, new)
     f()
@@ -63,8 +63,6 @@ function (p::InlinePrinter)(expr)
     function symbol(ex)
         color = if p.state.type
             c.type
-        elseif p.state.variable
-            c.variable
         elseif p.state.quoted
             c.quoted
         elseif p.state.call
@@ -79,13 +77,24 @@ function (p::InlinePrinter)(expr)
         is_gensym(ex) && printstyled("\""; color=color)
     end
 
-    variable(ex) = with(() -> p(ex), p.state, :variable)
-    quoted(ex) = with(() -> p(ex), p.state, :quoted)
-    type(ex) = with(() -> p(ex), p.state, :type)
-    call(ex) = with(() -> p(ex), p.state, :call)
-    macrocall(ex) = with(() -> p(ex), p.state, :macrocall)
+    quoted(ex) = with(() -> p(ex), p.state, :quoted, true)
+    type(ex) = with(() -> p(ex), p.state, :type, true)
+    call(ex) = with(() -> p(ex), p.state, :call, true)
+    macrocall(ex) = with(() -> p(ex), p.state, :macrocall, true)
     noblock(ex) = with(() -> p(ex), p.state, :block, false)
-    block(ex) = with(() -> p(ex), p.state, :block)
+    block(ex) = with(() -> p(ex), p.state, :block, true)
+
+    function precedence(f, s)
+        if s isa Int
+            preced = s
+        else
+            preced = Base.operator_precedence(s)
+        end
+
+        p.state.precedence >= preced && print('(')
+        with(f, p.state, :precedence, preced)
+        p.state.precedence >= preced && print(')')
+    end
 
     function print_expr(ex)
         @switch ex begin
@@ -126,28 +135,59 @@ function (p::InlinePrinter)(expr)
             @case Expr(:(=), k, v)
                 p(k); print(" = "); p(v)
             @case Expr(:..., name)
-                p(name);keyword("...")
+                precedence(:...) do
+                    p(name);keyword("...")
+                end
             @case Expr(:&, name)
-                keyword("&");p(name)
+                precedence(:&) do
+                    keyword("&")
+                    p(name)
+                end
             @case Expr(:(::), t)
-                keyword("::");type(t)
+                precedence(:(::)) do
+                    keyword("::");type(t)
+                end
             @case Expr(:(::), name, t)
-                p(name);keyword("::");type(t)
+                precedence(:(::)) do
+                    p(name);keyword("::");type(t)
+                end
             @case Expr(:$, name)
-                keyword('$');print("("); p(name); print(")")
+                precedence(:$) do
+                    keyword('$');print("("); p(name); print(")")
+                end
 
             @case Expr(head, lhs, rhs) && if head in expr_infix_wide end
-                p(lhs); keyword(" $head "); p(rhs)
+                precedence(head) do
+                    p(lhs); keyword(" $head "); p(rhs)
+                end
+
+                @case Expr(:., name)
+                print(name)
+            @case Expr(:., object, QuoteNode(name))
+                precedence(:.) do
+                    p(object); keyword("."); p(name)
+                end
+            @case Expr(:(<:), type, supertype)
+                precedence(:(<:)) do
+                    p(type); keyword(" <: "); p(supertype)
+                end
 
             # call expr
             @case Expr(:call, :(:), args...)
-                join(args, ":")
+                precedence(:(:)) do
+                    join(args, ":")
+                end
             @case Expr(:call, f, Expr(:parameters, kwargs...), args...)
                 call(f); print("("); join(args); keyword("; "); join(kwargs); print(")")
+
             @case Expr(:call, f::Symbol, arg) && if Base.isunaryoperator(f) end
-                keyword(f); p(arg)
+                precedence(typemax(Int)) do
+                    keyword(f); p(arg)
+                end
             @case Expr(:call, f::Symbol, args...) && if Base.isbinaryoperator(f) end
-                join(args, " $f ")
+                precedence(f) do
+                    join(args, " $f ")
+                end
             @case Expr(:call, f, args...)
                 call(f); print_braces(args, "(", ")")
             @case Expr(:tuple, args...)
@@ -215,18 +255,12 @@ function (p::InlinePrinter)(expr)
                 keyword("using ");join(args)
             @case Expr(:import, args...)
                 keyword("import ");join(args)
-            @case Expr(:., name)
-                print(name)
-            @case Expr(:., object, QuoteNode(name))
-                p(object); keyword("."); p(name)
-            @case Expr(:(:), head, args...)
-                p(head); keyword(": "); join(args)
-            @case Expr(:(<:), type, supertype)
-                p(type); keyword(" <: "); p(supertype)
             @case Expr(:as, name, alias)
                 p(name); keyword(" as "); p(alias)
             @case Expr(:export, args...)
                 keyword("export ");join(args)
+            @case Expr(:(:), head, args...)
+                p(head); keyword(": "); join(args)
             @case Expr(:where, body, whereparams...)
                 p(body); keyword(" where ")
                 with(p.state, :type) do
