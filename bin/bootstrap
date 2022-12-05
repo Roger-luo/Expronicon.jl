@@ -64,7 +64,7 @@ function main(ARGS=ARGS)
                     run(`git add .gitignore`)
                     run(`git add -A`)
                     run(`git commit -m"generated from Expronicon"`)
-                    run(`git push origin master`)
+                    run(`git push origin main`)
                 end
                 run(`ion release current`)
             end
