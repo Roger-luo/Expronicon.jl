@@ -182,6 +182,32 @@ function EmitInfo(def::ADTTypeDef)
     return info
 end
 
+"""
+    @adt name begin
+        variant1
+        variant2(field1, field2)
+
+        <mutable> struct variant3
+            field1
+            field2 = <default>
+        end
+    end
+
+Create an algebra data type (ADT). The ADT is a type that can have multiple
+variants. Each variant can have different fields. The fields can be of different
+types. The ADT is immutable by default. To make it mutable, use `mutable struct`
+instead of `struct` in the definition.
+
+The ADT is implemented as a tagged union. The tag is stored in the first field.
+The rest of the fields are the actual data. The data is stored in a compact way
+so that the size of the ADT is the size of the largest variant.
+
+Use of multiple variants will not effect type stability, unlike `Union` types.
+
+The variants must be used with the variant interface instead of the type interface
+from Julia `Base`, and the pattern match must be MLStyle's pattern match. It is
+recommended to use pattern match as much as possible.
+"""
 macro adt(head, body)
     def = ADTTypeDef(__module__, head, body)
     return esc(emit(def))
