@@ -54,7 +54,7 @@ export
 
 
 @static if !@isdefined(eachsplit)
-    eachsplit(s, pat) = Iterators.filter(!isempty, split(s, pat))
+    eachsplit(s, pat) = split(s, pat)
 end
 
 include("patches.jl")
