@@ -25,6 +25,7 @@ end
 @testset "printings" begin
     include("print/inline.jl")
     include("print/multi.jl")
+    include("print/old.jl")
 end
 
 @testset "analysis" begin

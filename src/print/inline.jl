@@ -3,6 +3,7 @@ Base.@kwdef mutable struct InlinePrinterState
     variable::Bool = false
     symbol::Bool = false
     call::Bool = false
+    macrocall::Bool = false
     quoted::Bool = false
     keyword::Bool = false
     block::Bool = true # show begin ... end by default
@@ -68,10 +69,11 @@ function (p::InlinePrinter)(expr)
             c.quoted
         elseif p.state.call
             c.call
+        elseif p.state.macrocall
+            c.macrocall
         else # normal symbol in expr
             :normal
         end
-
         is_gensym(ex) && printstyled("var\""; color=color)
         printstyled(ex, color=color)
         is_gensym(ex) && printstyled("\""; color=color)
@@ -81,6 +83,7 @@ function (p::InlinePrinter)(expr)
     quoted(ex) = with(() -> p(ex), p.state, :quoted)
     type(ex) = with(() -> p(ex), p.state, :type)
     call(ex) = with(() -> p(ex), p.state, :call)
+    macrocall(ex) = with(() -> p(ex), p.state, :macrocall)
     noblock(ex) = with(() -> p(ex), p.state, :block, false)
     block(ex) = with(() -> p(ex), p.state, :block)
 
@@ -133,11 +136,14 @@ function (p::InlinePrinter)(expr)
             @case Expr(:$, name)
                 keyword('$');print("("); p(name); print(")")
 
+            @case Expr(head, lhs, rhs) && if head in expr_infix_wide end
+                p(lhs); keyword(" $head "); p(rhs)
+
             # call expr
             @case Expr(:call, :(:), args...)
                 join(args, ":")
             @case Expr(:call, f, Expr(:parameters, kwargs...), args...)
-                call(f); print("("); join(args); keyword(";"); join(kwargs); print(")")
+                call(f); print("("); join(args); keyword("; "); join(kwargs); print(")")
             @case Expr(:call, f::Symbol, arg) && if Base.isunaryoperator(f) end
                 keyword(f); p(arg)
             @case Expr(:call, f::Symbol, args...) && if Base.isbinaryoperator(f) end
@@ -180,7 +186,9 @@ function (p::InlinePrinter)(expr)
                 printstyled("\"", color=c.string)
                 foreach(args) do x
                     x isa AbstractString && return printstyled(x; color=c.string)
-                    keyword('$'); print("("); p(x); print(")")
+                    keyword('$')
+                    x isa Symbol && return p(x)
+                    print("("); p(x); print(")")
                 end
                 printstyled("\"", color=c.string)
             @case Expr(:block, args...)
@@ -194,10 +202,12 @@ function (p::InlinePrinter)(expr)
                 keyword("; end")
             @case Expr(:macrocall, f, line, args...)
                 p.line && printstyled(line, color=c.comment)
-                printstyled(f, color=c.macrocall)
+                macrocall(f)
                 print_braces(args, "(", ")")
+            @case Expr(:return, Expr(:tuple, args...))
+                keyword("return "); join(args)
             @case Expr(:return, args...)
-                keyword("return ");join(args)
+                keyword("return "); join(args)
             @case Expr(:module, bare, name, body)
                 bare ? keyword("module ") : keyword("baremodule ")
                 p(name);print("; "); noblock(body); keyword(" end")
@@ -208,7 +218,7 @@ function (p::InlinePrinter)(expr)
             @case Expr(:., name)
                 print(name)
             @case Expr(:., object, QuoteNode(name))
-                p(object); keyword("."); print(name)
+                p(object); keyword("."); p(name)
             @case Expr(:(:), head, args...)
                 p(head); keyword(": "); join(args)
             @case Expr(:(<:), type, supertype)

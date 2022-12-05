@@ -167,7 +167,70 @@ function (p::Printer)(ex)
         end
     end
 
+    function print_macrocall(name, line, args)
+        leading_tab()
+        p.line && (inline(line); print(" "))
+        with(inline.state, :macrocall, true) do
+            inline(name)
+        end
+        p.state.level += 1
+        foreach(args) do arg
+            print(" ")
+            p(arg)
+        end
+    end
 
+    function print_switch(item, line, stmts)
+        leading_tab()
+        p.line && (inline(line); print(" "))
+        any(stmts) do stmt # check if this is the switch syntax
+            @match stmt begin
+                Expr(:macrocall, &(Symbol("@case")), _...) => true
+                _ => false
+            end
+        end || return print_macrocall("@switch", line, (item, Expr(:block, stmts...)))
+
+        is_case(stmt) = @match stmt begin
+            Expr(:macrocall, &(Symbol("@case")), _...) => true
+            _ => false
+        end
+
+        keyword("@switch "); p(item); keyword(" begin"); println()
+        indent() do
+            ptr = 1
+            while ptr <= length(stmts)
+                stmt = stmts[ptr]
+                @match stmt begin
+                    Expr(:macrocall, &(Symbol("@case")), line, pattern) => begin
+                        tab(); keyword("@case "); inline(pattern)
+                        case_ptr = ptr + 1
+                        case_ptr <= length(stmts) || continue
+                        case_stmt = stmts[case_ptr]
+                        indent() do
+                            while case_ptr <= length(stmts)
+                                case_stmt = stmts[case_ptr]
+                                if is_case(case_stmt)
+                                    case_ptr -= 1
+                                    break
+                                end
+
+                                tab()
+                                no_first_line_indent() do
+                                    p(case_stmt)
+                                end
+                                println()
+                                case_ptr += 1
+                            end
+                        end
+                        ptr = case_ptr
+                    end
+                    _ => (p(stmt); println())
+                end
+                ptr += 1
+            end # while
+        end # indent
+        println(); tab(); keyword("end")
+    end
 
     @switch ex begin
         @case Expr(:block, stmts...)
@@ -242,7 +305,7 @@ function (p::Printer)(ex)
 
         @case Expr(:for, iteration, body)
             leading_tab()
-            keyword("for "); inline(iteration); println()
+            keyword("for "); inline(split_body(iteration)...); println()
             stmts = split_body(body)
             indent() do
                 print_stmts(stmts)
@@ -269,8 +332,16 @@ function (p::Printer)(ex)
 
         @case Expr(:function, call, body)
             print_function(:function, call, body)
+        @case Expr(:->, call, body)
+            leading_tab()
+            inline(call); keyword(" -> ")
+            p(body)
+        
         @case Expr(:macro, call, body)
             print_function(:macro, call, body)
+
+        @case Expr(:macrocall, &(Symbol("@switch")), line, item, Expr(:block, stmts...))
+            print_switch(item, line, stmts)
 
         @case Expr(:macrocall, &(GlobalRef(Core, Symbol("@doc"))), line, doc, code)
             leading_tab()
@@ -285,15 +356,8 @@ function (p::Printer)(ex)
             tab(); no_first_line_indent() do
                 p(code)
             end
-        @case Expr(:macrocall, name::Symbol, line, args...)
-            leading_tab()
-            p.line && (inline(line); print(" "))
-            printstyled(name, color=c.macrocall)
-            p.state.level += 1
-            foreach(args) do arg
-                print(" ")
-                p(arg)
-            end
+        @case Expr(:macrocall, name, line, args...)
+            print_macrocall(name, line, args)
 
         @case Expr(:struct, ismutable, head, body)
             stmts = split_body(body)
