@@ -193,7 +193,7 @@ function (p::InlinePrinter)(expr)
             @case Expr(:tuple, args...)
                 print_braces(args, "(", ")")
             @case Expr(:curly, t, args...)
-                with(p.state, :type) do
+                with(p.state, :type, true) do
                     p(t); print_braces(args, "{", "}")
                 end
             @case Expr(:vect, args...)
@@ -233,7 +233,7 @@ function (p::InlinePrinter)(expr)
                 printstyled("\"", color=c.string)
             @case Expr(:block, args...)
                 p.state.block && keyword("begin ")
-                with(p.state, :block) do # print inner begin .. end
+                with(p.state, :block, true) do # print inner begin .. end
                     join(args, "; ")
                 end
                 p.state.block && keyword(" end")
@@ -263,7 +263,7 @@ function (p::InlinePrinter)(expr)
                 p(head); keyword(": "); join(args)
             @case Expr(:where, body, whereparams...)
                 p(body); keyword(" where ")
-                with(p.state, :type) do
+                with(p.state, :type, true) do
                     join(whereparams, ", ")
                 end
 
