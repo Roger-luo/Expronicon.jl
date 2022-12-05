@@ -352,7 +352,7 @@ function (p::Printer)(ex)
                 printstyled(line, color=c.string)
                 println()
             end
-            tab(); println("\"\"\"")
+            tab(); printstyled("\"\"\"\n", color=c.string)
             tab(); no_first_line_indent() do
                 p(code)
             end
