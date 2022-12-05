@@ -53,9 +53,7 @@ export
     print_expr, sprint_expr
 
 
-@static if @isdefined(eachsplit)
-    const eachsplit = Base.eachsplit
-else
+@static if !@isdefined(eachsplit)
     eachsplit(s, pat) = Iterators.filter(!isempty, split(s, pat))
 end
 
