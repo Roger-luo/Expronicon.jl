@@ -128,3 +128,14 @@ end
     @test test_match(2) == sin(2)
     @test test_match("abc") === nothing
 end
+
+@testset "JLMatch printing" begin
+    jl = JLMatch(:x)
+    jl[1] = true
+    jl[2] = :(sin(x))
+    jl[3] = quote
+        1 + 2
+        3 + 4
+    end
+    print_expr(jl)
+end

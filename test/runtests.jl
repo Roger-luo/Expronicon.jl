@@ -23,7 +23,13 @@ end
 end
 
 @testset "printings" begin
-    include("printing.jl")
+    include("print/inline.jl")
+    include("print/multi.jl")
+    include("print/old.jl")
+
+    @static if VERSION > v"1.8-"
+        include("print/lts.jl")
+    end
 end
 
 @testset "analysis" begin

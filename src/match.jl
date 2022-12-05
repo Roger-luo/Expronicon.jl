@@ -151,37 +151,6 @@ function codegen_ast(def::JLMatch)
     return init_cfg(gen_match(def.item, body, def.line, def.mod))
 end
 
-
-function print_expr(io::IO, def::JLMatch, ps::PrintState, theme::Color)
-    print_expr(io, def.line, ps, theme)
-    println(io)
-    isempty(def.patterns) && return print_expr(io, def.fallthrough, ps, theme)
-
-    within_line(io, ps) do
-        print_kw(io, "@match ", ps, theme)
-        print_expr(io, def.item, ps, theme)
-        print_kw(io, " begin ", ps, theme)
-    end
-    println(io, ps)
-    within_indent(ps) do
-        for (k, (pattern, action)) in enumerate(def)
-            within_line(io, ps) do
-                print_expr(io, pattern, ps, theme)
-                print_kw(io, " => ", ps, theme)
-                print_expr(io, action, ps, theme)
-            end
-            println(io, ps)
-        end
-        within_line(io, ps) do
-            print(io, "_")
-            print_kw(io, " => ", ps, theme)
-            print_expr(io, def.fallthrough, ps, theme)
-        end
-    end
-    println(io, ps)
-    print_end(io, ps, theme)
-end
-
 """
     codegen_match(f, x[, line::LineNumberNode=LineNumberNode(0), mod::Module=Main])
 
@@ -276,3 +245,65 @@ end
 @syntax_pattern JLKwStruct  is_struct
 @syntax_pattern JLIfElse    is_ifelse
 @syntax_pattern JLFor       is_for
+
+function (p::InlinePrinter)(expr::JLMatch)
+    c = p.color
+    print(xs...) = Base.print(p.io, xs...)
+    printstyled(xs...;kw...) = Base.printstyled(p.io, xs...; kw...)
+    keyword(s) = printstyled(s, color=c.keyword)
+
+    printstyled("@match "; color=p.color.macrocall, bold=true)
+    p(expr.item)
+    keyword(" begin;")
+    for (pattern, action) in zip(expr.patterns, expr.actions)
+        p(pattern)
+        keyword(" => ")
+        p(action)
+        keyword("; ")
+    end
+    if expr.fallthrough !== nothing
+        keyword("_ => ")
+        p(expr.fallthrough)
+        keyword("; ")
+    end
+    keyword("end")
+end
+
+function (p::Printer)(expr::JLMatch)
+    c = p.color
+    print(xs...) = Base.print(p.io, xs...)
+    printstyled(xs...;kw...) = Base.printstyled(p.io, xs...; kw...)
+    keyword(s) = printstyled(s, color=c.keyword)
+    tab() = print(" " ^ p.state.indent)
+    leading_tab() = p.state.no_first_line_indent || tab()
+    function indent(f; size::Int=4, level::Int=1)
+        with(p.state, :level, p.state.level + level) do
+            with(f, p.state, :indent, p.state.indent + size)
+        end
+    end
+
+    leading_tab()
+    printstyled("@match "; color=p.color.macrocall, bold=true)
+    p(expr.item)
+    keyword(" begin")
+    println()
+
+    indent() do
+        for (pattern, action) in zip(expr.patterns, expr.actions)
+            leading_tab()
+            p(pattern)
+            keyword(" => ")
+            with(p.state, :no_first_line_indent, true) do
+                p(action)
+            end
+            println()
+        end
+        if expr.fallthrough !== nothing
+            leading_tab()
+            keyword("_ => ")
+            p(expr.fallthrough)
+            println()
+        end
+    end
+    tab(); keyword("end")
+end

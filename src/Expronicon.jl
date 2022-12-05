@@ -53,14 +53,21 @@ export
     print_expr, sprint_expr
 
 
-
+@static if @isdefined(eachsplit)
+    const eachsplit = Base.eachsplit
+else
+    eachsplit(s, pat) = Iterators.filter(!isempty, split(s, pat))
+end
 
 include("patches.jl")
 include("types.jl")
 include("transform.jl")
 include("analysis/analysis.jl")
 include("codegen.jl")
-include("printing.jl")
+include("print/print.jl")
+
+# cannot be bootstrapped
+# include("printing.jl")
 include("match.jl")
 include("expand.jl")
 include("adt/adt.jl")
