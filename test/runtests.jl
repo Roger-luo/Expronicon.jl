@@ -23,7 +23,8 @@ end
 end
 
 @testset "printings" begin
-    include("printing.jl")
+    include("print/inline.jl")
+    include("print/multi.jl")
 end
 
 @testset "analysis" begin

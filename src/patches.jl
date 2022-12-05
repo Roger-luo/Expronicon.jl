@@ -13,3 +13,11 @@ end
         nothing
     end
 end
+
+@active LineNumberNode(x) begin
+    if x isa LineNumberNode
+        (x.line, x.file)
+    else
+        nothing
+    end
+end

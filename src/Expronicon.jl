@@ -60,7 +60,10 @@ include("types.jl")
 include("transform.jl")
 include("analysis/analysis.jl")
 include("codegen.jl")
-include("printing.jl")
+include("print/print.jl")
+
+# has deps on MLStyle
+# include("printing.jl")
 include("match.jl")
 include("expand.jl")
 include("adt/adt.jl")
