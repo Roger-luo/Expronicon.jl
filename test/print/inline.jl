@@ -57,10 +57,6 @@ print_inline(:(try; x + 1; y+1; catch; 1 + 1 end))
 print_inline(:(try; x + 1; y+1; catch e; 1 + 1 end))
 print_inline(:(try; x + 1; y+1; catch e; 1 + 1; finally 2 + 2 end))
 
-@static if VERSION > v"1.8-"
-    print_inline(:(try; x + 1; y+1; catch e; 1 + 1; else x; finally 2 + 2 end))
-end
-
 print_inline(Expr(:$, :(1 + 2)))
 print_inline(Expr(:meta, :aa, 2))
 print_inline(:($(Symbol("##a#112")) + 1))

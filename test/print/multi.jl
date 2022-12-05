@@ -215,30 +215,6 @@ end
 
 print_expr(ex)
 
-@static if VERSION > v"1.8-"
-    ex = @expr try
-        1 + 1
-    catch e
-        2 + 2
-    else e
-        3 + 3
-    finally
-        4 + 4
-    end
-
-    print_expr(ex)
-
-    ex = @expr try
-        1 + 1
-    catch e
-        2 + 2
-    else e
-        3 + 3
-    end
-
-    print_expr(ex)
-end
-
 ex = @expr module ABC
     1 + 1
     2 + 2
