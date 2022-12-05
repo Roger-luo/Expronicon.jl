@@ -231,3 +231,16 @@ else
 end
 
 print_expr(ex)
+
+
+ex = @expr if x > 100
+    x + 1
+elseif x > 90
+    x + 2
+elseif x > 80
+    x + 3
+else
+    error("some error msg")
+end
+
+print_expr(ex)

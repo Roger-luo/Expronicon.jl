@@ -49,7 +49,7 @@ function codegen_ast(def::JLIfElse)
     stmt = ex = Expr(:if)
     for (k, (cond, action)) in enumerate(def)
         push!(stmt.args, cond)
-        push!(stmt.args, Expr(:block, codegen_ast(action)))
+        push!(stmt.args, rm_single_block(Expr(:block, codegen_ast(action))))
 
         if k !== length(def)
             push!(stmt.args, Expr(:elseif))
