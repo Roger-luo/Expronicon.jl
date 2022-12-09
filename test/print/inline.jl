@@ -21,6 +21,12 @@ print_inline(:(A{T} where {T <: B}))
 print_inline(:(A{T} where {T <: B, T2 <: C}))
 print_inline(:(A::B))
 
+print_inline(:(struct ABC; a::Int; end))
+print_inline(:(mutable struct ABC; a::Int; end))
+print_inline(:(struct ABC; a::Int; b::Int; end))
+
+print_inline(:(primitive type ABC 32 end))
+
 print_inline(:(foo(x, y, z)))
 print_inline(:(foo(x, y, z...)))
 print_inline(:(foo(x, y, z; a, b=2)))

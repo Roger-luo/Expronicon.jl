@@ -312,6 +312,14 @@ function (p::InlinePrinter)(expr)
                 finally_body == false || (keyword("; finally "); noblock(finally_body))
                 keyword("; end")
 
+            @case Expr(:struct, ismutable, name, body)
+                ismutable ? keyword("mutable struct ") : keyword("struct ")
+                p(name); keyword("; ");
+                noblock(body); keyword("; end")
+
+            @case Expr(:primitive, name, size)
+                keyword("primitive "); p(name); print(" "); p(size); keyword(" end")
+
             @case Expr(head, args...)
                 keyword('$'); print("(")
                 printstyled(:Expr, color=c.call)
