@@ -231,6 +231,15 @@ function (p::InlinePrinter)(expr)
                     print("("); p(x); print(")")
                 end
                 printstyled("\"", color=c.string)
+
+            @case Expr(:block, args...) && if length(args) == 2 && is_line_no(args[1]) && is_line_no(args[2]) end
+                p(args[1]); print(" "); p(args[2])
+            @case Expr(:block, args...) && if length(args) == 2 && is_line_no(args[1]) end
+                p(args[1]); print(" "); noblock(args[2])
+            @case Expr(:block, args...) && if length(args) == 2 && is_line_no(args[2]) end
+                noblock(args[1]); print(" "); p(args[2])
+            @case Expr(:block, args...) && if length(args) == 2 end
+                print("("); noblock(args[1]); keyword("; "); noblock(args[2]); print(")")
             @case Expr(:block, args...)
                 p.state.block && keyword("begin ")
                 with(p.state, :block, true) do # print inner begin .. end
