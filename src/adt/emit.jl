@@ -278,46 +278,43 @@ function struct_cons(def::ADTTypeDef, info::EmitInfo)
             return Symbol("#args#", idx)
         end
 
-        arg_ptr = 0
         assert_args = expr_map(2:length(info.fieldtypes)) do idx
             typeinfo = info.typeinfo[variant]
-            if idx in typeinfo.mask
-                arg_ptr += 1
-                argname = args[idx]
-                vtypenames = typeinfo.variant_types[arg_ptr]
-                type_guess = typeinfo.guess[arg_ptr]
-                jl = JLIfElse()
-                if !isempty(vtypenames)
-                    @gensym variant_type
-                    msg = "expect $(join(vtypenames, " or "))"
-                    vtypes = map(vtypenames) do t
-                        :(Core.bitcast($(info.typename), $(info.name_type_map[t])))
-                    end
-                    jl[:(args[$arg_ptr] isa $(def.name))] = quote
-                        $argname = args[$arg_ptr]
-                        $variant_type = $ADT.variant_type($argname)
-                        $variant_type in $(xtuple(vtypes...)) || throw(ArgumentError(
-                            "$($msg), got $($variant_type)"))
-                    end
+            idx in typeinfo.mask || return :($(args[idx]) = $(undef_value(info.fieldtypes[idx])))
 
-                    if type_guess !== def.name
-                        jl[:(args[$arg_ptr] isa $type_guess)] = quote
-                            $argname = args[$arg_ptr]
-                        end
-                    end
-                else
-                    jl[:(args[$arg_ptr] isa $type_guess)] = quote
-                        $argname = args[$arg_ptr]
-                    end
+            argname = args[idx]
+            arg_idx = findfirst(isequal(idx), typeinfo.mask)
+            vtypenames = typeinfo.variant_types[arg_idx]
+            type_guess = typeinfo.guess[arg_idx]
+            jl = JLIfElse()
+            if !isempty(vtypenames)
+                @gensym variant_type
+                msg = "expect $(join(vtypenames, " or "))"
+                vtypes = map(vtypenames) do t
+                    :(Core.bitcast($(info.typename), $(info.name_type_map[t])))
+                end
+                jl[:(args[$arg_idx] isa $(def.name))] = quote
+                    $argname = args[$arg_idx]
+                    $variant_type = $ADT.variant_type($argname)
+                    $variant_type in $(xtuple(vtypes...)) || throw(ArgumentError(
+                        "$($msg), got $($variant_type)"))
                 end
 
-                jl.otherwise = quote
-                    $argname = $Base.convert($type_guess, args[$arg_ptr])
+                if type_guess !== def.name
+                    jl[:(args[$arg_idx] isa $type_guess)] = quote
+                        $argname = args[$arg_idx]
+                    end
                 end
-                codegen_ast(jl)
             else
-                :($(args[idx]) = $(undef_value(info.fieldtypes[idx])))
+                jl[:(args[$arg_idx] isa $type_guess)] = quote
+                    $argname = args[$arg_idx]
+                end
             end
+
+            jl.otherwise = quote
+                $argname = $Base.convert($type_guess, args[$arg_idx])
+            end
+            codegen_ast(jl)
         end
 
         return quote

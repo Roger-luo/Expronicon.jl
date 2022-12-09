@@ -525,3 +525,52 @@ end
     info = EmitInfo(def)
     @test_expr info.typeinfo[def.variants[2]].guess[1] == :(Vector{MubanLang})
 end
+
+body = quote
+    struct Waveform
+        coeff::Vector{Float64}
+        mask::BitVector
+        shape
+        duration::Float64
+    end
+end
+
+def = ADTTypeDef(Main, :PulseLang, body)
+info = EmitInfo(def)
+@test_expr emit_struct(def, info) == quote
+    Core.@__doc__ struct PulseLang
+            var"#type"::var"PulseLang#Type"
+            var"#Float64##2"::Float64
+            var"#Any##3"
+            var"#Any##4"
+            var"#Any##5"
+            function PulseLang(type::var"PulseLang#Type", args...)
+                if type == Core.bitcast(var"PulseLang#Type", 0x00000001)
+                    length(args) == 4 || throw(ArgumentError("expect $(4) arguments, got $(length(args)) arguments"))
+                    if args[4] isa Float64
+                        var"#args#2" = args[4]
+                    else
+                        var"#args#2" = (Base).convert(Float64, args[4])
+                    end
+                    if args[1] isa Vector{Float64}
+                        var"#args#3" = args[1]
+                    else
+                        var"#args#3" = (Base).convert(Vector{Float64}, args[1])
+                    end
+                    if args[2] isa BitVector
+                        var"#args#4" = args[2]
+                    else
+                        var"#args#4" = (Base).convert(BitVector, args[2])
+                    end
+                    if args[3] isa Any
+                        var"#args#5" = args[3]
+                    else
+                        var"#args#5" = (Base).convert(Any, args[3])
+                    end
+                    new(type, var"#args#2", var"#args#3", var"#args#4", var"#args#5")
+                else
+                    throw(ArgumentError("invalid variant type"))
+                end
+            end
+        end
+end

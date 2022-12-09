@@ -11,3 +11,7 @@ end
 @testset "match" begin
     include("match.jl")
 end
+
+@testset "eval" begin
+    include("eval.jl")
+end
