@@ -121,7 +121,7 @@ function (p::InlinePrinter)(expr)
                     print("(");quoted(ex.value);print("))")
                 end
             @case ::GlobalRef
-                p(ex.mod); keyword("."); print(ex.name)
+                p(ex.mod); keyword("."); p(ex.name)
             @case Expr(:kw, k, v)
                 p(k);print(" = ");p(v)
             @case Expr(:(=), k, Expr(:block, stmts...))
@@ -319,6 +319,17 @@ function (p::InlinePrinter)(expr)
 
             @case Expr(:primitive, name, size)
                 keyword("primitive "); p(name); print(" "); p(size); keyword(" end")
+
+            @case Expr(:meta, :inline)
+                macrocall(GlobalRef(Base, Symbol("@_inline_meta")));
+                keyword(";")
+
+            @case Expr(:symboliclabel, label)
+                macrocall(GlobalRef(Base, Symbol("@label")));
+                print(" "); p(label);
+            @case Expr(:symbolicgoto, label)
+                macrocall(GlobalRef(Base, Symbol("@goto")));
+                print(" "); p(label);
 
             @case Expr(head, args...)
                 keyword('$'); print("(")

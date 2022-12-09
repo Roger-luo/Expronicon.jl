@@ -73,3 +73,7 @@ print_inline(Expr(:$, :(1 + 2)))
 print_inline(Expr(:meta, :aa, 2))
 print_inline(:($(Symbol("##a#112")) + 1))
 print_inline(:(::$(Symbol("##a#112")) + 1))
+
+print_inline(Expr(:meta, :inline))
+print_inline(Expr(:symbolicgoto, :abc))
+print_inline(Expr(:symboliclabel, :abc))
