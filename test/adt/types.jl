@@ -12,7 +12,7 @@ end
 @testset "ADTTypeDef(ex)" begin
     body = quote
         Quit
-        
+
         struct Move
             x::Int
             y::Int
