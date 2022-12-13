@@ -50,7 +50,9 @@ export
     xmapreduce,
     xiterate,
     # printings
-    print_expr, sprint_expr
+    print_inline,
+    print_expr,
+    sprint_expr
 
 
 @static if !@isdefined(eachsplit)

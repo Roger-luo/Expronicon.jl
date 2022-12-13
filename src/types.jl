@@ -126,6 +126,12 @@ function JLFunction(;
         throw(ArgumentError("function rettype can only be a `Type`, `Symbol`, `Expr` or just `nothing`, got a $(typeof(rettype))."))
     line isa Maybe{LineNumberNode} ||
         throw(ArgumentError("function line must be a `LineNumberNode` or just `nothing`, got a $(typeof(line))."))
+    any(x->!isa(x, Union{Symbol, Expr}), args) &&
+        throw(ArgumentError("function args can only be a list of `Symbol` or `Expr`, got a $(typeof(args))."))
+    !isnothing(whereparams) && any(x->!isa(x, Union{Symbol, Expr}), whereparams) &&
+        throw(ArgumentError("function whereparams can only be a list of `Symbol` or `Expr`, got a $(typeof(whereparams))."))
+    !isnothing(kwargs) && any(x->!isa(x, Union{Symbol, Expr}), kwargs) &&
+        throw(ArgumentError("function kwargs can only be a list of `Expr(:kw, name, default)` or `Symbol`, got a $(typeof(kwargs))."))
 
     JLFunction(head, name, args, kwargs, rettype, whereparams, body, line, doc)
 end
