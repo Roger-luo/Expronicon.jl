@@ -1,6 +1,6 @@
 using Test
 using Expronicon
-using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, emit_struct,
+using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, emit_struct, emit_exports,
     emit_show, emit_variant_cons, emit_reflection, emit_variant_binding,
     emit_getproperty, emit_propertynames,
     # reflection
@@ -83,6 +83,7 @@ end
 
 def = ADTTypeDef(Main, :Message, body)
 info = EmitInfo(def)
+@test_expr emit_exports(def, info) == :(export Quit, Move, Write, Aka, ChangeColor, Message)
 
 @test_expr emit_struct(def, info) == quote
     #= /Users/roger/Code/Julia/Expronicon/src/adt/emit.jl:329 =# Core.@__doc__ struct Message

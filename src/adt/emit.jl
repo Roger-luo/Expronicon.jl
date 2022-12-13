@@ -183,7 +183,7 @@ function EmitInfo(def::ADTTypeDef)
 end
 
 """
-    @adt name begin
+    @adt <public> name begin
         variant1
         variant2(field1, field2)
 
@@ -193,7 +193,17 @@ end
         end
     end
 
-Create an algebra data type (ADT). The ADT is a type that can have multiple
+Create an algebra data type (ADT).
+
+# Arguments
+
+- `public`: optional, if present, the ADT and its variants will be exported.
+- `<name>`: the name of the ADT, can be just a name or name with supertype.
+- `<body>`: the body of the ADT, a list of variants in `begin ... end` block.
+
+# Introduction
+
+The ADT is a type that can have multiple
 variants. Each variant can have different fields. The fields can be of different
 types. The ADT is immutable by default. To make it mutable, use `mutable struct`
 instead of `struct` in the definition.
@@ -213,10 +223,16 @@ macro adt(head, body)
     return esc(emit(def))
 end
 
+macro adt(export_variant, head, body)
+    export_variant == :public || error("expect `public` after `@adt`")
+    def = ADTTypeDef(__module__, head, body; export_variant=true)
+    return esc(emit(def))
+end
+
 function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
     return quote
         primitive type $(info.typename) 32 end
-
+        $(emit_exports(def, info))
         $(emit_struct(def, info))
         $(emit_variant_cons(def, info))
         $(emit_variant_binding(def, info))
@@ -337,6 +353,14 @@ function struct_cons(def::ADTTypeDef, info::EmitInfo)
         args=[:(type::$(info.typename)), :(args...)],
         body=construct_body
     )
+end
+
+function emit_exports(def::ADTTypeDef, info::EmitInfo)
+    names = map(def.variants) do variant
+        return variant.name
+    end
+    push!(names, def.name)
+    return Expr(:export, names...)
 end
 
 function emit_struct(def::ADTTypeDef, info::EmitInfo)

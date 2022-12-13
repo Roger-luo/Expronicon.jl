@@ -39,6 +39,7 @@ Base.@kwdef struct ADTTypeDef
     name::Symbol
     typevars::Vector{Any} = Any[]
     supertype::Any = nothing
+    export_variants::Bool = false
 
     # enum of the type
     # <name>
@@ -97,7 +98,7 @@ function adt_split_head(head)
     return name, typevars, supertype
 end
 
-function ADTTypeDef(m::Module, head, body::Expr)
+function ADTTypeDef(m::Module, head, body::Expr; export_variants::Bool = false)
     variants = Variant[]
     lineinfo = nothing
     for ex in body.args
@@ -108,7 +109,7 @@ function ADTTypeDef(m::Module, head, body::Expr)
             lineinfo = nothing
         end
     end
-    return ADTTypeDef(m, adt_split_head(head)..., variants)
+    return ADTTypeDef(m, adt_split_head(head)..., export_variants, variants)
 end
 
 function Base.:(==)(a::Variant, b::Variant)
