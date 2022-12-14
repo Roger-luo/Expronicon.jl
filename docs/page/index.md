@@ -25,4 +25,11 @@ features:
       title: Rich set of tools
       details: Rich set of tools for analysis, transform and generate
         Julia expression.
+    - icon: 📦
+      title: Compile out compile-time dependencies
+      details: Compile out compile-time dependencies to reduce
+        startup time.
+    - icon: 🚀
+      title: Algebra data type
+      details: Type stable rust-like algebra data type for fast syntax tree manipulation.
 ---
