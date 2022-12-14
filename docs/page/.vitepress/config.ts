@@ -18,7 +18,7 @@ export default defineConfig({
             copyright: 'Copyright © 2019-present Roger Luo',
         },
         editLink: {
-            pattern: 'https://github.com/Roger-luo/Expronicon.jl/edit/main/docs/:path',
+            pattern: 'https://github.com/Roger-luo/Expronicon.jl/edit/main/docs/page/:path',
             text: 'Edit this page on GitHub'
         },
         socialLinks: [
