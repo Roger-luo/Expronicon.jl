@@ -1,0 +1,18 @@
+{
+  "name": "Expronicon",
+  "version": "1.0.0",
+  "description": "Expronicon's documentation",
+  "main": "index.js",
+  "repository": "https://github.com/Roger-luo/Expronicon.jl.git",
+  "author": "Roger-luo <rogerluo.rl18@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.0.0-alpha.31",
+    "vue": "^3.2.45"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  }
+}

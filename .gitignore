@@ -2,13 +2,21 @@
 *.jl.cov
 *.jl.mem
 /Manifest.toml
+
+.vscode
+lcov.info
+build/
+docs_build/
+/test/Manifest.toml
+
+# old Documenter ignores
 /docs/Manifest.toml
 /docs/build/
 docs/build
 docs/site
 docs/src/assets/main.css
 docs/src/assets/indigo.css
-.vscode
-lcov.info
-build/
-/test/Manifest.toml
+
+# VitePress ignores
+node_modules
+docs/page/docs/.vitepress/dist
