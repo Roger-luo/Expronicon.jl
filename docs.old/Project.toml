@@ -2,5 +2,6 @@
 ANSIColoredPrinters = "a4c015fc-c6ff-483c-b24f-f7ea428134e9"
 DocThemeIndigo = "8bac0ac5-51bf-41f9-885e-2bf1ac2bec5f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterMarkdown = "997ab1e6-3595-5248-9280-8efb232c3433"
 Expronicon = "6b7a57c9-7cc1-4fdf-b7f5-e857abae3636"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
