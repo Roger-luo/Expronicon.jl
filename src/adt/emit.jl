@@ -195,13 +195,13 @@ end
 
 Create an algebra data type (ADT).
 
-# Arguments
+### Arguments
 
 - `public`: optional, if present, the ADT and its variants will be exported.
 - `<name>`: the name of the ADT, can be just a name or name with supertype.
 - `<body>`: the body of the ADT, a list of variants in `begin ... end` block.
 
-# Introduction
+### Introduction
 
 The ADT is a type that can have multiple
 variants. Each variant can have different fields. The fields can be of different
@@ -217,6 +217,12 @@ Use of multiple variants will not effect type stability, unlike `Union` types.
 The variants must be used with the variant interface instead of the type interface
 from Julia `Base`, and the pattern match must be MLStyle's pattern match. It is
 recommended to use pattern match as much as possible.
+
+### Pretty Printing
+
+A default pretty printing method is provided for the ADT as `ADT.default_show`.
+One should overload the `Base.show` method call `ADT.default_show` if the default
+pretty printing is preferred.
 """
 macro adt(head, body)
     def = ADTTypeDef(__module__, head, body)
