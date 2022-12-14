@@ -4,8 +4,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [
     SearchPlugin({
-      placeholder: "Procure por algo!",
-      buttonLabel: "Procurar",
+      placeholder: "Search Documentation",
+      buttonLabel: "Search",
       previewLength: 10,
     }),
   ],
