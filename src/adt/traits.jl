@@ -1,4 +1,26 @@
 """
+    is_adt(::Type{T}) where T
+
+Returns `true` if `T` is an algebra data type.
+"""
+is_adt(::Type{T}) where T = false
+
+"""
+    is_adt(variant)
+
+Returns `true` if `variant` is an instance of an algebra data type.
+"""
+is_adt(variant) = false
+
+"""
+    is_variant(variant)
+    is_variant(variant_type)
+
+Returns `true` if `T` is a variant type or an instance of an algebra data type.
+"""
+is_variant(variant_type) = false
+
+"""
     variants(::Type{T}) where T
 
 Returns the variant types of an algebra data type `T`.

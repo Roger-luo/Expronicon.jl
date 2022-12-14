@@ -195,13 +195,13 @@ end
 
 Create an algebra data type (ADT).
 
-# Arguments
+### Arguments
 
 - `public`: optional, if present, the ADT and its variants will be exported.
 - `<name>`: the name of the ADT, can be just a name or name with supertype.
 - `<body>`: the body of the ADT, a list of variants in `begin ... end` block.
 
-# Introduction
+### Introduction
 
 The ADT is a type that can have multiple
 variants. Each variant can have different fields. The fields can be of different
@@ -217,6 +217,12 @@ Use of multiple variants will not effect type stability, unlike `Union` types.
 The variants must be used with the variant interface instead of the type interface
 from Julia `Base`, and the pattern match must be MLStyle's pattern match. It is
 recommended to use pattern match as much as possible.
+
+### Pretty Printing
+
+A default pretty printing method is provided for the ADT as `ADT.default_show`.
+One should overload the `Base.show` method call `ADT.default_show` if the default
+pretty printing is preferred.
 """
 macro adt(head, body)
     def = ADTTypeDef(__module__, head, body)
@@ -475,11 +481,11 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     show_body = foreach_variant(:t, def, info) do variant
         if variant.type === :singleton
             quote
-                $Base.show(io, $value_type)
+                $ADT.default_show(io, $value_type)
             end
         elseif variant.type === :call
             quote
-                $Base.show(io, $value_type)
+                $ADT.default_show(io, $value_type)
                 print(io, "(")
                 mask = $ADT.variant_masks($value_type)
                 for (idx, field_idx) in enumerate(mask)
@@ -493,7 +499,7 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
             end
         else # struct
             quote
-                $Base.show(io, $value_type)
+                $ADT.default_show(io, $value_type)
                 print(io, "(")
                 mask = $ADT.variant_masks($value_type)
                 names = $ADT.variant_fieldnames($value_type)
@@ -511,7 +517,7 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     end
 
     return quote
-        function Base.show(io::IO, t::$(def.name))
+        function $ADT.default_show(io::IO, t::$(def.name))
             $(codegen_ast(show_body))
         end
     end

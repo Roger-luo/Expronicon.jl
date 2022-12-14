@@ -215,11 +215,11 @@ end
 end
 
 @test_expr emit_show(def, info) == quote
-    function Base.show(io::IO, t::Message)
+    function $ADT.default_show(io::IO, t::Message)
         if (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000001)
-            (Base).show(io, (Expronicon.ADT).variant_type(t))
+            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000002)
-            (Base).show(io, (Expronicon.ADT).variant_type(t))
+            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             names = (Expronicon.ADT).variant_fieldnames((Expronicon.ADT).variant_type(t))
@@ -232,7 +232,7 @@ end
             end
             print(io, ")")
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000003)
-            (Base).show(io, (Expronicon.ADT).variant_type(t))
+            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             for (idx, field_idx) = enumerate(mask)
@@ -243,7 +243,7 @@ end
             end
             print(io, ")")
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000004)
-            (Base).show(io, (Expronicon.ADT).variant_type(t))
+            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             names = (Expronicon.ADT).variant_fieldnames((Expronicon.ADT).variant_type(t))
@@ -256,7 +256,7 @@ end
             end
             print(io, ")")
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000005)
-            (Base).show(io, (Expronicon.ADT).variant_type(t))
+            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             for (idx, field_idx) = enumerate(mask)

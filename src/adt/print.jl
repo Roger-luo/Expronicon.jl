@@ -1,6 +1,16 @@
 tab(n) = " "^n
 splitlines(s::String) = split(s, '\n')
 
+"""
+    default_show(io::IO, x)
+
+The default `show` method for an ADT. This is used to print the ADT.
+"""
+function default_show(io::IO, x)
+    is_variant(x) || throw(ArgumentError("not an ADT variant: $x"))
+    return show(io, x)
+end
+
 function Base.show(io::IO, mime::MIME"text/plain", def::ADTTypeDef)
     printstyled(io, "@adt "; color=:cyan)
     def.export_variants && printstyled(io, "public "; color=197)
