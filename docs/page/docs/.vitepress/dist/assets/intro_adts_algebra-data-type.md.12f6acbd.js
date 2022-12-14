@@ -1,1 +1,0 @@
-import{_ as a,c as t,o as e}from"./app.0ff3518e.js";const _=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"intro/adts/algebra-data-type.md","lastUpdated":null}'),r={name:"intro/adts/algebra-data-type.md"};function o(s,n,c,d,p,l){return e(),t("div")}const m=a(r,[["render",o]]);export{_ as __pageData,m as default};
