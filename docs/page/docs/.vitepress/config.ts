@@ -6,6 +6,7 @@ export default defineConfig({
     description: 'Collective tools for metaprogramming in Julia.',
     lastUpdated: true,
     cleanUrls: 'with-subfolders',
+    base: 'Expronicon.jl',
 
     themeConfig: {
         // siteTitle: 'My Custom Title'
