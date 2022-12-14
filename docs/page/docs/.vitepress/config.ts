@@ -12,7 +12,16 @@ export default defineConfig({
         nav: nav(),
         sidebar: {
             '/intro/': sidebarIntro(),
-        }
+        },
+        footer: {
+            message: 'Released under the MIT License.',
+            copyright: 'Copyright © 2019-present Roger Luo',
+        },
+        algolia: {
+            appId: 'SMP1LNISJ0',
+            apiKey: '9c5bb6496ab253709084153de62c6bdf',
+            indexName: 'expronicon'
+        },
     }
 })
 

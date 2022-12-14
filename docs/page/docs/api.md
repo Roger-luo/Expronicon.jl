@@ -88,7 +88,7 @@ julia> codegen_ast(jl)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L34-L101' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L34-L101' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLStruct' href='#Expronicon.JLStruct'>#</a>
 **`Expronicon.JLStruct`** &mdash; *Type*.
@@ -117,8 +117,8 @@ The only required keyword argument for the constructor is `name`, the rest are a
   * `ismutable::Bool`: if the struct definition is mutable.
   * `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
   * `supertype`: supertype of the struct definition.
-  * `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](reference.md#Expronicon.JLField).
-  * `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](reference.md#Expronicon.JLFunction).
+  * `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](api.md#Expronicon.JLField).
+  * `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](api.md#Expronicon.JLFunction).
   * `line::LineNumberNode`: a `LineNumberNode` to indicate the definition position for error report etc.
   * `doc::String`: documentation string of the struct.
   * `misc`: other things that happens inside the struct body, by definition this will   just fall through and is equivalent to eval them outside the struct body.
@@ -163,7 +163,7 @@ julia> codegen_ast(jl)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L206-L270' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L206-L270' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLKwStruct' href='#Expronicon.JLKwStruct'>#</a>
 **`Expronicon.JLKwStruct`** &mdash; *Type*.
@@ -175,7 +175,7 @@ mutable struct JLKwStruct <: JLExpr
 JLKwStruct(;kw...)
 ```
 
-Type describes a Julia struct that allows keyword definition of defaults. This syntax is similar to [`JLStruct`](reference.md#Expronicon.JLStruct) except the the fields are of type [`JLKwField`](reference.md#Expronicon.JLKwField).
+Type describes a Julia struct that allows keyword definition of defaults. This syntax is similar to [`JLStruct`](api.md#Expronicon.JLStruct) except the the fields are of type [`JLKwField`](api.md#Expronicon.JLKwField).
 
 **Fields and Keyword Arguments**
 
@@ -184,18 +184,18 @@ All the following fields are valid as keyword arguments `kw` in the constructor,
 The only required keyword argument for the constructor is `name`, the rest are all optional.
 
   * `name::Symbol`: name of the struct, this is the only required keyword argument.
-  * `typealias::String`: an alias of the [`JLKwStruct`](reference.md#Expronicon.JLKwStruct),   see also the `@option` macro in [Configurations.jl](https://github.com/Roger-luo/Configurations.jl).
+  * `typealias::String`: an alias of the [`JLKwStruct`](api.md#Expronicon.JLKwStruct),   see also the `@option` macro in [Configurations.jl](https://github.com/Roger-luo/Configurations.jl).
   * `ismutable::Bool`: if the struct definition is mutable.
   * `typevars::Vector{Any}`: type variables of the struct, should be `Symbol` or `Expr`.
   * `supertype`: supertype of the struct definition.
-  * `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](reference.md#Expronicon.JLField).
-  * `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](reference.md#Expronicon.JLFunction).
+  * `fields::Vector{JLField}`: field definitions of the struct, should be a [`JLField`](api.md#Expronicon.JLField).
+  * `constructors::Vector{JLFunction}`: constructors definitions of the struct, should be [`JLFunction`](api.md#Expronicon.JLFunction).
   * `line::LineNumberNode`: a `LineNumberNode` to indicate the definition position for error report etc.
   * `doc::String`: documentation string of the struct.
   * `misc`: other things that happens inside the struct body, by definition this will   just fall through and is equivalent to eval them outside the struct body.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L291-L317' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L291-L317' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLIfElse' href='#Expronicon.JLIfElse'>#</a>
 **`Expronicon.JLIfElse`** &mdash; *Type*.
@@ -248,7 +248,7 @@ end
 
 **Generate the Julia `Expr` object**
 
-to generate the corresponding `Expr` object, one can call [`codegen_ast`](reference.md#Expronicon.codegen_ast-Tuple{Any}).
+to generate the corresponding `Expr` object, one can call [`codegen_ast`](api.md#Expronicon.codegen_ast-Tuple{Any}).
 
 ```julia
 julia> codegen_ast(jl)
@@ -262,7 +262,7 @@ julia> codegen_ast(jl)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L338-L396' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L338-L396' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLMatch' href='#Expronicon.JLMatch'>#</a>
 **`Expronicon.JLMatch`** &mdash; *Type*.
@@ -307,7 +307,7 @@ julia> jl
 end
 ```
 
-to generate the corresponding Julia `Expr` object, one can call [`codegen_ast`](reference.md#Expronicon.codegen_ast-Tuple{Any}).
+to generate the corresponding Julia `Expr` object, one can call [`codegen_ast`](api.md#Expronicon.codegen_ast-Tuple{Any}).
 
 ```julia
 julia> codegen_ast(jl)
@@ -345,7 +345,7 @@ julia> codegen_ast(jl)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/match.jl#L3-L81' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/match.jl#L3-L81' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLFor' href='#Expronicon.JLFor'>#</a>
 **`Expronicon.JLFor`** &mdash; *Type*.
@@ -359,7 +359,7 @@ JLFor <: JLExpr
 Syntax type for Julia for loop.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L432-L436' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L432-L436' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLField' href='#Expronicon.JLField'>#</a>
 **`Expronicon.JLField`** &mdash; *Type*.
@@ -386,7 +386,7 @@ The only required keyword argument for the constructor is `name`, the rest are a
   * `doc::String`: the docstring of this definition.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L139-L156' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L139-L156' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLKwField' href='#Expronicon.JLKwField'>#</a>
 **`Expronicon.JLKwField`** &mdash; *Type*.
@@ -414,12 +414,12 @@ The only required keyword argument for the constructor is `name`, the rest are a
   * `name::Symbol`: the name of the field.
   * `type`: the type of the field.
   * `isconst`: if the field is annotated with `const`.
-  * `default`: default value of the field, default is [`no_default`](reference.md#Expronicon.no_default).
+  * `default`: default value of the field, default is [`no_default`](api.md#Expronicon.no_default).
   * `line::LineNumberNode`: a `LineNumberNode` to indicate the line information.
   * `doc::String`: the docstring of this definition.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L170-L191' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L170-L191' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.NoDefault' href='#Expronicon.NoDefault'>#</a>
 **`Expronicon.NoDefault`** &mdash; *Type*.
@@ -433,7 +433,7 @@ NoDefault
 Type describes a field should have no default value.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L11-L15' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L11-L15' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.no_default' href='#Expronicon.no_default'>#</a>
 **`Expronicon.no_default`** &mdash; *Constant*.
@@ -444,10 +444,10 @@ Type describes a field should have no default value.
 const no_default = NoDefault()
 ```
 
-Constant instance for [`NoDefault`](reference.md#Expronicon.NoDefault) that describes a field should have no default value.
+Constant instance for [`NoDefault`](api.md#Expronicon.NoDefault) that describes a field should have no default value.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L18-L23' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L18-L23' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.JLExpr' href='#Expronicon.JLExpr'>#</a>
 **`Expronicon.JLExpr`** &mdash; *Type*.
@@ -461,7 +461,7 @@ abstract type JLExpr end
 Abstract type for Julia syntax type.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/types.jl#L27-L31' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/types.jl#L27-L31' class='documenter-source'>source</a><br>
 
 
 <a id='Analysis'></a>
@@ -507,7 +507,7 @@ julia> sub(_->1, :(x + y))
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L398-L416' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L398-L416' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.alias_gensym-Tuple{Any}' href='#Expronicon.alias_gensym-Tuple{Any}'>#</a>
 **`Expronicon.alias_gensym`** &mdash; *Method*.
@@ -525,7 +525,7 @@ Replace gensym with `<name>_<id>`.
 
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L279-L286' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L279-L286' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.annotations_only-Tuple{Any}' href='#Expronicon.annotations_only-Tuple{Any}'>#</a>
 **`Expronicon.annotations_only`** &mdash; *Method*.
@@ -536,10 +536,10 @@ Replace gensym with `<name>_<id>`.
 annotations_only(ex)
 ```
 
-Return type annotations only. See also [`name_only`](reference.md#Expronicon.name_only-Tuple{Any}).
+Return type annotations only. See also [`name_only`](api.md#Expronicon.name_only-Tuple{Any}).
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L82-L86' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L82-L86' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.eval_interp-Tuple{Module, Any}' href='#Expronicon.eval_interp-Tuple{Module, Any}'>#</a>
 **`Expronicon.eval_interp`** &mdash; *Method*.
@@ -553,7 +553,7 @@ eval_interp(m::Module, ex)
 evaluate the interpolation operator in `ex` inside given module `m`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L2-L6' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L2-L6' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.eval_literal-Tuple{Module, Any}' href='#Expronicon.eval_literal-Tuple{Module, Any}'>#</a>
 **`Expronicon.eval_literal`** &mdash; *Method*.
@@ -567,7 +567,7 @@ eval_literal(m::Module, ex)
 Evaluate the literal values and insert them back to the expression. The literal value can be checked via `is_literal`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L20-L25' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L20-L25' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.expr_map-Tuple{Any, Vararg{Any}}' href='#Expronicon.expr_map-Tuple{Any, Vararg{Any}}'>#</a>
 **`Expronicon.expr_map`** &mdash; *Method*.
@@ -601,7 +601,7 @@ end
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L341-L367' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L341-L367' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.flatten_blocks-Tuple{Any}' href='#Expronicon.flatten_blocks-Tuple{Any}'>#</a>
 **`Expronicon.flatten_blocks`** &mdash; *Method*.
@@ -615,7 +615,7 @@ flatten_blocks(ex)
 Remove hierachical expression blocks.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L171-L175' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L171-L175' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.name_only-Tuple{Any}' href='#Expronicon.name_only-Tuple{Any}'>#</a>
 **`Expronicon.name_only`** &mdash; *Method*.
@@ -647,7 +647,7 @@ julia> name_only(:(x::Int))
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L47-L71' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L47-L71' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.nexprs-Tuple{Any, Int64}' href='#Expronicon.nexprs-Tuple{Any, Int64}'>#</a>
 **`Expronicon.nexprs`** &mdash; *Method*.
@@ -676,7 +676,7 @@ end
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L376-L395' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L376-L395' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.prettify-Tuple{Any}' href='#Expronicon.prettify-Tuple{Any}'>#</a>
 **`Expronicon.prettify`** &mdash; *Method*.
@@ -706,7 +706,7 @@ All the options are `true` by default.
 
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L123-L146' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L123-L146' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.renumber_gensym-Tuple{Any}' href='#Expronicon.renumber_gensym-Tuple{Any}'>#</a>
 **`Expronicon.renumber_gensym`** &mdash; *Method*.
@@ -717,10 +717,10 @@ All the options are `true` by default.
 renumber_gensym(ex)
 ```
 
-Re-number gensym with counter from this expression. Produce a deterministic gensym name for testing etc. See also: [`alias_gensym`](reference.md#Expronicon.alias_gensym-Tuple{Any})
+Re-number gensym with counter from this expression. Produce a deterministic gensym name for testing etc. See also: [`alias_gensym`](api.md#Expronicon.alias_gensym-Tuple{Any})
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L307-L313' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L307-L313' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.rm_annotations-Tuple{Any}' href='#Expronicon.rm_annotations-Tuple{Any}'>#</a>
 **`Expronicon.rm_annotations`** &mdash; *Method*.
@@ -734,7 +734,7 @@ rm_annotations(x)
 Remove type annotation of given expression.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L259-L263' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L259-L263' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.rm_lineinfo-Tuple{Any}' href='#Expronicon.rm_lineinfo-Tuple{Any}'>#</a>
 **`Expronicon.rm_lineinfo`** &mdash; *Method*.
@@ -752,7 +752,7 @@ Remove `LineNumberNode` in a given expression.
 
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L94-L104' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L94-L104' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.rm_nothing-Tuple{Any}' href='#Expronicon.rm_nothing-Tuple{Any}'>#</a>
 **`Expronicon.rm_nothing`** &mdash; *Method*.
@@ -770,7 +770,7 @@ Remove the constant value `nothing` in given expression `ex`.
   * `preserve_last_nothing`: if `true`, the last `nothing`   will be preserved.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L206-L215' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L206-L215' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.substitute-Tuple{Expr, Pair}' href='#Expronicon.substitute-Tuple{Expr, Pair}'>#</a>
 **`Expronicon.substitute`** &mdash; *Method*.
@@ -784,7 +784,7 @@ substitute(ex::Expr, old=>new)
 Substitute the old symbol `old` with `new`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/transform.jl#L34-L38' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L34-L38' class='documenter-source'>source</a><br>
 
 
 <a id='CodeGen'></a>
@@ -837,7 +837,7 @@ end
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L2-L36' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L2-L36' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_fields-Tuple{Any}' href='#Expronicon.codegen_ast_fields-Tuple{Any}'>#</a>
 **`Expronicon.codegen_ast_fields`** &mdash; *Method*.
@@ -848,10 +848,10 @@ end
 codegen_ast_fields(fields; just_name::Bool=true)
 ```
 
-Generate a list of Julia AST object for each field, only generate a list of field names by default, option `just_name` can be turned off to call [`codegen_ast`](reference.md#Expronicon.codegen_ast-Tuple{Any}) on each field object.
+Generate a list of Julia AST object for each field, only generate a list of field names by default, option `just_name` can be turned off to call [`codegen_ast`](api.md#Expronicon.codegen_ast-Tuple{Any}) on each field object.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L240-L246' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L240-L246' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_kwfn' href='#Expronicon.codegen_ast_kwfn'>#</a>
 **`Expronicon.codegen_ast_kwfn`** &mdash; *Function*.
@@ -903,7 +903,7 @@ end
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L112-L154' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L112-L154' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_kwfn_infer' href='#Expronicon.codegen_ast_kwfn_infer'>#</a>
 **`Expronicon.codegen_ast_kwfn_infer`** &mdash; *Function*.
@@ -917,7 +917,7 @@ codegen_ast_kwfn_infer(def, name = nothing)
 Generate the keyword function that infers the type.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L200-L204' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L200-L204' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_kwfn_plain' href='#Expronicon.codegen_ast_kwfn_plain'>#</a>
 **`Expronicon.codegen_ast_kwfn_plain`** &mdash; *Function*.
@@ -931,7 +931,7 @@ codegen_ast_kwfn_plain(def[, name = nothing])
 Generate the plain keyword function that does not infer type variables. So that one can use the type conversions defined by constructors.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L162-L167' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L162-L167' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_struct-Tuple{Any}' href='#Expronicon.codegen_ast_struct-Tuple{Any}'>#</a>
 **`Expronicon.codegen_ast_struct`** &mdash; *Method*.
@@ -942,7 +942,7 @@ Generate the plain keyword function that does not infer type variables. So that 
 codegen_ast_struct(def)
 ```
 
-Generate pure Julia struct `Expr` from struct definition. This is equivalent to `codegen_ast` for `JLStruct`. See also [`codegen_ast`](reference.md#Expronicon.codegen_ast-Tuple{Any}).
+Generate pure Julia struct `Expr` from struct definition. This is equivalent to `codegen_ast` for `JLStruct`. See also [`codegen_ast`](api.md#Expronicon.codegen_ast-Tuple{Any}).
 
 **Example**
 
@@ -968,7 +968,7 @@ julia> codegen_ast_struct(def)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L405-L433' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L405-L433' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_struct_body-Tuple{Any}' href='#Expronicon.codegen_ast_struct_body-Tuple{Any}'>#</a>
 **`Expronicon.codegen_ast_struct_body`** &mdash; *Method*.
@@ -1005,7 +1005,7 @@ end
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L360-L387' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L360-L387' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.codegen_ast_struct_head-Tuple{Any}' href='#Expronicon.codegen_ast_struct_head-Tuple{Any}'>#</a>
 **`Expronicon.codegen_ast_struct_head`** &mdash; *Method*.
@@ -1039,7 +1039,7 @@ julia> codegen_ast_struct_head(def)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L323-L347' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L323-L347' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.struct_name_plain-Tuple{Any}' href='#Expronicon.struct_name_plain-Tuple{Any}'>#</a>
 **`Expronicon.struct_name_plain`** &mdash; *Method*.
@@ -1050,7 +1050,7 @@ julia> codegen_ast_struct_head(def)
 struct_name_plain(def)
 ```
 
-Plain constructor name. See also [`struct_name_without_inferable`](reference.md#Expronicon.struct_name_without_inferable-Tuple{Any}).
+Plain constructor name. See also [`struct_name_without_inferable`](api.md#Expronicon.struct_name_without_inferable-Tuple{Any}).
 
 **Example**
 
@@ -1064,7 +1064,7 @@ julia> struct_name_plain(def)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L260-L275' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L260-L275' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.struct_name_without_inferable-Tuple{Any}' href='#Expronicon.struct_name_without_inferable-Tuple{Any}'>#</a>
 **`Expronicon.struct_name_without_inferable`** &mdash; *Method*.
@@ -1075,7 +1075,7 @@ julia> struct_name_plain(def)
 struct_name_without_inferable(def; leading_inferable::Bool=true)
 ```
 
-Constructor name that assume some of the type variables is inferred. See also [`struct_name_plain`](reference.md#Expronicon.struct_name_plain-Tuple{Any}). The kwarg `leading_inferable` can be used to configure whether to preserve the leading inferable type variables, the default is `true` to be consistent with the default julia constructors.
+Constructor name that assume some of the type variables is inferred. See also [`struct_name_plain`](api.md#Expronicon.struct_name_plain-Tuple{Any}). The kwarg `leading_inferable` can be used to configure whether to preserve the leading inferable type variables, the default is `true` to be consistent with the default julia constructors.
 
 **Example**
 
@@ -1099,7 +1099,7 @@ julia> struct_name_without_inferable(def; leading_inferable=false)
 ```
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L281-L310' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L281-L310' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xcall-Tuple{Any, Vararg{Any}}' href='#Expronicon.xcall-Tuple{Any, Vararg{Any}}'>#</a>
 **`Expronicon.xcall`** &mdash; *Method*.
@@ -1113,7 +1113,7 @@ xcall(name, args...; kw...)
 Create a function call to `name`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L476-L480' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L476-L480' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xcall-Tuple{Module, Symbol, Vararg{Any}}' href='#Expronicon.xcall-Tuple{Module, Symbol, Vararg{Any}}'>#</a>
 **`Expronicon.xcall`** &mdash; *Method*.
@@ -1131,7 +1131,7 @@ Create a function call to `GlobalRef(m, name)`.
 
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L490-L500' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L490-L500' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xfirst-Tuple{Any}' href='#Expronicon.xfirst-Tuple{Any}'>#</a>
 **`Expronicon.xfirst`** &mdash; *Method*.
@@ -1145,7 +1145,7 @@ xfirst(collection)
 Create a function call expression to `Base.first`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L522-L526' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L522-L526' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xgetindex-Tuple{Any, Vararg{Any}}' href='#Expronicon.xgetindex-Tuple{Any, Vararg{Any}}'>#</a>
 **`Expronicon.xgetindex`** &mdash; *Method*.
@@ -1159,7 +1159,7 @@ xgetindex(collection, key...)
 Create a function call expression to `Base.getindex`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L506-L510' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L506-L510' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xiterate-Tuple{Any, Any}' href='#Expronicon.xiterate-Tuple{Any, Any}'>#</a>
 **`Expronicon.xiterate`** &mdash; *Method*.
@@ -1173,7 +1173,7 @@ xiterate(it, st)
 Create a function call expression to `Base.iterate`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L571-L575' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L571-L575' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xiterate-Tuple{Any}' href='#Expronicon.xiterate-Tuple{Any}'>#</a>
 **`Expronicon.xiterate`** &mdash; *Method*.
@@ -1187,7 +1187,7 @@ xiterate(it)
 Create a function call expression to `Base.iterate`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L564-L568' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L564-L568' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xlast-Tuple{Any}' href='#Expronicon.xlast-Tuple{Any}'>#</a>
 **`Expronicon.xlast`** &mdash; *Method*.
@@ -1201,7 +1201,7 @@ xlast(collection)
 Create a function call expression to `Base.last`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L529-L533' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L529-L533' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xmap-Tuple{Any, Vararg{Any}}' href='#Expronicon.xmap-Tuple{Any, Vararg{Any}}'>#</a>
 **`Expronicon.xmap`** &mdash; *Method*.
@@ -1215,7 +1215,7 @@ xmap(f, xs...)
 Create a function call expression to `Base.map`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L550-L554' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L550-L554' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xmapreduce-Tuple{Any, Any, Vararg{Any}}' href='#Expronicon.xmapreduce-Tuple{Any, Any, Vararg{Any}}'>#</a>
 **`Expronicon.xmapreduce`** &mdash; *Method*.
@@ -1229,7 +1229,7 @@ xmapreduce(f, op, xs...)
 Create a function call expression to `Base.mapreduce`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L557-L561' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L557-L561' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xnamedtuple-Tuple{}' href='#Expronicon.xnamedtuple-Tuple{}'>#</a>
 **`Expronicon.xnamedtuple`** &mdash; *Method*.
@@ -1243,7 +1243,7 @@ xnamedtuple(;kw...)
 Create a `NamedTuple` expression.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L463-L467' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L463-L467' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xprint-Tuple' href='#Expronicon.xprint-Tuple'>#</a>
 **`Expronicon.xprint`** &mdash; *Method*.
@@ -1257,7 +1257,7 @@ xprint(xs...)
 Create a function call expression to `Base.print`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L536-L540' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L536-L540' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xprintln-Tuple' href='#Expronicon.xprintln-Tuple'>#</a>
 **`Expronicon.xprintln`** &mdash; *Method*.
@@ -1271,7 +1271,7 @@ xprintln(xs...)
 Create a function call expression to `Base.println`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L543-L547' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L543-L547' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xpush-Tuple{Any, Vararg{Any}}' href='#Expronicon.xpush-Tuple{Any, Vararg{Any}}'>#</a>
 **`Expronicon.xpush`** &mdash; *Method*.
@@ -1285,7 +1285,7 @@ xpush(collection, items...)
 Create a function call expression to `Base.push!`.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L513-L517' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L513-L517' class='documenter-source'>source</a><br>
 
 <a id='Expronicon.xtuple-Tuple' href='#Expronicon.xtuple-Tuple'>#</a>
 **`Expronicon.xtuple`** &mdash; *Method*.
@@ -1299,7 +1299,7 @@ xtuple(xs...)
 Create a `Tuple` expression.
 
 
-<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/9849b54d135e5a3bfe3a8264841e1b3b00f1afde/src/codegen.jl#L456-L460' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/codegen.jl#L456-L460' class='documenter-source'>source</a><br>
 
 
 <a id='Printings'></a>
