@@ -23,12 +23,7 @@ export default defineConfig({
         },
         socialLinks: [
             { icon: 'github', link: 'https://github.com/Roger-luo/Expronicon.jl' }
-        ],
-        algolia: {
-            appId: 'SMP1LNISJ0',
-            apiKey: '9c5bb6496ab253709084153de62c6bdf',
-            indexName: 'expronicon'
-        },
+        ]
     }
 })
 
