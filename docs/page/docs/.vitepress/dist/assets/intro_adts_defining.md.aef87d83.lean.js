@@ -1,0 +1,1 @@
+import{_ as t,c as e,o as n}from"./app.0ff3518e.js";const f=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"intro/adts/defining.md","lastUpdated":null}'),a={name:"intro/adts/defining.md"};function r(o,s,i,d,c,p){return n(),e("div")}const l=t(a,[["render",r]]);export{f as __pageData,l as default};

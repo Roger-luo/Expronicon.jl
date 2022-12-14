@@ -1,0 +1,1 @@
+import{_ as e,c as t,o as n,d as r}from"./app.0ff3518e.js";const u=JSON.parse('{"title":"Pretty Printing","description":"","frontmatter":{},"headers":[],"relativePath":"intro/pretty-print.md","lastUpdated":null}'),i={name:"intro/pretty-print.md"},o=r("",3),a=[o];function c(s,d,p,l,_,h){return n(),t("div",null,a)}const P=e(i,[["render",c]]);export{u as __pageData,P as default};
