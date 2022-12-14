@@ -12,8 +12,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: change directory
-        run: cd docs/page
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -27,5 +25,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/page/docs/.vitepress/dist
+          publish_dir: docs/page/.vitepress/dist
           # cname: example.com # if wanna deploy to custom domain
