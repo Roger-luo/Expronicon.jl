@@ -17,6 +17,13 @@ export default defineConfig({
             message: 'Released under the MIT License.',
             copyright: 'Copyright © 2019-present Roger Luo',
         },
+        editLink: {
+            pattern: 'https://github.com/Roger-luo/Expronicon.jl/edit/main/docs/:path',
+            text: 'Edit this page on GitHub'
+        },
+        socialLinks: [
+            { icon: 'github', link: 'https://github.com/Roger-luo/Expronicon.jl' }
+        ],
         algolia: {
             appId: 'SMP1LNISJ0',
             apiKey: '9c5bb6496ab253709084153de62c6bdf',
