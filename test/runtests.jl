@@ -32,6 +32,10 @@ end
     end
 end
 
+@testset "types" begin
+    include("types.jl")
+end
+
 @testset "analysis" begin
     include("analysis.jl")
 end
