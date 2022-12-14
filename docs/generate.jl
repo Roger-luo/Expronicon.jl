@@ -12,6 +12,6 @@ makedocs(;
     doctest=false,
     source = "src",
     pages=[
-        "API Reference" => "reference.md",
+        "API Reference" => "api.md",
     ],
 )
