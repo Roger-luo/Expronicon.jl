@@ -9,6 +9,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: change directory
+        run: cd docs/page
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -16,10 +18,6 @@ jobs:
         with:
           node-version: 16
           cache: yarn
-
-      - name: change directory
-        run: cd docs/page
-
       - run: yarn install --frozen-lockfile
 
       - name: Build
