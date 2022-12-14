@@ -475,11 +475,11 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     show_body = foreach_variant(:t, def, info) do variant
         if variant.type === :singleton
             quote
-                $Base.show(io, $value_type)
+                $ADT.default_show(io, $value_type)
             end
         elseif variant.type === :call
             quote
-                $Base.show(io, $value_type)
+                $ADT.default_show(io, $value_type)
                 print(io, "(")
                 mask = $ADT.variant_masks($value_type)
                 for (idx, field_idx) in enumerate(mask)
@@ -493,7 +493,7 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
             end
         else # struct
             quote
-                $Base.show(io, $value_type)
+                $ADT.default_show(io, $value_type)
                 print(io, "(")
                 mask = $ADT.variant_masks($value_type)
                 names = $ADT.variant_fieldnames($value_type)
@@ -511,7 +511,7 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     end
 
     return quote
-        function Base.show(io::IO, t::$(def.name))
+        function $ADT.default_show(io::IO, t::$(def.name))
             $(codegen_ast(show_body))
         end
     end

@@ -1,5 +1,10 @@
 function emit_reflection(def::ADTTypeDef, info::EmitInfo)
     quote
+        $ADT.is_variant(::$(info.typename)) = true
+        $ADT.is_variant(::$(def.name)) = true
+        $ADT.is_adt(::Type{<:$(def.name)}) = true
+        $ADT.is_adt(::$(def.name)) = true
+
         $(emit_variants(def, info))
         $(emit_adt_type(def, info))
         $(emit_variant_type(def, info))
