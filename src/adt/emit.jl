@@ -229,9 +229,9 @@ macro adt(head, body)
     return esc(emit(def))
 end
 
-macro adt(export_variant, head, body)
-    export_variant == :public || error("expect `public` after `@adt`")
-    def = ADTTypeDef(__module__, head, body; export_variant=true)
+macro adt(export_variants, head, body)
+    export_variants == :public || error("expect `public` after `@adt`")
+    def = ADTTypeDef(__module__, head, body; export_variants=true)
     return esc(emit(def))
 end
 
