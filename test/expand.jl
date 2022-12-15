@@ -48,6 +48,7 @@ options = ExpandOptions(
         joinpath("test", "match.jl"),
         joinpath("test", "expand.jl"),
         "generate.jl",
+        "node_modules",
         joinpath("docs", "Manifest.toml"),
         joinpath("docs", "build"),
         "Manifest.toml", "build",

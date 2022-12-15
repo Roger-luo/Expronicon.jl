@@ -10,6 +10,7 @@ end
 
 @testset "match" begin
     include("match.jl")
+    include("enum.jl")
 end
 
 @testset "eval" begin

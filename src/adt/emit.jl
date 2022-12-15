@@ -245,6 +245,7 @@ function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
         $(emit_reflection(def, info))
         $(emit_getproperty(def, info))
         $(emit_propertynames(def, info))
+        $(emit_is_enum(def, info))
         $(emit_pattern_uncall(def, info))
         $(emit_show(def, info))
     end
@@ -523,10 +524,31 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     end
 end
 
-function emit_pattern_uncall(::ADTTypeDef, info::EmitInfo)
+function emit_pattern_uncall(def::ADTTypeDef, info::EmitInfo)
     return quote
         function $MLStyle.pattern_uncall(t::$(info.typename), self, type_params, type_args, args)
             return $ADT.compile_adt_pattern(t, self, type_params, type_args, args)
+        end
+
+        function $MLStyle.pattern_uncall(x::$(def.name), self, type_params, type_args, args)
+            isempty(type_params) && isempty(type_args) && isempty(args) || error("invalid pattern")
+            return MLStyle.AbstractPatterns.literal(x)
+        end
+    end
+end
+
+function emit_is_enum(def::ADTTypeDef, info::EmitInfo)
+    is_enum_body = foreach_variant(:value, def, info) do variant
+        if variant.type === :singleton
+            :(return true)
+        else
+            :(return false)
+        end
+    end
+
+    return quote
+        function $MLStyle.is_enum(value::$(def.name))
+            $(codegen_ast(is_enum_body))
         end
     end
 end
