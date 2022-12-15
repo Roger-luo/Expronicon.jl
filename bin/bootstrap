@@ -49,6 +49,7 @@ function main(ARGS=ARGS)
                 joinpath("test", "adt.jl"),
                 joinpath("test", "adt"),
                 "generate.jl",
+                "node_modules",
                 joinpath("docs", "Manifest.toml"),
                 joinpath("docs", "build"),
                 "Manifest.toml", "build",

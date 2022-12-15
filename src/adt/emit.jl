@@ -532,7 +532,7 @@ function emit_pattern_uncall(def::ADTTypeDef, info::EmitInfo)
 
         function $MLStyle.pattern_uncall(x::$(def.name), self, type_params, type_args, args)
             isempty(type_params) && isempty(type_args) && isempty(args) || error("invalid pattern")
-            return MLStyle.AbstractPatterns.literal(x)
+            return $MLStyle.AbstractPatterns.literal(x)
         end
     end
 end
