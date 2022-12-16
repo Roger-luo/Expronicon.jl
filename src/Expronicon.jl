@@ -25,7 +25,7 @@ export
     # transformations
     Substitute, no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     annotations_only, rm_annotations, rm_single_block, rm_nothing,
-    substitute, eval_interp, eval_literal,
+    substitute, eval_interp, eval_literal, renumber_gensym,
     expr_map, nexprs,
     # codegen
     codegen_ast,
