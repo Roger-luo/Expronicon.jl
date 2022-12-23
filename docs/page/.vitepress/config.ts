@@ -74,7 +74,6 @@ function sidebarIntro() {
                 { text: 'Introduction', link: '/intro/adts/intro' },
                 { text: 'Defining ADTs', link: '/intro/adts/defining' },
                 { text: 'Pattern Matching', link: '/intro/adts/pattern-matching' },
-                { text: 'A Simple Language', link: '/intro/adts/simple-lang' },
             ]
         }
     ]
