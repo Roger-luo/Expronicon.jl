@@ -52,6 +52,8 @@ Throw an `ExprNotEqual` if they are not equal.
 function assert_equal_expr(m::Module, lhs, rhs)
     lhs = prettify(lhs; preserve_last_nothing=true, alias_gensym=false)
     rhs = prettify(rhs; preserve_last_nothing=true, alias_gensym=false)
+    lhs = renumber_gensym(lhs)
+    rhs = renumber_gensym(rhs)
     compare_expr(m, lhs, rhs) && return true
     lhs, rhs = locate_inequal_expr(m, lhs, rhs)
     throw(ExprNotEqual(lhs, rhs))

@@ -44,7 +44,6 @@ end
 
     ignore::Ignore = default_paths_to_ignore(project)
     dont_touch::Ignore = default_paths_dont_touch(project)
-    gitignore::Maybe{Ignore} = isfile(".gitignore") ? Ignore(".gitignore") : nothing
 end
 
 function Base.show(io::IO, ::MIME"text/plain", opt::Options)
@@ -59,14 +58,12 @@ function Base.show(io::IO, ::MIME"text/plain", opt::Options)
     println(io, "    uuid = \"", opt.uuid, "\"")
     println(io, "    ignore = ", opt.ignore)
     println(io, "    dont_touch = ", opt.dont_touch)
-    println(io, "    gitignore = ", opt.gitignore)
     print(io, ")")
 end
 
 function ignore(path::String, options::Options)
     path_ = relpath(path, options.project)
     isnothing(options.ignore) || path_ in options.ignore && return true
-    isnothing(options.gitignore) || path_ in options.gitignore && return true
     return false
 end
 
@@ -77,4 +74,7 @@ end
 
 expand_name(options::Options) = options.project_name * options.postfix
 project_dir(options::Options, xs...) = joinpath(options.project, xs...)
-build_dir(options::Options, xs...) = joinpath(options.build_dir, expand_name(options), xs...)
+
+function build_dir(options::Options, xs...)
+    return joinpath(options.build_dir, expand_name(options), xs...)
+end

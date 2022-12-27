@@ -2,7 +2,7 @@ tab(n) = " "^n
 splitlines(s::String) = split(s, '\n')
 
 function variant_show_inline(io::IO, x)
-    return variant_show_default(io, x)
+    return variant_show_inline_default(io, x)
 end
 
 function variant_show_inline_default(::IO, x)

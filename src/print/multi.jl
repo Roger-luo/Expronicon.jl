@@ -203,6 +203,7 @@ function (p::Printer)(ex)
                 @match stmt begin
                     Expr(:macrocall, &(Symbol("@case")), line, pattern) => begin
                         tab(); keyword("@case "); inline(pattern)
+                        println()
                         case_ptr = ptr + 1
                         case_ptr <= length(stmts) || continue
                         case_stmt = stmts[case_ptr]
@@ -276,7 +277,9 @@ function (p::Printer)(ex)
             is_root() || (println(); tab(); keyword("end"))
         @case Expr(:let, Expr(:block, args...), Expr(:block, stmts...))
             leading_tab()
-            keyword("let "); inline(args...); println()
+            keyword("let ");
+            isempty(args) || inline(args...)
+            println()
             indent() do
                 print_stmts(stmts)
             end
@@ -336,6 +339,17 @@ function (p::Printer)(ex)
             leading_tab()
             inline(call); keyword(" -> ")
             p(body)
+        @case Expr(:do, call, Expr(:->, Expr(:tuple, args...), body))
+            leading_tab()
+            inline(call); keyword(" do ")
+            isempty(args) || inline(args...)
+            println()
+            stmts = split_body(body)
+            indent() do
+                print_stmts(stmts)
+            end
+            println();
+            tab(); keyword("end")
         
         @case Expr(:macro, call, body)
             print_function(:macro, call, body)

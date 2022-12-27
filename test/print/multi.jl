@@ -244,3 +244,25 @@ else
 end
 
 print_expr(ex)
+
+print_expr(:(foo() do; end))
+print_expr(:(foo() do x; end))
+print_expr(:(foo() do x, y, z; end))
+print_expr(:(foo() do x, y, z; 1+1;2+2; end))
+print_expr(:(foo() do x, y, z...; 1+1;2+2; end))
+
+ex = @expr function (p::InlinePrinter)(x, (xs...); delim = ", ")
+    p(x)
+    for x = xs
+        printstyled(p.io, delim; color = (p.color).keyword)
+        p(x)
+    end
+end
+
+print_expr(ex)
+
+ex = @expr function (InlinePrinter)(io::IO; color::ColorScheme = Monokai256(), line::Bool = false)
+    InlinePrinter(io, color, line, InlinePrinterState())
+end
+
+print_expr(ex)

@@ -57,7 +57,17 @@ function (p::InlinePrinter)(expr)
         print(open); join(xs, delim); print(close)
     end
 
-    string(s) = printstyled('"', s, '"', color=c.string)
+    function string(s)
+        printstyled('"'; color=c.string)
+        for ch in s
+            if ch == '"'
+                printstyled("\\\""; color=c.quoted)
+            else
+                printstyled(ch, color=c.string)
+            end
+        end
+        printstyled('"'; color=c.string)
+    end
     keyword(s) = printstyled(s, color=c.keyword)
 
     function symbol(ex)
@@ -91,9 +101,9 @@ function (p::InlinePrinter)(expr)
             preced = Base.operator_precedence(s)
         end
 
-        p.state.precedence >= preced && print('(')
+        preced > 0 && p.state.precedence >= preced && print('(')
         with(f, p.state, :precedence, preced)
-        p.state.precedence >= preced && print(')')
+        preced > 0 && p.state.precedence >= preced && print(')')
     end
 
     function print_expr(ex)
@@ -116,9 +126,7 @@ function (p::InlinePrinter)(expr)
                 if Base.isidentifier(ex.value)
                     keyword(":"); quoted(ex.value)
                 else
-                    keyword('$'); print("(")
-                    printstyled("QuoteNode", color=c.call)
-                    print("(");quoted(ex.value);print("))")
+                    keyword(":("); quoted(ex.value); keyword(")")
                 end
             @case ::GlobalRef
                 p(ex.mod); keyword("."); p(ex.name)
@@ -163,7 +171,7 @@ function (p::InlinePrinter)(expr)
 
                 @case Expr(:., name)
                 print(name)
-            @case Expr(:., object, QuoteNode(name))
+            @case Expr(:., object, QuoteNode(name)) || Expr(:., object, name)
                 precedence(:.) do
                     p(object); keyword("."); p(name)
                 end
@@ -177,8 +185,6 @@ function (p::InlinePrinter)(expr)
                 precedence(:(:)) do
                     join(args, ":")
                 end
-            @case Expr(:call, f, Expr(:parameters, kwargs...), args...)
-                call(f); print("("); join(args); keyword("; "); join(kwargs); print(")")
 
             @case Expr(:call, f::Symbol, arg) && if Base.isunaryoperator(f) end
                 precedence(typemax(Int)) do
@@ -188,8 +194,16 @@ function (p::InlinePrinter)(expr)
                 precedence(f) do
                     join(args, " $f ")
                 end
+            @case Expr(:call, f, Expr(:parameters, kwargs...), args...)
+                f isa Symbol || print("(")
+                call(f);
+                f isa Symbol || print(")")
+                print("("); join(args); keyword("; "); join(kwargs); print(")")
             @case Expr(:call, f, args...)
-                call(f); print_braces(args, "(", ")")
+                f isa Symbol || print("(")
+                call(f);
+                f isa Symbol || print(")")
+                print_braces(args, "(", ")")
             @case Expr(:tuple, args...)
                 print_braces(args, "(", ")")
             @case Expr(:curly, t, args...)
@@ -216,6 +230,17 @@ function (p::InlinePrinter)(expr)
                 p.line && print(")")
             @case Expr(:->, args, body)
                 p(args); keyword(" -> "); print("("); noblock(body); print(")")
+
+            @case Expr(:do, call, Expr(:->, Expr(:tuple, args...), body))
+                p(call); keyword(" do");
+                isempty(args) || (print(" "); p(args...);)
+                keyword("; ");
+                noblock(body);
+                isempty(args) || print(" ")
+                keyword("end")
+
+            @case Expr(:quote, stmt)
+                keyword(":("); noblock(stmt); keyword(")")
             @case Expr(:quote, args...)
                 keyword("quote ");
                 with(p.state, :block, false) do
@@ -282,6 +307,9 @@ function (p::InlinePrinter)(expr)
             @case Expr(:while, condition, body)
                 keyword("while "); noblock(condition); keyword("; "); noblock(body);
                 keyword("; end")
+            
+            @case Expr(:continue)
+                keyword("continue")
 
             @case Expr(:if, condition, body)
                 keyword("if "); noblock(condition); keyword("; "); noblock(body);
