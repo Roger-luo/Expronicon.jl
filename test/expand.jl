@@ -15,6 +15,7 @@ options = ExpandOptions(;
     src_dont_touch=["types.jl", "codegen.jl"],
     exclude_paths=[
         "README.md",
+        "node_modules",
         joinpath("test", "match.jl"),
         joinpath("test", "expand.jl"),
         joinpath("test", "adt.jl"),

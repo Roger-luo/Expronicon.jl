@@ -448,6 +448,9 @@ function (p::Printer)(ex)
             leading_tab()
             keyword("const "); p(code)
 
+        @case Expr(:return, Expr(:tuple, Expr(:parameters, _...), _...)) ||
+                Expr(:return, Expr(:tuple, _...))
+            inline(ex)
         @case Expr(:return, code)
             leading_tab()
             keyword("return "); p(code)
