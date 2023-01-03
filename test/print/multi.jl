@@ -158,6 +158,17 @@ end
 
 print_expr(ex)
 
+ex = @expr begin
+    quote
+        """
+        aaaa $aaa
+        """
+        sin(x) = x
+    end
+end
+
+print_expr(ex)
+
 ex = @expr @__MODULE__
 print_expr(ex)
 print_expr(ex; line=true)
@@ -263,6 +274,33 @@ print_expr(ex)
 
 ex = @expr function (InlinePrinter)(io::IO; color::ColorScheme = Monokai256(), line::Bool = false)
     InlinePrinter(io, color, line, InlinePrinterState())
+end
+
+print_expr(ex)
+
+print_expr(:(@foo "aaaaa" a b c))
+print_expr(:(@foo "aaaaa\naaaaa" a b c))
+
+ex = quote
+    function foo()
+        msg = :("expect $($nargs) arguments, got $(length(args)) arguments")
+    end
+end
+
+print_expr(ex)
+
+ex = quote
+    function foo()
+        msg = :("expect $($nargs) arguments\n, got $(length(args)) arguments")
+    end
+end
+
+print_expr(ex)
+
+ex = quote
+    function split_lines(ex)::Vector{Any}
+        ex isa AbstractString && return Any[[line] for line in eachsplit(ex, '\n')]
+    end
 end
 
 print_expr(ex)

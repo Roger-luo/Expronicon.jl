@@ -5,6 +5,7 @@ Base.@kwdef mutable struct InlinePrinterState
     macrocall::Bool = false
     quoted::Bool = false
     keyword::Bool = false
+    loop_iterator::Bool = false # = is a loop iterator
     block::Bool = true # show begin ... end by default
     precedence::Int = 0 # precedence of the parent expression
 end
@@ -57,18 +58,9 @@ function (p::InlinePrinter)(expr)
         print(open); join(xs, delim); print(close)
     end
 
-    function string(s)
-        printstyled('"'; color=c.string)
-        for ch in s
-            if ch == '"'
-                printstyled("\\\""; color=c.quoted)
-            else
-                printstyled(ch, color=c.string)
-            end
-        end
-        printstyled('"'; color=c.string)
-    end
+    string(s) = printstyled(repr(s); color=c.string)
     keyword(s) = printstyled(s, color=c.keyword)
+    assign() = p.state.loop_iterator ? keyword(" in ") : keyword(" = ")
 
     function symbol(ex)
         color = if p.state.type
@@ -89,7 +81,15 @@ function (p::InlinePrinter)(expr)
 
     quoted(ex) = with(() -> p(ex), p.state, :quoted, true)
     type(ex) = with(() -> p(ex), p.state, :type, true)
-    call(ex) = with(() -> p(ex), p.state, :call, true)
+    function call(ex)
+        omit_parent = @match ex begin
+            Expr(:., _...) || ::Symbol => true
+            _ => false
+        end
+        omit_parent || print("(")
+        with(() -> p(ex), p.state, :call, true)
+        omit_parent || print(")")
+    end
     macrocall(ex) = with(() -> p(ex), p.state, :macrocall, true)
     noblock(ex) = with(() -> p(ex), p.state, :block, false)
     block(ex) = with(() -> p(ex), p.state, :block, true)
@@ -101,15 +101,49 @@ function (p::InlinePrinter)(expr)
             preced = Base.operator_precedence(s)
         end
 
-        preced > 0 && p.state.precedence >= preced && print('(')
+        require = preced > 0 && p.state.precedence > 0
+        require && p.state.precedence >= preced && print('(')
         with(f, p.state, :precedence, preced)
-        preced > 0 && p.state.precedence >= preced && print(')')
+        require && p.state.precedence >= preced && print(')')
+    end
+
+    function print_call(ex)
+        @switch ex begin
+            @case Expr(:call, :(:), args...)
+                precedence(:(:)) do
+                    join(args, ":")
+                end
+
+            @case Expr(:call, f::Symbol, arg) && if Base.isunaryoperator(f) end
+                precedence(typemax(Int)) do
+                    keyword(f); p(arg)
+                end
+            @case Expr(:call, f::Symbol, args...) && if Base.isbinaryoperator(f) end
+                precedence(f) do
+                    join(args, " $f ")
+                end
+            @case Expr(:call, f, Expr(:parameters, kwargs...), args...)
+                call(f);
+                print("("); join(args); keyword("; "); join(kwargs); print(")")
+            
+            @case Expr(:call, f, args...)
+                call(f);
+                print_braces(args, "(", ")")
+        end
+    end
+
+    function print_function(head, call, body)
+        keyword("$head "); p(call); keyword("; ")
+        join(split_body(body), ";")
+        keyword("; end")
     end
 
     function print_expr(ex)
         @switch ex begin
             @case ::Number
                 printstyled(ex, color=c.number)
+            @case ::Char
+                printstyled(repr(ex), color=c.string)
             @case ::String
                 string(ex)
             @case ::Nothing
@@ -122,8 +156,11 @@ function (p::InlinePrinter)(expr)
             @case Expr(:line, file, line)
                 p.line || return # don't print line numbers
                 printstyled("#= $(file):$(line) =#", color=c.line)
+
+            @case ::QuoteNode && if ex.value in Base.quoted_syms end
+                keyword(":("); quoted(ex.value); keyword(")")
             @case ::QuoteNode
-                if Base.isidentifier(ex.value)
+                if ex.value isa Symbol && Base.isidentifier(ex.value)
                     keyword(":"); quoted(ex.value)
                 else
                     keyword(":("); quoted(ex.value); keyword(")")
@@ -133,15 +170,19 @@ function (p::InlinePrinter)(expr)
             @case Expr(:kw, k, v)
                 p(k);print(" = ");p(v)
             @case Expr(:(=), k, Expr(:block, stmts...))
-                if length(stmts) == 2 && count(!is_line_no, stmts) == 1
-                    p(k); keyword(" = ")
-                    p.line && is_line_no(stmts[1]) && p(stmts[1])
-                    p(stmts[end])
-                else
-                    p(k); keyword(" = "); p(ex.args[2])
+                precedence(:(=)) do
+                    if length(stmts) == 2 && count(!is_line_no, stmts) == 1
+                        p(k); assign()
+                        p.line && is_line_no(stmts[1]) && p(stmts[1])
+                        p(stmts[end])
+                    else
+                        p(k); assign(); p(ex.args[2])
+                    end
                 end
             @case Expr(:(=), k, v)
-                p(k); print(" = "); p(v)
+                precedence(:(=)) do
+                    p(k); assign(); p(v)
+                end
             @case Expr(:..., name)
                 precedence(:...) do
                     p(name);keyword("...")
@@ -169,9 +210,18 @@ function (p::InlinePrinter)(expr)
                     p(lhs); keyword(" $head "); p(rhs)
                 end
 
-                @case Expr(:., name)
+            @case Expr(:., name)
                 print(name)
-            @case Expr(:., object, QuoteNode(name)) || Expr(:., object, name)
+            @case Expr(:., object, QuoteNode(name))
+                precedence(:.) do
+                    p(object); keyword(".");
+                    if name in Base.quoted_syms
+                        p(QuoteNode(name))
+                    else
+                        p(name)
+                    end
+                end
+            @case Expr(:., object, name)
                 precedence(:.) do
                     p(object); keyword("."); p(name)
                 end
@@ -181,31 +231,16 @@ function (p::InlinePrinter)(expr)
                 end
 
             # call expr
-            @case Expr(:call, :(:), args...)
-                precedence(:(:)) do
-                    join(args, ":")
-                end
-
-            @case Expr(:call, f::Symbol, arg) && if Base.isunaryoperator(f) end
-                precedence(typemax(Int)) do
-                    keyword(f); p(arg)
-                end
-            @case Expr(:call, f::Symbol, args...) && if Base.isbinaryoperator(f) end
-                precedence(f) do
-                    join(args, " $f ")
-                end
-            @case Expr(:call, f, Expr(:parameters, kwargs...), args...)
-                f isa Symbol || print("(")
-                call(f);
-                f isa Symbol || print(")")
-                print("("); join(args); keyword("; "); join(kwargs); print(")")
-            @case Expr(:call, f, args...)
-                f isa Symbol || print("(")
-                call(f);
-                f isa Symbol || print(")")
-                print_braces(args, "(", ")")
+            @case Expr(:call, _...)
+                print_call(ex)
+            @case Expr(:tuple, Expr(:parameters, args...))
+                print_braces(args, "(;", ")")
             @case Expr(:tuple, args...)
-                print_braces(args, "(", ")")
+                if length(args) == 1
+                    print("("); p(args[1]); print(",)")
+                else
+                    print_braces(args, "(", ")")
+                end
             @case Expr(:curly, t, args...)
                 with(p.state, :type, true) do
                     p(t); print_braces(args, "{", "}")
@@ -223,6 +258,22 @@ function (p::InlinePrinter)(expr)
             @case Expr(:ref, object, args...)
                 p(object)
                 print_braces(args, "[", "]")
+
+            @case Expr(:comprehension, Expr(:generator, iter, body))
+                preced = p.state.precedence
+                p.state.precedence = 0
+                with(p.state, :loop_iterator, true) do
+                    print("["); p(iter); keyword(" for "); p(body); print("]")
+                end
+                p.state.precedence = preced
+            @case Expr(:typed_comprehension, t, Expr(:generator, iter, body))
+                preced = p.state.precedence
+                p.state.precedence = 0
+                with(p.state, :loop_iterator, true) do
+                    type(t); print("["); p(iter); keyword(" for "); p(body); print("]")
+                end
+                p.state.precedence = preced
+
             @case Expr(:->, args, Expr(:block, line, code))
                 p(args); keyword(" -> "); 
                 p.line && (print("("); p(line); print(" "))
@@ -238,6 +289,9 @@ function (p::InlinePrinter)(expr)
                 noblock(body);
                 isempty(args) || print(" ")
                 keyword("end")
+
+            @case Expr(:function, call, body)
+                print_function(:function, call, body)
 
             @case Expr(:quote, stmt)
                 keyword(":("); noblock(stmt); keyword(")")
@@ -274,10 +328,15 @@ function (p::InlinePrinter)(expr)
             @case Expr(:let, Expr(:block, args...), body)
                 keyword("let "); join(args, ", "); keyword("; "); noblock(body);
                 keyword("; end")
+            @case Expr(:let, arg, body)
+                keyword("let "); p(arg); keyword("; "); noblock(body);
+                keyword("; end")
             @case Expr(:macrocall, f, line, args...)
                 p.line && printstyled(line, color=c.comment)
                 macrocall(f)
                 print_braces(args, "(", ")")
+            @case Expr(:return, Expr(:tuple, Expr(:parameters, kwargs...), args...))
+                keyword("return "); p(Expr(:tuple, Expr(:parameters, kwargs...), args...))
             @case Expr(:return, Expr(:tuple, args...))
                 keyword("return "); join(args)
             @case Expr(:return, args...)
@@ -296,14 +355,20 @@ function (p::InlinePrinter)(expr)
             @case Expr(:(:), head, args...)
                 p(head); keyword(": "); join(args)
             @case Expr(:where, body, whereparams...)
-                p(body); keyword(" where ")
+                p(body); keyword(" where {")
                 with(p.state, :type, true) do
                     join(whereparams, ", ")
                 end
+                keyword("}")
 
             @case Expr(:for, iteration, body)
-                keyword("for "); noblock(iteration); keyword("; "); noblock(body);
-                keyword("; end")
+                preced = p.state.precedence
+                p.state.precedence = 0
+                with(p.state, :loop_iterator, true) do
+                    keyword("for "); noblock(iteration); keyword("; "); noblock(body);
+                    keyword("; end")
+                end
+                p.state.precedence = preced
             @case Expr(:while, condition, body)
                 keyword("while "); noblock(condition); keyword("; "); noblock(body);
                 keyword("; end")
@@ -325,14 +390,15 @@ function (p::InlinePrinter)(expr)
                 keyword("elseif "); noblock(condition); keyword("; "); noblock(body);
             
             @case Expr(:elseif, condition, body, elsebody)
-                keyword("elseif "); noblock(condition); keyword("; "); noblock(body);
-                keyword("; else "); noblock(elsebody)
+                keyword("elseif "); noblock(condition); keyword("; "); noblock(body); keyword("; ")
+                Meta.isexpr(elsebody, :elseif) || keyword("else")
+                noblock(elsebody)
 
             @case Expr(:try, try_body, catch_vars, catch_body)
                 keyword("try "); noblock(try_body); keyword("; ")
-                catch_vars == false || (keyword("catch "); noblock(catch_vars))
-                catch_vars == false || (keyword("; "); noblock(catch_body))
-                keyword("; end")
+                keyword("catch");
+                catch_vars == false || (print(" "); noblock(catch_vars))
+                keyword(";"); noblock(catch_body); keyword("; end")
 
             @case Expr(:try, try_body, catch_vars, catch_body, finally_body)
                 keyword("try "); noblock(try_body); keyword("; ")
@@ -354,13 +420,17 @@ function (p::InlinePrinter)(expr)
                 p(name); keyword("; ");
                 noblock(body); keyword("; end")
 
+            @case Expr(:abstract, name)
+                keyword("abstract type "); p(name); keyword(" end")
             @case Expr(:primitive, name, size)
-                keyword("primitive "); p(name); print(" "); p(size); keyword(" end")
+                keyword("primitive type "); p(name); print(" "); p(size); keyword(" end")
 
             @case Expr(:meta, :inline)
                 macrocall(GlobalRef(Base, Symbol("@_inline_meta")));
                 keyword(";")
 
+            @case Expr(:break)
+                keyword("break")
             @case Expr(:symboliclabel, label)
                 macrocall(GlobalRef(Base, Symbol("@label")));
                 print(" "); p(label);
