@@ -15,65 +15,44 @@ function parse(io::IO, path::String)
     return IgnoreFile(path, stmts)
 end
 
-split_segments(s::String) = split_segments(IOBuffer(s))
+parse_pattern(s::AbstractString) = parse_pattern(IOBuffer(s))
 
-function split_segments(io::IO)
-    function read_segment()
-        buf = IOBuffer()
-        while !eof(io)
-            c = read(io, Char)
-            if c == '/'
-                return String(take!(buf)), true
-            elseif c == '\\' # escape
-                c = read(io, Char)
-                write(buf, c)
-            else
-                write(buf, c)
-            end
-        end
-        return String(take!(buf)), false
-    end
-
-    segments = String[]
-    has_sep = false
-    while !eof(io)
-        segment, has_sep = read_segment()
-        push!(segments, segment)
-    end
-    has_sep && push!(segments, first(read_segment()))
-    return segments
-end
-
-parse_pattern(s::String) = parse_pattern(IOBuffer(s))
-
-function parse_pattern(io::IO)::Pattern
+function parse_pattern(io::IO)
     mark(io)
     read(io, Char) == '!' && return Not(parse_pattern(io))
     reset(io)
 
-    segments = Pattern[]
-    segment_s = split_segments(io)
-    cons = if last(segment_s) == ""
-        pop!(segment_s)
-        Directory
-    else
-        Path
-    end
+    pc, c = '\0', '\0'
+    buf = IOBuffer()
+    patterns = Pattern[]
+    readchar() = (pc = c; c = read(io, Char); c)
 
-    if first(segment_s) == ""
-        push!(segments, Root)
-        popfirst!(segment_s)
-    end
-
-    for s in segment_s
-        segment = @match s begin
-            "*" => Asterisk
-            "**" => DoubleAsterisk
-            name => Id(name)
+    while !eof(io)
+        readchar()
+        if c == '\\'
+            write(buf, read(io, Char))
+        elseif pc == '\0' && c == '/'
+            push!(patterns, Root)
+        elseif c == '*'
+            readchar()
+            if c == '*'
+                push!(patterns, DoubleAsterisk)
+                eof(io) && return Path(patterns)
+                readchar() == '/' && continue
+                eof(io) || error("expect EOF or '/' after '**'")
+            else
+                write(buf, '*'); write(buf, c)
+            end
+        elseif c == '/'
+            push!(patterns, FileName(String(take!(buf))))
+        else
+            write(buf, c)
         end
-        push!(segments, segment)
     end
-    return cons(segments)
+    push!(patterns, FileName(String(take!(buf))))
+
+    c == '/' && (pop!(patterns); return Directory(patterns))
+    return Path(patterns)
 end
 
 macro pattern_str(s)

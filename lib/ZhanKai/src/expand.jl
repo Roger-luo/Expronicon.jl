@@ -1,7 +1,9 @@
 function parse_file(src)
     raw = read(src, String)
     ex = Meta.parse("begin $raw end")
-    return prettify(ex)
+    ex = rm_nothing(ex)
+    ex = rm_lineinfo(ex)
+    return ex
 end
 
 function expand_macro(mod::Module, ex::Expr, options::Options)
@@ -23,7 +25,9 @@ function expand_macro(mod::Module, ex::Expr, options::Options)
     ret = sub(ex) do expr
         macroexpand(mod, expr)
     end
-    return prettify(ret)
+    ret = rm_lineinfo(ret)
+    ret = rm_nothing(ret)
+    return ret
 end
 
 function expand_file(mod::Module, src, options::Options)

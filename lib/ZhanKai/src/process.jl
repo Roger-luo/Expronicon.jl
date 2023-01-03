@@ -8,6 +8,7 @@ end
 struct ExpandInfo
     files_to_process::Vector{String}
     files_to_copy::Vector{String}
+    tests_to_copy::Vector{String}
 end
 
 function Base.show(io::IO, info::ExpandInfo)
@@ -24,28 +25,45 @@ function Base.show(io::IO, info::ExpandInfo)
         println(io, ",")
     end
     println(io, "    ],")
+    println(io, "    tests_to_copy = [")
+    for file in info.tests_to_copy
+        print(io, "        \"", relpath(file, pwd()), "\"")
+        println(io, ",")
+    end
+    println(io, "    ],")
     print(io, ")")
 end
 
 function ExpandInfo(option::Options)
     files_to_process = String[]
     files_to_copy = String[]
+    tests_to_copy = String[]
+    ignore = IgnoreFile(option.project, option.ignore)
+    dont_touch = IgnoreFile(option.project, option.dont_touch)
+    ignore_test = IgnoreFile(joinpath(option.project, "test"), option.ignore_test)
 
     for file in read_tracked_files(option.project)
-        ignore(file, option) && continue
+        contains(ignore, file) && continue
 
-        if dont_touch(file, option)
+        if startswith(relpath(file, option.project), "test")
+            contains(ignore_test, file) && continue
+            push!(tests_to_copy, file)
+            continue
+        end
+
+        if contains(dont_touch, file)
             push!(files_to_copy, file)
         else
             push!(files_to_process, file)
         end
     end
-    return ExpandInfo(files_to_process, files_to_copy)
+    return ExpandInfo(files_to_process, files_to_copy, tests_to_copy)
 end
 
 function copy_dont_touch(info::ExpandInfo, options::Options)
     for src in info.files_to_copy
         dst = build_dir(options, relpath(src, options.project))
+        ispath(dirname(dst)) || mkpath(dirname(dst))
         cp(src, dst; force=true)
     end
     return
@@ -109,6 +127,58 @@ function edit_project_deps(options::Options)
     return
 end
 
+function replace_module(expr, options::Options)
+    new = Symbol(options.project_name * options.postfix)
+    old = Symbol(options.project_name)
+
+    # convert object to expr
+    s = sprint_expr(expr)
+    ast = Meta.parse("begin $s end")
+
+    substitute(ex) = @match ex begin
+        &old => new
+        Expr(:., &old, args...) => Expr(:., new, map(substitute, args)...)
+        Expr(head, args...) => Expr(head, map(substitute, args)...)
+        _ => ex
+    end
+
+    return substitute(ast)
+end
+
+function rm_using(expr, options::Options)
+    deps = map(Symbol, options.deps)
+    sub = Substitute() do expr
+        return Meta.isexpr(expr, (:using, :import))
+    end
+    return sub(expr) do imports
+        @match imports begin
+            Expr(:using, Expr(:(:), package, _...)) ||
+                Expr(:import, Expr(:(:), package, _...)) ||
+                Expr(:using, Expr(:(.), package, _...)) ||
+                Expr(:import, Expr(:(.), package, _...)) => package in deps ? nothing : expr
+
+            Expr(:using, packages...) => Expr(:using, filter(p->!(p in deps), packages))
+            Expr(:import, packages...) => Expr(:import, filter(p->!(p in deps), packages))
+        end
+    end
+end
+
+function rm_include(file::String, expr, options::Options)
+    ignore = IgnoreFile(options.project, options.ignore)
+    file_dir(xs...) = joinpath(dirname(file), xs...)
+    sub = Substitute() do expr
+        @match expr begin
+            :(include($path)) || :(Base.include($path)) => begin
+                contains(ignore, file_dir(path))
+            end
+            _=> false
+        end
+    end
+    return sub(expr) do ex
+        return
+    end
+end
+
 function expand(m::Module, options::Options)
     info = ExpandInfo(options)
     isdir(build_dir(options)) || mkpath(build_dir(options))
@@ -117,11 +187,37 @@ function expand(m::Module, options::Options)
     edit_project_deps(options)
 
     for src in info.files_to_process
-        dst = build_dir(options, relpath(src, options.project))
-        ast = expand_file(m, src, options)
-        open(dst, "w+") do io
-            print_expr(io, ast)
+        @info "processing $src"
+        if basename(src) == options.project_name * ".jl"
+            dst = build_dir(options, relpath(src, options.project))
+            dst = joinpath(dirname(dst), options.project_name * options.postfix * ".jl")
+        else
+            dst = build_dir(options, relpath(src, options.project))
         end
+        ast = expand_file(m, src, options)
+        ast = replace_module(ast, options)
+        ast = rm_using(ast, options)
+        ast = rm_include(src, ast, options)
+        ast = rm_lineinfo(ast)
+        ast = rm_nothing(ast)
+        write_file(ast, dst)
+    end
+
+    for src in info.tests_to_copy
+        @info "processing $src"
+        ast = parse_file(src)
+        ast = replace_module(ast, options)
+        ast = rm_lineinfo(ast)
+        ast = rm_nothing(ast)
+        dst = build_dir(options, relpath(src, options.project))
+        write_file(ast, dst)
     end
     return
+end
+
+function write_file(ast, dst::String)
+    ispath(dirname(dst)) || mkpath(dirname(dst))
+    open(dst, "w+") do io
+        print_expr(io, ast)
+    end
 end

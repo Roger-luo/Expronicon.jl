@@ -1,11 +1,21 @@
-using Expronicon: print_expr, prettify, print_inline, Substitute
+using Expronicon: Expronicon, print_expr, prettify, print_inline, Substitute
 using MLStyle: @match
-using ZhanKai: parse_file, expand_macro
+using ZhanKai: ZhanKai, parse_file, expand_macro, expand, IgnoreFile
+using ZhanKai: ExpandInfo, edit_project_deps, expand, read_tracked_files
+option = ZhanKai.Options(;
+    macronames=["match", "switch"], deps=["MLStyle"],
+    ignore=[
+        ".git", ".github", "docs",
+        "lib", "bin", "package.json",
+        "yarn.lock", "Project.toml",
+        "src/patches.jl", "src/match.jl", "src/expand.jl", "src/adt/**",
+    ],
+    ignore_test = ["adt/**", "match.jl", "expand.jl"],
+)
 
-ex = parse_file("src/Expronicon.jl")
-print_expr(ex)
+ExpandInfo(option)
+expand(Expronicon, option)
 
-ex = parse_file("src/print/inline.jl")
-using ZhanKai: scan_expand_files, ignore, scan_dont_touch, ExpandInfo, edit_project_deps, expand
-option = ZhanKai.Options(;macronames=["match", "switch"], deps=["MLStyle"])
-expand_macro(Expronicon, ex, option)|>print_expr
+using Expronicon: splitlines
+
+splitlines(:("aaaa\n$(Abc)aaaa"))

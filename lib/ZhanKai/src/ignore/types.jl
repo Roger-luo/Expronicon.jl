@@ -3,11 +3,9 @@
     
     Root
     EmptyLine
-    Asterisk
-    DoubleAsterisk
-
-    Id(::String)
-    Not(::Pattern)
+    DoubleAsterisk # ** is special to gitignore, not a glob pattern
+    Not(::Pattern) # this is the leading '!' in gitignore
+    FileName(::String) # this will match a glob pattern
 
     struct Path
         segments::Vector{Pattern}
@@ -23,4 +21,11 @@ end
 struct IgnoreFile
     path::String
     stmts::Vector{Pattern}
+end
+
+function IgnoreFile(path::String, patterns::Vector{String})
+    stmts = map(patterns) do pattern
+        parse_pattern(pattern)
+    end
+    return IgnoreFile(path, stmts)
 end

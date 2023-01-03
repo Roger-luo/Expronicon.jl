@@ -1,8 +1,16 @@
 function ADT.variant_show_inline(io::IO, x::Pattern)
     no_quote_io = IOContext(io, :quote => true)
+
+    function valid_filename_char(c)
+        return isletter(c) || isdigit(c) || c == '_' ||
+            c == '-' || c == '.' || c == '/'
+    end
+
     function print_iden(name::String)
         for c in name
-            if isletter(c) || isdigit(c) || c == '_'
+            if c == '*' || c == '?' || c == '[' || c == ']'
+                printstyled(io, c; color=:light_red)
+            elseif valid_filename_char(c)
                 print(io, c)
             else
                 printstyled(io, '\\'; color=:magenta)
@@ -27,10 +35,9 @@ function ADT.variant_show_inline(io::IO, x::Pattern)
         Comment(msg) => printstyled(io, "#", msg; color=:light_black)
         Root => printstyled(io, "Root"; color=:light_red)
         EmptyLine => printstyled(io, "EmptyLine"; color=:light_red)
-        Asterisk => printstyled(io, "*"; color=:light_red)
         DoubleAsterisk => printstyled(io, "**"; color=:light_red)
 
-        Id(name) => print_iden(name)
+        FileName(name) => print_iden(name)
 
         Not(pattern) => begin
             printstyled(io, "!"; color=:light_red)

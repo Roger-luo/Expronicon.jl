@@ -15,20 +15,11 @@ end
 
 # paths to exclude that is not in gitignore
 function default_paths_to_ignore(project::String)
-    Ignore(project, [
-        fn".git", fn".github", fn"docs", fn"lib", fn"bin",
-        fn"package.json", fn"yarn.lock",
-        fn"Project.toml" # we will generate a new one
-    ])
-end
-
-# dont touch these files, just copy them
-function default_paths_dont_touch(project::String)
-    Ignore(project, [
-        fn"LICENSE",
-        fn".gitignore",
-        fn"README.md",
-    ])
+    [
+        ".git", ".github", "docs",
+        "lib", "bin", "package.json",
+        "yarn.lock", "Project.toml"
+    ]
 end
 
 @option struct Options
@@ -42,8 +33,9 @@ end
     build_dir::String = "build"
     uuid::String = find_uuid(build_dir, project, postfix, project_toml)
 
-    ignore::Ignore = default_paths_to_ignore(project)
-    dont_touch::Ignore = default_paths_dont_touch(project)
+    ignore::Vector{String} = default_paths_to_ignore(project)
+    dont_touch::Vector{String} = ["LICENSE", ".gitignore", "README.md"]
+    ignore_test::Vector{String} = String[]
 end
 
 function Base.show(io::IO, ::MIME"text/plain", opt::Options)
@@ -58,18 +50,8 @@ function Base.show(io::IO, ::MIME"text/plain", opt::Options)
     println(io, "    uuid = \"", opt.uuid, "\"")
     println(io, "    ignore = ", opt.ignore)
     println(io, "    dont_touch = ", opt.dont_touch)
+    println(io, "    ignore_test = ", opt.ignore_test)
     print(io, ")")
-end
-
-function ignore(path::String, options::Options)
-    path_ = relpath(path, options.project)
-    isnothing(options.ignore) || path_ in options.ignore && return true
-    return false
-end
-
-function dont_touch(path::String, options::Options)
-    path_ = relpath(path, options.project)
-    return path_ in options.dont_touch
 end
 
 expand_name(options::Options) = options.project_name * options.postfix
