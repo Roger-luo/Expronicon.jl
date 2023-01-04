@@ -1,13 +1,12 @@
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
-/Manifest.toml
+Manifest.toml
 
 .vscode
 lcov.info
 build
 docs_build/
-/test/Manifest.toml
 
 # old Documenter ignores
 /docs/Manifest.toml
