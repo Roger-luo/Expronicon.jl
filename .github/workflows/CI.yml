@@ -42,7 +42,12 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-      - uses: julia-actions/julia-runtest@v1
+      - name: dev lib environment
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg; Pkg.activate("lib/ZhanKai/"); Pkg.develop(path=".")
+      - name: lib/ZhanKai
+        uses: julia-actions/julia-runtest@v1
         with:
           project: lib/ZhanKai
       - uses: julia-actions/julia-processcoverage@v1
