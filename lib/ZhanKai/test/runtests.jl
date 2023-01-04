@@ -1,11 +1,10 @@
 using ZhanKai
 using Test
 
-@testset "ZhanKai.jl" begin
-    # Write your tests here.
+@testset "ignore" begin
+    include("ignore/ignore.jl")
 end
 
-using ZhanKai: ExpandInfo, edit_project_deps, expand
-option = ZhanKai.Options(;macronames=["match", "switch"], deps=["MLStyle"])
-info = ExpandInfo(option)
-expand(Expronicon, option)
+@testset "expand" begin
+    include("expand.jl")
+end

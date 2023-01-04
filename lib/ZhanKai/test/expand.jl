@@ -1,25 +1,32 @@
-using Expronicon: Expronicon, print_expr, prettify, print_inline, Substitute
-using MLStyle: @match
-using ZhanKai: ZhanKai, parse_file, expand_macro, expand, IgnoreFile
-using ZhanKai: ExpandInfo, edit_project_deps, expand, read_tracked_files
-option = ZhanKai.Options(;
-    macronames=["match", "switch"], deps=["MLStyle"],
-    ignore=[
-        ".git", ".github", "docs",
-        "lib", "bin", "package.json",
-        "yarn.lock", "Project.toml",
-        "src/patches.jl", "src/match.jl", "src/expand.jl", "src/adt/**",
-    ],
-    ignore_test = ["adt/**", "match.jl", "expand.jl"],
-)
+using ZhanKai
+using Expronicon
 
-ExpandInfo(option)
-expand(Expronicon, option)
+# project_dir = pkgdir(ZhanKai)
+# test_dir = joinpath(project_dir, "test")
+build_dir = pkgdir(ZhanKai, "test", "build")
+rm(build_dir; force=true, recursive=true)
 
-src = "test/analysis.jl"
-ast = parse_file(src)
-ast = ZhanKai.replace_block_call_syntax(ast.args[8])
+cd(pkgdir(Expronicon)) do
+    option = ZhanKai.Options(;
+        macronames=["match", "switch"], deps=["MLStyle"],
+        build_dir,
+        ignore=[
+            ".git", ".github", "docs",
+            "lib", "bin", "package.json",
+            "yarn.lock", "Project.toml",
+            "src/patches.jl", "src/match.jl", "src/expand.jl", "src/adt/**",
+        ],
+        ignore_test = ["adt/**", "match.jl", "expand.jl"],
+    )
+    ZhanKai.expand(Expronicon, option)
+end
 
-s = sprint(show, ast; context=:module=>Expronicon)
-write("test.jl", s)
-println(Expr(:toplevel, ast.args[1]))
+cd(joinpath(build_dir, "ExproniconLite")) do
+    mkpath("docs")
+    mkpath("docs/src")
+    touch("docs/README.md")
+    touch("docs/src/index.md")
+    run(`$(Base.julia_cmd()) --project -e 'using Pkg; Pkg.test()'`)
+end
+
+rm(build_dir; force=true, recursive=true)
