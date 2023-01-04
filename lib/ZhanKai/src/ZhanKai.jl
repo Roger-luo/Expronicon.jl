@@ -11,6 +11,10 @@ using UUIDs: uuid1
 using Pkg: Pkg
 using Serialization: serialize, deserialize
 
+@static if VERSION < v"1.7-"
+    Base.pkgdir(m::Module, xs...) = joinpath(dirname(pathof(m)), xs...)
+end # 1.6 compat
+
 include("ignore/ignore.jl")
 
 using .GitIgnore: IgnoreFile, parse, @pattern_str
