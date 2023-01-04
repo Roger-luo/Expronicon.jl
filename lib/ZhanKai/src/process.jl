@@ -86,8 +86,8 @@ function edit_test_deps!(project_toml::Dict, options::Options)
     end
 
     test_project = project_dir(options, "test", "Project.toml")
-    isfile(test_project) || error("cannot find test dependencies\
-        do you have a test/Project.toml or [extras] in Project.toml?")
+    isfile(test_project) || error("cannot find test dependencies " * 
+        "do you have a test/Project.toml or [extras] in Project.toml?")
     test_d = TOML.parsefile(test_project)
     haskey(test_d, "deps") || error("no deps in test/Project.toml")
     for package in options.deps
