@@ -261,39 +261,50 @@ function expand(m::Module, options::Options)
     copy_dont_touch(info, options)
     edit_project_deps(options)
 
-    for src in info.files_to_process
-        @info "processing $src"
-        if basename(src) == options.project_name * ".jl"
-            dst = build_dir(options, relpath(src, options.project))
-            dst = joinpath(dirname(dst), options.project_name * options.postfix * ".jl")
-        else
-            dst = build_dir(options, relpath(src, options.project))
-        end
-        ast = expand_file(m, src, options)
-        ast = replace_module(m, ast, options)
-        ast = rm_using(ast, options)
-        ast = replace_include(src, ast, options)
-        ast = insert_include_generated(ast)
-        ast = rm_single_toplevel_block(ast)
-        ast = canonicalize_lambda_head(ast)
-        ast = rm_lineinfo(ast)
-        ast = rm_nothing(ast)
-        write_file(m, ast, dst)
-    end
+    N = length(info.files_to_process) + length(info.tests_to_copy)
+    progress_count = 1
 
-    for src in info.tests_to_copy
-        @info "processing $src"
-        ast = parse_file(src)
-        ast = replace_module(m, ast, options)
-        ast = insert_include_generated(ast)
-        ast = rm_single_toplevel_block(ast)
-        ast = canonicalize_lambda_head(ast)
-        ast = rm_test_include(src, ast, options)
-        ast = rm_lineinfo(ast)
-        ast = rm_nothing(ast)
-        dst = build_dir(options, relpath(src, options.project))
-        write_file(m, ast, dst)
-    end
+    @withprogress name="zhan" begin
+        for src in info.files_to_process
+            @info "processing $src"
+            if basename(src) == options.project_name * ".jl"
+                dst = build_dir(options, relpath(src, options.project))
+                dst = joinpath(dirname(dst), options.project_name * options.postfix * ".jl")
+            else
+                dst = build_dir(options, relpath(src, options.project))
+            end
+            ast = expand_file(m, src, options)
+            ast = replace_module(m, ast, options)
+            ast = rm_using(ast, options)
+            ast = replace_include(src, ast, options)
+            ast = insert_include_generated(ast)
+            ast = rm_single_toplevel_block(ast)
+            ast = canonicalize_lambda_head(ast)
+            ast = rm_lineinfo(ast)
+            ast = rm_nothing(ast)
+            write_file(m, ast, dst)
+
+            @logprogress progress_count/N
+            progress_count += 1
+        end
+
+        for src in info.tests_to_copy
+            @info "processing $src"
+            ast = parse_file(src)
+            ast = replace_module(m, ast, options)
+            ast = insert_include_generated(ast)
+            ast = rm_single_toplevel_block(ast)
+            ast = canonicalize_lambda_head(ast)
+            ast = rm_test_include(src, ast, options)
+            ast = rm_lineinfo(ast)
+            ast = rm_nothing(ast)
+            dst = build_dir(options, relpath(src, options.project))
+            write_file(m, ast, dst)
+
+            @logprogress progress_count/N
+            progress_count += 1
+        end
+    end # progress
     return
 end
 

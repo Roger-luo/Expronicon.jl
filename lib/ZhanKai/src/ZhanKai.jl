@@ -10,6 +10,7 @@ using TOML: TOML
 using UUIDs: uuid1
 using Pkg: Pkg
 using Serialization: serialize, deserialize
+using ProgressLogging: @withprogress, @logprogress
 
 @static if VERSION < v"1.7-"
     Base.pkgdir(m::Module, xs...) = joinpath(dirname(dirname(pathof(m))), xs...)
@@ -22,5 +23,6 @@ using .GitIgnore: IgnoreFile, parse, @pattern_str
 include("options.jl")
 include("expand.jl")
 include("process.jl")
+include("cli.jl")
 
 end

@@ -1,0 +1,16 @@
+macronames = ["match", "switch"]
+deps = ["MLStyle"]
+project = "/Users/roger/Code/Julia/Expronicon"
+project_toml = "Project.toml"
+project_name = "Expronicon"
+postfix = "Lite"
+build_dir = "build"
+uuid = "29b9a29c-8bef-11ed-0028-732c0dff91cc"
+ignore = [
+    ".git", ".github", "docs", "lib", "bin",
+    "package.json", "yarn.lock", "Project.toml",
+    "src/patches.jl", "src/match.jl", "src/expand.jl",
+    "src/adt/**"
+]
+dont_touch = ["LICENSE", ".gitignore", "README.md"]
+ignore_test = ["adt/**", "match.jl", "expand.jl"]

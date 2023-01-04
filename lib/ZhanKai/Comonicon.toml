@@ -1,0 +1,7 @@
+name = "zhan"
+
+[install]
+completion=true
+quiet=false
+compile="min"
+optimize=2
