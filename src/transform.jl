@@ -227,6 +227,31 @@ function rm_nothing(ex; preserve_last_nothing::Bool=false)
     end
 end
 
+"""
+    canonicalize_lambda_head(ex)
+
+Canonicalize the `Expr(:function, Expr(:block, x, Expr(:(=), key, default)), body)` to
+
+```julia
+Expr(:function, Expr(:tuple, Expr(:parameters, Expr(:kw, key, default)), x), body)
+```
+"""
+function canonicalize_lambda_head(ex)
+    @match ex begin
+        Expr(:function, Expr(:block, x, y), body) ||
+                Expr(:function, Expr(:block, x, ::LineNumberNode, y), body) => begin
+            Expr(:function, Expr(:tuple, Expr(:parameters, y), x), body)
+        end
+
+        Expr(:function, Expr(:block, x, Expr(:(=), key, default)), body) ||
+            Expr(:function, Expr(:block, x, ::LineNumberNode, Expr(:(=), key, default)), body) => begin
+            Expr(:function, Expr(:tuple, Expr(:parameters, Expr(:kw, key, default)), x), body) 
+        end
+        Expr(head, args...) => Expr(head, map(canonicalize_lambda_head, args)...)
+        _ => ex
+    end
+end
+
 function rm_single_block(ex)
     @match ex begin
         Expr(:(=), _...) ||

@@ -5,7 +5,7 @@
 
 .vscode
 lcov.info
-build/
+build
 docs_build/
 /test/Manifest.toml
 

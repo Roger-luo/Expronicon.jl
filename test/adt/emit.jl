@@ -174,40 +174,40 @@ info = EmitInfo(def)
 end
 
 @test_expr emit_variant_cons(def, info) == quote
-    function (t::var"Message#Type")(args...; kwargs...)
-        isempty(kwargs) && return Message(t, args...)
-        if t == Core.bitcast(var"Message#Type", 0x00000002)
-            length(args) == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))
-            valid_keys = (:x, :y)
-            others = filter(!((in)(valid_keys)), keys(kwargs))
-            isempty(others) || throw(ArgumentError("unknown keyword argument: $(join(others, ", "))"))
+    function (var"##adt_type#1"::var"Message#Type")(var"##args#1"...; var"##kwargs#1"...)
+        isempty(var"##args#1") || return Message(var"##adt_type#1", var"##args#1"...)
+        if var"##adt_type#1" == Core.bitcast(var"Message#Type", 0x00000002)
+            length(var"##args#1") == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))
+            var"##valid_keys#1" = (:x, :y)
+            var"##others#1" = filter(!((in)(var"##valid_keys#1")), keys(var"##kwargs#1"))
+            isempty(var"##others#1") || throw(ArgumentError("unknown keyword argument: $(join(var"##others#1", ", "))"))
             if haskey(kwargs, :x)
-                var"#kw#1" = kwargs[:x]
+                x = kwargs[:x]
             else
                 throw(ArgumentError("missing keyword argument: x"))
             end
             if haskey(kwargs, :y)
-                var"#kw#2" = kwargs[:y]
+                y = kwargs[:y]
             else
                 throw(ArgumentError("missing keyword argument: y"))
             end
-            return Message(t, var"#kw#1", var"#kw#2")
-        elseif t == Core.bitcast(var"Message#Type", 0x00000004)
-            length(args) == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))
-            valid_keys = (:x, :y)
-            others = filter(!((in)(valid_keys)), keys(kwargs))
-            isempty(others) || throw(ArgumentError("unknown keyword argument: $(join(others, ", "))"))
+            return Message(var"##adt_type#1", x, y)
+        elseif var"##adt_type#1" == Core.bitcast(var"Message#Type", 0x00000004)
+            length(var"##args#1") == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))
+            var"##valid_keys#2" = (:x, :y)
+            var"##others#2" = filter(!((in)(var"##valid_keys#2")), keys(var"##kwargs#1"))
+            isempty(var"##others#2") || throw(ArgumentError("unknown keyword argument: $(join(var"##others#2", ", "))"))
             if haskey(kwargs, :x)
-                var"#kw#1" = kwargs[:x]
+                x = kwargs[:x]
             else
                 throw(ArgumentError("missing keyword argument: x"))
             end
             if haskey(kwargs, :y)
-                var"#kw#2" = kwargs[:y]
+                y = kwargs[:y]
             else
                 throw(ArgumentError("missing keyword argument: y"))
             end
-            return Message(t, var"#kw#1", var"#kw#2")
+            return Message(var"##adt_type#1", x, y)
         else
             throw(ArgumentError("invalid variant type"))
         end
@@ -215,11 +215,14 @@ end
 end
 
 @test_expr emit_show(def, info) == quote
-    function $ADT.default_show(io::IO, t::Message)
+    function Base.show(io::IO, t::Message)
+        (Expronicon.ADT).variant_show_inline(io, t)
+    end
+    function (Expronicon.ADT).variant_show_inline_default(io::IO, t::Message)
         if (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000001)
-            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
+            (Base).show(io, (Expronicon.ADT).variant_type(t))
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000002)
-            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
+            (Base).show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             names = (Expronicon.ADT).variant_fieldnames((Expronicon.ADT).variant_type(t))
@@ -232,7 +235,7 @@ end
             end
             print(io, ")")
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000003)
-            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
+            (Base).show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             for (idx, field_idx) = enumerate(mask)
@@ -243,7 +246,7 @@ end
             end
             print(io, ")")
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000004)
-            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
+            (Base).show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             names = (Expronicon.ADT).variant_fieldnames((Expronicon.ADT).variant_type(t))
@@ -256,7 +259,7 @@ end
             end
             print(io, ")")
         elseif (Expronicon.ADT).variant_type(t) == Core.bitcast(var"Message#Type", 0x00000005)
-            ADT.default_show(io, (Expronicon.ADT).variant_type(t))
+            (Base).show(io, (Expronicon.ADT).variant_type(t))
             print(io, "(")
             mask = (Expronicon.ADT).variant_masks((Expronicon.ADT).variant_type(t))
             for (idx, field_idx) = enumerate(mask)

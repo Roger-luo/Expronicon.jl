@@ -1,0 +1,25 @@
+name = "ZhanKai"
+uuid = "b057ea82-7e59-11ed-1fcd-adb05d5283b4"
+version = "0.1.0"
+
+[deps]
+CRC32c = "8bf52ea8-c179-5cab-976a-9e18b702a9bc"
+Configurations = "5218b696-f38b-4ac9-8b61-a12ec717816d"
+Expronicon = "6b7a57c9-7cc1-4fdf-b7f5-e857abae3636"
+GarishPrint = "b0ab02a7-8576-43f7-aa76-eaa7c3897c54"
+Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
+MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
+[compat]
+julia = "1.8"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

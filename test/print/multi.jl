@@ -158,6 +158,17 @@ end
 
 print_expr(ex)
 
+ex = @expr begin
+    quote
+        """
+        aaaa $aaa
+        """
+        sin(x) = x
+    end
+end
+
+print_expr(ex)
+
 ex = @expr @__MODULE__
 print_expr(ex)
 print_expr(ex; line=true)
@@ -241,6 +252,55 @@ elseif x > 80
     x + 3
 else
     error("some error msg")
+end
+
+print_expr(ex)
+
+print_expr(:(foo() do; end))
+print_expr(:(foo() do x; end))
+print_expr(:(foo() do x, y, z; end))
+print_expr(:(foo() do x, y, z; 1+1;2+2; end))
+print_expr(:(foo() do x, y, z...; 1+1;2+2; end))
+
+ex = @expr function (p::InlinePrinter)(x, (xs...); delim = ", ")
+    p(x)
+    for x = xs
+        printstyled(p.io, delim; color = (p.color).keyword)
+        p(x)
+    end
+end
+
+print_expr(ex)
+
+ex = @expr function (InlinePrinter)(io::IO; color::ColorScheme = Monokai256(), line::Bool = false)
+    InlinePrinter(io, color, line, InlinePrinterState())
+end
+
+print_expr(ex)
+
+print_expr(:(@foo "aaaaa" a b c))
+print_expr(:(@foo "aaaaa\naaaaa" a b c))
+
+ex = quote
+    function foo()
+        msg = :("expect $($nargs) arguments, got $(length(args)) arguments")
+    end
+end
+
+print_expr(ex)
+
+ex = quote
+    function foo()
+        msg = :("expect $($nargs) arguments\n, got $(length(args)) arguments")
+    end
+end
+
+print_expr(ex)
+
+ex = quote
+    function split_lines(ex)::Vector{Any}
+        ex isa AbstractString && return Any[[line] for line in eachsplit(ex, '\n')]
+    end
 end
 
 print_expr(ex)

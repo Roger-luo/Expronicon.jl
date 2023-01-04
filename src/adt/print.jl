@@ -1,14 +1,12 @@
 tab(n) = " "^n
 splitlines(s::String) = split(s, '\n')
 
-"""
-    default_show(io::IO, x)
+function variant_show_inline(io::IO, x)
+    return variant_show_inline_default(io, x)
+end
 
-The default `show` method for an ADT. This is used to print the ADT.
-"""
-function default_show(io::IO, x)
-    is_variant(x) || throw(ArgumentError("not an ADT variant: $x"))
-    return show(io, x)
+function variant_show_inline_default(::IO, x)
+    error("this method is expected to be generated for $(typeof(x)) by @adt macro")
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", def::ADTTypeDef)

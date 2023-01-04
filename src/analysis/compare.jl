@@ -52,6 +52,8 @@ Throw an `ExprNotEqual` if they are not equal.
 function assert_equal_expr(m::Module, lhs, rhs)
     lhs = prettify(lhs; preserve_last_nothing=true, alias_gensym=false)
     rhs = prettify(rhs; preserve_last_nothing=true, alias_gensym=false)
+    lhs = renumber_gensym(lhs)
+    rhs = renumber_gensym(rhs)
     compare_expr(m, lhs, rhs) && return true
     lhs, rhs = locate_inequal_expr(m, lhs, rhs)
     throw(ExprNotEqual(lhs, rhs))
@@ -219,6 +221,8 @@ function compare_expr_object(m::Module, lhs::Expr, rhs::Expr)
             return compare_where(m, lhs, rhs)
         @case (Expr(:curly, _...), Expr(:curly, _...))
             return compare_curly(m, lhs, rhs)
+        @case (Expr(:function, _...), Expr(:function, _...))
+            return compare_function(m, lhs, rhs)
 
         @case (::Expr, ::Expr)
             lhs.head === rhs.head || return false
@@ -231,6 +235,25 @@ function compare_expr_object(m::Module, lhs::Expr, rhs::Expr)
         @case _ # well none of the cases above, fallback to ==
             return lhs == rhs
     end
+end
+
+function compare_function(m::Module, lhs::Expr, rhs::Expr)
+    lhs,rhs = canonicalize_lambda_head(lhs), canonicalize_lambda_head(rhs)
+    @show lhs
+    compare_expr(m, lhs.args[1], rhs.args[1]) || return false
+    length(lhs.args) == length(rhs.args) == 1 && return true
+
+    function is_all_lineno(ex)
+        Meta.isexpr(ex, :block) || return false
+        return all(x->x isa LineNumberNode, ex.args)
+    end
+
+    if length(lhs.args) == 1
+        is_all_lineno(rhs.args[2]) && return true
+    elseif length(rhs.args) == 1
+        is_all_lineno(lhs.args[2]) && return true
+    end
+    return compare_expr(m, lhs.args[2], rhs.args[2])
 end
 
 function compare_curly(m::Module, lhs::Expr, rhs::Expr)

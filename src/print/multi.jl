@@ -1,3 +1,4 @@
+
 Base.@kwdef mutable struct PrinterState
     indent::Int = 0
     level::Int = 0
@@ -128,13 +129,6 @@ function (p::Printer)(ex)
         println(); tab(); keyword("end")
     end
 
-    function split_body(body)
-        return @match body begin
-            Expr(:block, stmts...) => stmts
-            _ => (body, )
-        end
-    end
-
     function print_try(body)
         body == false && return
         stmts = split_body(body)
@@ -203,6 +197,7 @@ function (p::Printer)(ex)
                 @match stmt begin
                     Expr(:macrocall, &(Symbol("@case")), line, pattern) => begin
                         tab(); keyword("@case "); inline(pattern)
+                        println()
                         case_ptr = ptr + 1
                         case_ptr <= length(stmts) || continue
                         case_stmt = stmts[case_ptr]
@@ -232,7 +227,44 @@ function (p::Printer)(ex)
         println(); tab(); keyword("end")
     end
 
+    function print_multi_lines(s::AbstractString)
+        buf = IOBuffer(s); line_buf = IOBuffer()
+        while !eof(buf)
+            ch = read(buf, Char)
+            if ch == '\n'
+                printstyled(String(take!(line_buf)), color=c.string)
+                println(); tab()
+            else
+                ch in ('$', ) && write(line_buf, '\\')
+                write(line_buf, ch)
+            end
+        end
+        last_line = String(take!(line_buf))
+        isempty(last_line) || (printstyled(last_line, color=c.string))
+    end
+
     @switch ex begin
+        @case ::String
+            leading_tab()
+            occursin('\n', ex) || return inline(ex)
+            printstyled("\"\"\"\n", color=c.string); tab()
+            print_multi_lines(ex)
+            printstyled("\"\"\"", color=c.string)
+        @case Expr(:string, args...)
+            leading_tab()
+            any(arg->arg isa AbstractString && occursin('\n', arg), args) || return inline(ex)
+            printstyled("\"\"\"\n", color=c.string)
+            tab()
+            for arg in args
+                if arg isa AbstractString
+                    print_multi_lines(arg)
+                elseif arg isa Symbol
+                    keyword("\$"); inline(arg)
+                else
+                    keyword("\$"); print("("); inline(arg); print(")")
+                end
+            end
+            printstyled("\"\"\"", color=c.string)
         @case Expr(:block, stmts...)
             leading_tab()
             show_begin_end = p.always_begin_end ? true : !is_root()
@@ -276,11 +308,14 @@ function (p::Printer)(ex)
             is_root() || (println(); tab(); keyword("end"))
         @case Expr(:let, Expr(:block, args...), Expr(:block, stmts...))
             leading_tab()
-            keyword("let "); inline(args...); println()
+            keyword("let ");
+            isempty(args) || inline(args...)
+            println()
             indent() do
                 print_stmts(stmts)
             end
-            println(); keyword("end")
+            println();
+            tab(); keyword("end")
         @case Expr(:if, cond, body)
             print_if(cond, body)
         @case Expr(:if, cond, body, otherwise)
@@ -305,7 +340,12 @@ function (p::Printer)(ex)
 
         @case Expr(:for, iteration, body)
             leading_tab()
+            inline.state.loop_iterator = true
+            preced = inline.state.precedence
+            inline.state.precedence = 0
             keyword("for "); inline(split_body(iteration)...); println()
+            inline.state.loop_iterator = false
+            inline.state.precedence = preced
             stmts = split_body(body)
             indent() do
                 print_stmts(stmts)
@@ -336,6 +376,17 @@ function (p::Printer)(ex)
             leading_tab()
             inline(call); keyword(" -> ")
             p(body)
+        @case Expr(:do, call, Expr(:->, Expr(:tuple, args...), body))
+            leading_tab()
+            inline(call); keyword(" do ")
+            isempty(args) || inline(args...)
+            println()
+            stmts = split_body(body)
+            indent() do
+                print_stmts(stmts)
+            end
+            println();
+            tab(); keyword("end")
         
         @case Expr(:macro, call, body)
             print_function(:macro, call, body)
@@ -346,13 +397,9 @@ function (p::Printer)(ex)
         @case Expr(:macrocall, &(GlobalRef(Core, Symbol("@doc"))), line, doc, code)
             leading_tab()
             p.line && (inline(line); println())
-            printstyled("\"\"\"\n", color=c.string)
-            for line in eachsplit(doc, '\n')
-                tab()
-                printstyled(line, color=c.string)
-                println()
-            end
-            tab(); printstyled("\"\"\"\n", color=c.string)
+            no_first_line_indent() do
+                p(doc)
+            end; println() # this is special to docstring syntax
             tab(); no_first_line_indent() do
                 p(code)
             end
@@ -400,6 +447,13 @@ function (p::Printer)(ex)
         @case Expr(:const, code)
             leading_tab()
             keyword("const "); p(code)
+
+        @case Expr(:return, Expr(:tuple, Expr(:parameters, _...), _...)) ||
+                Expr(:return, Expr(:tuple, _...))
+            inline(ex)
+        @case Expr(:return, code)
+            leading_tab()
+            keyword("return "); p(code)
 
         @case _
             inline(ex)

@@ -220,9 +220,10 @@ recommended to use pattern match as much as possible.
 
 ### Pretty Printing
 
-A default pretty printing method is provided for the ADT as `ADT.default_show`.
-One should overload the `Base.show` method call `ADT.default_show` if the default
-pretty printing is preferred.
+A default inline pretty printing is generated for `Base.show(io::IO, x::<your ADT type>)`.
+If you want to customize inline text printing, overload
+`Expronicon.ADT.variant_show_inline(io::IO, x::<your ADT type>)` method. For other `MIME`
+types, you can overload the normal `Base.show(::IO, ::MIME, x::<your ADT type>)` method.
 """
 macro adt(head, body)
     def = ADTTypeDef(__module__, head, body)
@@ -385,35 +386,39 @@ function emit_struct(def::ADTTypeDef, info::EmitInfo)
 end
 
 function emit_variant_cons(def::ADTTypeDef, info::EmitInfo)
+    @gensym adt_type args kwargs
     kwarg_body = JLIfElse()
     for (idx, variant) in enumerate(def.variants)
         variant.type === :struct || continue
         nfields = length(variant.fieldtypes)
         assign_kwargs = expr_map(1:nfields,
             variant.fieldnames, variant.field_defaults) do idx, name, default
+            
             var = Symbol("#kw#", idx)
             msg = "missing keyword argument: $(name)"
             throw_ex = Expr(:block, variant.lineinfo, :(throw(ArgumentError($msg))))
             if default === no_default
                 quote
                     if haskey(kwargs, $(QuoteNode(name)))
-                        $(var) = kwargs[$(QuoteNode(name))]
+                        $(name) = kwargs[$(QuoteNode(name))]
                     else
                         $throw_ex
                     end
                 end
             else
-                :($var = get(kwargs, $(QuoteNode(name)), $(default)))
+                :($name = get($kwargs, $(QuoteNode(name)), $(default)))
             end
         end
-        kwarg_body[:(t == $(xvariant_type(info, idx)))] = Expr(:block,
+
+        @gensym valid_keys others
+        kwarg_body[:($adt_type == $(xvariant_type(info, idx)))] = Expr(:block,
             variant.lineinfo,
-            :(length(args) == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))),
-            :(valid_keys = $(xtuple(QuoteNode.(variant.fieldnames)...))),
-            :(others = filter(!in(valid_keys), keys(kwargs))),
-            :(isempty(others) || throw(ArgumentError("unknown keyword argument: $(join(others, ", "))"))),
+            :(length($args) == 0 || throw(ArgumentError("expect keyword arguments instead of positional arguments"))),
+            :($valid_keys = $(xtuple(QuoteNode.(variant.fieldnames)...))),
+            :($others = filter(!in($valid_keys), keys($kwargs))),
+            :(isempty($others) || throw(ArgumentError("unknown keyword argument: $(join($others, ", "))"))),
             assign_kwargs,
-            :(return $(def.name)(t, $([Symbol("#kw#", idx) for idx in 1:nfields]...)))
+            :(return $(def.name)($adt_type, $(variant.fieldnames...)))
         )
     end
     kwarg_body.otherwise = quote
@@ -422,8 +427,8 @@ function emit_variant_cons(def::ADTTypeDef, info::EmitInfo)
 
     return quote
         # NOTE: make sure struct definition is available
-        function (t::$(info.typename))(args...; kwargs...)
-            isempty(kwargs) && return $(def.name)(t, args...)
+        function ($adt_type::$(info.typename))($args...; $kwargs...)
+            isempty($args) || return $(def.name)($adt_type, $args...)
             $(codegen_ast(kwarg_body))
         end
     end
@@ -482,11 +487,11 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     show_body = foreach_variant(:t, def, info) do variant
         if variant.type === :singleton
             quote
-                $ADT.default_show(io, $value_type)
+                $Base.show(io, $value_type)
             end
         elseif variant.type === :call
             quote
-                $ADT.default_show(io, $value_type)
+                $Base.show(io, $value_type)
                 print(io, "(")
                 mask = $ADT.variant_masks($value_type)
                 for (idx, field_idx) in enumerate(mask)
@@ -500,7 +505,7 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
             end
         else # struct
             quote
-                $ADT.default_show(io, $value_type)
+                $Base.show(io, $value_type)
                 print(io, "(")
                 mask = $ADT.variant_masks($value_type)
                 names = $ADT.variant_fieldnames($value_type)
@@ -518,7 +523,11 @@ function emit_show(def::ADTTypeDef, info::EmitInfo)
     end
 
     return quote
-        function $ADT.default_show(io::IO, t::$(def.name))
+        function Base.show(io::IO, t::$(def.name))
+            $ADT.variant_show_inline(io, t)
+        end
+
+        function $ADT.variant_show_inline_default(io::IO, t::$(def.name))
             $(codegen_ast(show_body))
         end
     end
