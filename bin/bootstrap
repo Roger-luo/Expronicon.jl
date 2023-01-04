@@ -33,8 +33,13 @@ function main(ARGS=ARGS)
         end
         ZhanKai.CLI.zhan()
 
-        if "release" in ARGS
-            cd(build_dir) do
+        if ARGS[1] == "release"
+            cd(pkgdir(Expronicon)) do
+                LibGit2.isdirty(LibGit2.GitRepo(".")) && error("Expronicon is dirty")
+                run(`ion release $(ARGS[2])`)
+            end
+
+            cd(pkgdir(Expronicon, "build")) do
                 if LibGit2.isdirty(LibGit2.GitRepo("."))
                     run(`git add .gitignore`)
                     run(`git add -A`)
