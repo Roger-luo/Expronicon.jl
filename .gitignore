@@ -3,15 +3,14 @@
 *.jl.mem
 Manifest.toml
 
+!bin/Manifest.toml
+
 .vscode
 lcov.info
 build
 docs_build/
 
 # old Documenter ignores
-/docs/Manifest.toml
-/docs/build/
-docs/build
 docs/site
 docs/src/assets/main.css
 docs/src/assets/indigo.css

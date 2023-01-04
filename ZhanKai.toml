@@ -10,7 +10,8 @@ ignore = [
     ".git", ".github", "docs", "lib", "bin",
     "package.json", "yarn.lock", "Project.toml",
     "src/patches.jl", "src/match.jl", "src/expand.jl",
-    "src/adt/**"
+    "src/adt/**", "ZhanKai.toml",
+    "README.md"
 ]
-dont_touch = ["LICENSE", ".gitignore", "README.md"]
+dont_touch = ["LICENSE", ".gitignore"]
 ignore_test = ["adt/**", "match.jl", "expand.jl"]
