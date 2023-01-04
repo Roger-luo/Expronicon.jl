@@ -4,10 +4,20 @@
 Split doc string from given expression.
 """
 function split_doc(ex::Expr)
-    if ex.head === :macrocall && ex.args[1] == GlobalRef(Core, Symbol("@doc"))
-        return ex.args[2], ex.args[3], ex.args[4]
-    else
-        return nothing, nothing, ex
+    @switch ex begin
+        @case Expr(:macrocall, &(GlobalRef(Core, Symbol("@doc"))), line, doc, expr) ||
+                Expr(:macrocall, &(Symbol("@doc")), line, doc, expr) ||
+                Expr(:macrocall, Expr(:., :Core, &(QuoteNode(Symbol("@doc")))), line, doc, expr)
+            return line, doc, expr
+
+        # quote
+        #     @doc "" struct <name> end
+        # end
+        @case Expr(:block, ::LineNumberNode, stmt)
+            line, doc, expr = split_doc(stmt)
+            return line, doc, expr
+        @case _
+            return nothing, nothing, ex
     end
 end
 

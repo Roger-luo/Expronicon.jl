@@ -432,7 +432,7 @@ end
 
     @test sprint(showerror, ExprNotEqual(empty_line, :Int)) == """
     expression not equal due to:
-      lhs: <empty line>::Expronicon.EmptyLine
+      lhs: <empty line>
       rhs: :Int::Symbol
     """
 end
@@ -468,4 +468,8 @@ end
 
 @testset "check" begin
     include("analysis/check.jl")
+end
+
+@testset "compare" begin
+    include("analysis/compare.jl")
 end

@@ -70,7 +70,6 @@ include("print/print.jl")
 # cannot be bootstrapped
 # include("printing.jl")
 include("match.jl")
-include("expand.jl")
 include("adt/adt.jl")
 
 end

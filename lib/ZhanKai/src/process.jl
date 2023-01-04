@@ -127,13 +127,24 @@ function edit_project_deps(options::Options)
     return
 end
 
-function replace_module(expr, options::Options)
+function object_to_expr(m::Module, ex)
+    @match ex begin
+        ::Union{Symbol, Int, Bool, Float64, String, Char, LineNumberNode} => ex
+        ::QuoteNode => QuoteNode(object_to_expr(m, ex.value))
+        Expr(head, args...) => Expr(head, map(x->object_to_expr(m, x), args)...)
+        _ => begin
+            s = sprint(print, ex; context=:module=>m)
+            return Meta.parse("begin $s end").args[2]
+        end
+    end
+end
+
+function replace_module(m::Module, expr, options::Options)
     new = Symbol(options.project_name * options.postfix)
     old = Symbol(options.project_name)
 
     # convert object to expr
-    s = sprint_expr(expr)
-    ast = Meta.parse("begin $s end")
+    ast = object_to_expr(m, expr)
 
     substitute(ex) = @match ex begin
         &old => new
@@ -163,19 +174,83 @@ function rm_using(expr, options::Options)
     end
 end
 
-function rm_include(file::String, expr, options::Options)
+function rm_test_include(file::String, expr, options::Options)
+    ignore = IgnoreFile(joinpath(options.project, "test"), options.ignore_test)
+    file_dir(xs...) = joinpath(dirname(file), xs...)
+    sub = Substitute() do expr
+        @match expr begin
+            :(include($path)) || :(Base.include($path)) => contains(ignore, file_dir(path))
+            _=> false
+        end
+    end
+    return sub(_->nothing, expr)
+end
+
+function replace_include(file::String, expr, options::Options)
     ignore = IgnoreFile(options.project, options.ignore)
     file_dir(xs...) = joinpath(dirname(file), xs...)
     sub = Substitute() do expr
         @match expr begin
-            :(include($path)) || :(Base.include($path)) => begin
-                contains(ignore, file_dir(path))
-            end
+            :(include($path)) || :(Base.include($path)) => true
             _=> false
         end
     end
     return sub(expr) do ex
-        return
+        @switch ex begin
+            @case :(include($path)) || :(Base.include($path))
+            @case _
+        end
+
+        contains(ignore, file_dir(path)) && return # ignore
+        :(__include_generated__($path))
+    end
+end
+
+function insert_toplevel(ex, code)
+    @switch ex begin
+        @case Expr(:module, bare, name, Expr(:block, stmts...))
+            stmts = map(x->insert_toplevel(x, code), stmts)
+            return Expr(:module, bare, name, Expr(:block, code, stmts...))
+        @case Expr(head, args...)
+            args = map(x->insert_toplevel(x, code), args)
+            return Expr(head, args...)
+        @case _
+            return ex
+    end
+end
+
+function insert_include_generated(ex)
+    include_generated_def = quote
+        @static if !isdefined(@__MODULE__(), :include_generated)
+            function __include_generated__(_path::String)
+                Base.@_noinline_meta
+                mod = @__MODULE__()
+                path, prev = Base._include_dependency(mod, _path)
+                code = read(path, String)
+                tls = task_local_storage()
+                tls[:SOURCE_PATH] = path
+                try
+                    ex = include_string(mod, "quote $code end", path)
+                    mod.eval(mod.eval(ex))
+                    return
+                finally
+                    if prev === nothing
+                        delete!(tls, :SOURCE_PATH)
+                    else
+                        tls[:SOURCE_PATH] = prev
+                    end
+                end
+            end
+        end
+    end
+    return insert_toplevel(ex, include_generated_def)
+end
+
+function rm_single_toplevel_block(ex)
+    @match ex begin
+        Expr(:block, Expr(:module, args...)) => Expr(:module, args...)
+        Expr(head, args...) => Expr(head, map(rm_single_toplevel_block, args)...)
+        _ => ex
     end
 end
 
@@ -195,29 +270,39 @@ function expand(m::Module, options::Options)
             dst = build_dir(options, relpath(src, options.project))
         end
         ast = expand_file(m, src, options)
-        ast = replace_module(ast, options)
+        ast = replace_module(m, ast, options)
         ast = rm_using(ast, options)
-        ast = rm_include(src, ast, options)
+        ast = replace_include(src, ast, options)
+        ast = insert_include_generated(ast)
+        ast = rm_single_toplevel_block(ast)
+        ast = canonicalize_lambda_head(ast)
         ast = rm_lineinfo(ast)
         ast = rm_nothing(ast)
-        write_file(ast, dst)
+        write_file(m, ast, dst)
     end
 
     for src in info.tests_to_copy
         @info "processing $src"
         ast = parse_file(src)
-        ast = replace_module(ast, options)
+        ast = replace_module(m, ast, options)
+        ast = insert_include_generated(ast)
+        ast = rm_single_toplevel_block(ast)
+        ast = canonicalize_lambda_head(ast)
+        ast = rm_test_include(src, ast, options)
         ast = rm_lineinfo(ast)
         ast = rm_nothing(ast)
         dst = build_dir(options, relpath(src, options.project))
-        write_file(ast, dst)
+        write_file(m, ast, dst)
     end
     return
 end
 
-function write_file(ast, dst::String)
+function write_file(mod::Module, ast, dst::String)
     ispath(dirname(dst)) || mkpath(dirname(dst))
     open(dst, "w+") do io
-        print_expr(io, ast)
+        # show_block(io, "begin", ex, indent, quote_level)
+        Base.show_block(IOContext(io, :module=>mod, :unquote_fallback => false), "", ast, 0, 0)
+        # println(IOContext(io, :module=>mod), ast)
+        # print_expr(io, ast)
     end
 end

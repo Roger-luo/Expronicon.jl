@@ -11,6 +11,17 @@ function expand_macro(mod::Module, ex::Expr, options::Options)
         # TODO: also check modules
         @match expr begin
             Expr(:macrocall, name, line, xs...) => begin
+                if name isa GlobalRef
+                    string(name.mod) in options.deps || return false
+                    name = name.name
+                elseif Meta.isexpr(name, :.)
+                    string(name.args[1]) in options.deps || return false
+                    name = name.args[2]
+                    if name.args[2] isa QuoteNode
+                        name = name.value
+                    end
+                end
+
                 name_s = string(name)
                 if startswith(name_s, "@")
                     return name_s[2:end] in options.macronames

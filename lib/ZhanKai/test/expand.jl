@@ -16,6 +16,10 @@ option = ZhanKai.Options(;
 ExpandInfo(option)
 expand(Expronicon, option)
 
-using Expronicon: splitlines
+src = "test/analysis.jl"
+ast = parse_file(src)
+ast = ZhanKai.replace_block_call_syntax(ast.args[8])
 
-splitlines(:("aaaa\n$(Abc)aaaa"))
+s = sprint(show, ast; context=:module=>Expronicon)
+write("test.jl", s)
+println(Expr(:toplevel, ast.args[1]))
