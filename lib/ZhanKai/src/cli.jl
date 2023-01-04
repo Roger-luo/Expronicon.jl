@@ -17,6 +17,7 @@ Expand a project with ZhanKai.
         cd(dirname(Base.current_project(path))) do
             isfile("ZhanKai.toml") || error("expect ZhanKai.toml in current project")
             option = from_toml(Options, "ZhanKai.toml")
+            @info option
             m_sym = Symbol(option.project_name)
             m = Base.eval(Main, Expr(:toplevel, :(using $(m_sym);$(m_sym))))
             expand(m, option)

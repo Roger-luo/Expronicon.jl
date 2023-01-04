@@ -6,7 +6,7 @@ function find_project_name(path::String, project_toml::String)
 end
 
 function find_uuid(build_dir::String, project::String, postfix::String, project_toml::String)
-    built_project = joinpath(build_dir, project * postfix, project_toml)
+    built_project = joinpath(project, build_dir, basename(project) * postfix, project_toml)
     isfile(built_project) || return string(uuid1())
     d = TOML.parsefile(built_project)
     haskey(d, "uuid") || return string(uuid1())

@@ -5,7 +5,6 @@ project_toml = "Project.toml"
 project_name = "Expronicon"
 postfix = "Lite"
 build_dir = "build"
-uuid = "29b9a29c-8bef-11ed-0028-732c0dff91cc"
 ignore = [
     ".git", ".github", "docs", "lib", "bin",
     "package.json", "yarn.lock", "Project.toml",
