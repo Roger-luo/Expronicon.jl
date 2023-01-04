@@ -1,4 +1,4 @@
-name: CI
+name: lib/ZhanKai
 on:
   - push
   - pull_request
