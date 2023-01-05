@@ -399,8 +399,8 @@ function emit_variant_cons(def::ADTTypeDef, info::EmitInfo)
             throw_ex = Expr(:block, variant.lineinfo, :(throw(ArgumentError($msg))))
             if default === no_default
                 quote
-                    if haskey(kwargs, $(QuoteNode(name)))
-                        $(name) = kwargs[$(QuoteNode(name))]
+                    if haskey($kwargs, $(QuoteNode(name)))
+                        $(name) = $kwargs[$(QuoteNode(name))]
                     else
                         $throw_ex
                     end
