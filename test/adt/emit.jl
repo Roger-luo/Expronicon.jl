@@ -181,13 +181,13 @@ end
             var"##valid_keys#1" = (:x, :y)
             var"##others#1" = filter(!((in)(var"##valid_keys#1")), keys(var"##kwargs#1"))
             isempty(var"##others#1") || throw(ArgumentError("unknown keyword argument: $(join(var"##others#1", ", "))"))
-            if haskey(kwargs, :x)
-                x = kwargs[:x]
+            if haskey(var"##kwargs#1", :x)
+                x = var"##kwargs#1"[:x]
             else
                 throw(ArgumentError("missing keyword argument: x"))
             end
-            if haskey(kwargs, :y)
-                y = kwargs[:y]
+            if haskey(var"##kwargs#1", :y)
+                y = var"##kwargs#1"[:y]
             else
                 throw(ArgumentError("missing keyword argument: y"))
             end
@@ -197,13 +197,13 @@ end
             var"##valid_keys#2" = (:x, :y)
             var"##others#2" = filter(!((in)(var"##valid_keys#2")), keys(var"##kwargs#1"))
             isempty(var"##others#2") || throw(ArgumentError("unknown keyword argument: $(join(var"##others#2", ", "))"))
-            if haskey(kwargs, :x)
-                x = kwargs[:x]
+            if haskey(var"##kwargs#1", :x)
+                x = var"##kwargs#1"[:x]
             else
                 throw(ArgumentError("missing keyword argument: x"))
             end
-            if haskey(kwargs, :y)
-                y = kwargs[:y]
+            if haskey(var"##kwargs#1", :y)
+                y = var"##kwargs#1"[:y]
             else
                 throw(ArgumentError("missing keyword argument: y"))
             end
