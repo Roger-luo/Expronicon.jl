@@ -120,7 +120,7 @@ function scan_fields!(info::EmitInfo, def::ADTTypeDef)
     end
 
     sorted_types = []
-    sizehint!(sorted_types, length(typeset)-1)
+    sizehint!(sorted_types, length(typeset))
     for type in keys(typeset)
         type === Any && continue
         push!(sorted_types, type)
