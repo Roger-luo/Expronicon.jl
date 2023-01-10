@@ -70,6 +70,7 @@ function path_contains(p::PatternStream, s::PathStream)
     # skip the root token since it is only used
     # to distinguish name match or path match
     p.segments[1] == Root && next_token(p)
+    p_token = EmptyLine
     while !eof(s) && !eof(p)
         s_token, p_token = next_token(s), next_token(p)
         next = @match (s_token, p_token) begin
