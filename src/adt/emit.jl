@@ -247,6 +247,7 @@ function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
         $(emit_getproperty(def, info))
         $(emit_propertynames(def, info))
         $(emit_is_enum(def, info))
+        $(emit_enum_matcher(def, info))
         $(emit_pattern_uncall(def, info))
         $(emit_show(def, info))
     end
@@ -558,6 +559,22 @@ function emit_is_enum(def::ADTTypeDef, info::EmitInfo)
     return quote
         function $MLStyle.is_enum(value::$(def.name))
             $(codegen_ast(is_enum_body))
+        end
+    end
+end
+
+function emit_enum_matcher(def::ADTTypeDef, info::EmitInfo)
+    enum_matcher_body = foreach_variant(:value, def, info) do variant
+        if variant.type === :singleton
+            :(return :(variant_type($value) == variant_type($expr)))
+        else
+            :(return :(error("not a singleton variant")))
+        end
+    end
+
+    return quote
+        function $MLStyle.enum_matcher(value::$(def.name), expr)
+            $(codegen_ast(enum_matcher_body))
         end
     end
 end

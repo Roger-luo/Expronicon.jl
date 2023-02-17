@@ -1,7 +1,10 @@
-using MLStyle
-using Expronicon.ADT: @adt
+module TestIsEqualEnum
 
-@macroexpand @adt Foo begin
+using Test
+using MLStyle
+using Expronicon.ADT: @adt, variant_type
+
+@adt Foo begin
     Bar
     struct Baz
         args::Vector{Int}
@@ -16,40 +19,8 @@ function Base.:(==)(lhs::Foo, rhs::Foo)
     end
 end
 
-Bar == Bar
-
-@less Bar == Bar
-@edit Baz([1, 2, 3]) == Baz([1, 2, 3])
-Baz([1, 2, 3]) == Baz([1, 2, 3])
-
-@match (lhs, rhs) begin
-    (Bar, Bar) => true
-    (Baz(args), Baz(args)) => args == args
-    _ => false
+@testset "isequal(enum)" begin
+    @test Bar == Bar
 end
 
-@enum Fruit begin
-    Apple
-    Banana
-    Orange
-end
-
-function Base.:(==)(lhs::Fruit, rhs::Fruit)
-    @match (lhs, rhs) begin
-        (&Apple, &Apple) => true
-        (&Banana, &Banana) => true
-        (&Orange, &Orange) => true
-        _ => false
-    end
-end
-
-Apple == Apple
-
-@macroexpand @match (lhs, rhs) begin
-(Apple, Apple) => true
-(Banana, Banana) => true
-(Orange, Orange) => true
-_ => false
-end
-
-
+end # module
