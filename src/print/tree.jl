@@ -142,7 +142,7 @@ function print_node(io::IO, node)
     error("unimplemented print_node method for $(typeof(node))")
 end    
 function print_child_annotation(io::IO, node, child, annotation)
-    error("unimplemented print_child_key method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
+    error("unimplemented print_child_annotation method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
 end
 
 should_print_annotation(ch) = applicable(keys, ch)
@@ -235,7 +235,7 @@ children(node) = error("unimplemented children method for $(typeof(node))")
 print_node(io::IO, node) = error("unimplemented print_node method for $(typeof(node))")
 print_node_suffix(io::IO, node) = return
 
-print_child_annotation(io::IO, node, child, annotation) = error("unimplemented print_annotation_after method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
+print_child_annotation(io::IO, node, child, annotation) = error("unimplemented print_annotation method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
 print_child_annotation_suffix(io::IO, node, child, annotation) = return
 
 precedence(node) = 1
