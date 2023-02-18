@@ -161,9 +161,8 @@ Base.@kwdef mutable struct State
 end
 
 Base.@kwdef struct Color
-    delimiter::Symbol = :light_black
-    annotation_delim::Symbol = :light_black
-    brackets::Vector{Symbol} = [:yellow, :green, :cyan, :red, :magenta, :blue]
+    delimiter::Symbol = :light_red
+    brackets::Vector{Symbol} = [:yellow, :green, :cyan, :magenta, :light_gray, :default, :light_red]
 end
 
 struct Printer{IO_t <: IO}
