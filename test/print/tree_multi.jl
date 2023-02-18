@@ -1,5 +1,5 @@
 using MLStyle
-using Expronicon.Tree
+using Expronicon.Tree.Multiline
 using Expronicon.ADT: @adt
 
 @adt public DeviceKind begin
@@ -93,28 +93,22 @@ Base.convert(::Type{Size}, s::Int) = ConstSize(s)
     end
 end
 
-function Tree.children(t::Tensura)
+function Multiline.children(t::Tensura)
     @match t begin
         Tensor(_, _) => ()
         Reshape(tensor, _) => (tensor,)
         PermuteDims(tensor, _) => (tensor,)
         Conjugate(tensor) => (tensor,)
         Contract(tensor1, tensor2, indices1, indices2) =>
-            Dict(indices1=>tensor1, indices2=>tensor2)
-        Trace(tensor, i1, i2) => Dict([i1, i2]=>tensor,)
+            Dict(tensor1 => indices1, tensor2 => indices2)
+        Trace(tensor, i1, i2) => Dict(tensor => [i1, i2])
         Device(tensor, _) => (tensor,)
     end
 end
 
-function print_annotation(io, dims)
-    printstyled(io, " <", color=:light_black)
-    mapjoin(dims, "×") do x
-        printstyled(io, x, color=:light_black)
-    end
-    printstyled(io, ">", color=:light_black)
-end
+Multiline.print_child_annotation(io::IO, node::Tensura, child::Tensura, key) = printstyled(io, key; color = :red, bold=true)
 
-function Tree.print_node(io::IO, node::Tensura)
+function Multiline.print_node(io::IO, node::Tensura)
     @match node begin
         Tensor(name, _) => print(io, name)
         Reshape(_...) => printstyled(io, "reshape", color=:cyan, bold=true)
@@ -124,14 +118,13 @@ function Tree.print_node(io::IO, node::Tensura)
         Trace(_...) => printstyled(io, "trace", color=:cyan, bold=true)
         Device(_, device) => printstyled(io, "device ", device, color=:cyan, bold=true)
     end
-    get(io, :shape, false) && Tree.print_annotation(io, size(node))
     return
 end
-
 
 A = Tensor("A", [2, 3, 2])
 R = Reshape(A, [6, 2])
 R2 = Reshape(R, [2, 3, 2])
 C = Contract(A, R2, [1, 2], [2, 3])
-p = Tree.Printer(stdout)
+p = Multiline.Printer(stdout)
 p(C)
+p(R)
