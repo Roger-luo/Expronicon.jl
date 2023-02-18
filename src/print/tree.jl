@@ -180,19 +180,18 @@ function (p::Printer)(node)
     c = p.color
     print(xs...) = Base.print(p.io, xs...)
     printstyled(xs...;kw...) = Base.printstyled(p.io, xs...; kw...)
-    print_prefix(node) = Inline.print_prefix(p.io, node)
-    print_suffix(node) = Inline.print_suffix(p.io, node)
     print_node(node) = Inline.print_node(p.io, node)
-    print_child_annotation_before(node, child, annotation) = Inline.print_child_annotation_before(p.io, node, child, annotation)
-    print_child_annotation_after(node, child, annotation) = Inline.print_child_annotation_after(p.io, node, child, annotation)
+    print_node_suffix(node) = Inline.print_node_suffix(p.io, node)
+    print_child_annotation(node, child, annotation) = Inline.print_child_annotation(p.io, node, child, annotation)
+    print_child_annotation_suffix(node, child, annotation) = Inline.print_child_annotation_suffix(p.io, node, child, annotation)
 
     function join(xs, delimiter, should_print_annotation = false)
         for (i, x) in enumerate(xs)
             if should_print_annotation
                 child, annotation = x
-                print_child_annotation_before(node, child, annotation)
+                print_child_annotation(node, child, annotation)
                 p(child)
-                print_child_annotation_after(node, child, annotation)
+                print_child_annotation_suffix(node, child, annotation)
             else
                 p(x)
             end
@@ -216,31 +215,28 @@ function (p::Printer)(node)
 
     if this_precedence <= parent_precedence
         bracket(node_bracket_left(node), node_bracket_right(node)) do
-            print_prefix(node)
             print_node(node)
             p.state.precedence = this_precedence
             join(children, this_delim, this_print_annotation)
             p.state.precedence = parent_precedence
-            print_suffix(node)
+            print_node_suffix(node)
         end
     else
-        print_prefix(node)
         print_node(node)
         p.state.precedence = this_precedence
         join(children, this_delim, this_print_annotation)
         p.state.precedence = parent_precedence
-        print_suffix(node)
+        print_node_suffix(node)
     end
     return
 end
 
 children(node) = error("unimplemented children method for $(typeof(node))")
 print_node(io::IO, node) = error("unimplemented print_node method for $(typeof(node))")
-print_child_annotation_after(io::IO, node, child, annotation) = error("unimplemented print_annotation_after method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
+print_node_suffix(io::IO, node) = return
 
-print_prefix(io::IO, node) = return
-print_suffix(io::IO, node) = return
-print_child_annotation_before(io::IO, node, child, v) = return
+print_child_annotation(io::IO, node, child, annotation) = error("unimplemented print_annotation_after method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
+print_child_annotation_suffix(io::IO, node, child, annotation) = return
 
 precedence(node) = 1
 delimiter(node) = ", "

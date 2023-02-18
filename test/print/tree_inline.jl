@@ -78,7 +78,7 @@ function Inline.print_node(io::IO, node::FCSR)
         Literal(n) => printstyled(io, n; color = :green)
     end
 end
-function Inline.print_child_annotation_after(io::IO, node::FCSR, child::FCSR, annotation)
+function Inline.print_child_annotation_suffix(io::IO, node::FCSR, child::FCSR, annotation)
     @match (node, child) begin
         (Mul(d), _) => begin
             annotation == 1 && return
@@ -87,7 +87,7 @@ function Inline.print_child_annotation_after(io::IO, node::FCSR, child::FCSR, an
         _ => return
     end
 end
-function Inline.print_child_annotation_before(io::IO, node::FCSR, child::FCSR, annotation)
+function Inline.print_child_annotation(io::IO, node::FCSR, child::FCSR, annotation)
     @match (node, child) begin
         (Add(d), _) => begin
             annotation == 1 && return
