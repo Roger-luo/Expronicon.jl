@@ -566,7 +566,8 @@ end
 function emit_enum_matcher(def::ADTTypeDef, info::EmitInfo)
     enum_matcher_body = foreach_variant(:value, def, info) do variant
         if variant.type === :singleton
-            :(return :(variant_type($value) == variant_type($expr)))
+            ex = :($ADT.variant_type($(Expr(:$, :value))) == $ADT.variant_type($(Expr(:$, :expr))))
+            :(return $(Expr(:quote, ex)))
         else
             :(return :(error("not a singleton variant")))
         end
