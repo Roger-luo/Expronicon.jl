@@ -1,6 +1,7 @@
 using MLStyle
-using Expronicon.Tree
+using Expronicon
 using Expronicon.ADT: @adt
+using Expronicon.ADT.Tree
 
 @adt public DeviceKind begin
     CPU

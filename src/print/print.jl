@@ -1,5 +1,4 @@
 include("utils.jl")
-include("tree.jl")
 include("colors.jl")
 include("inline.jl")
 include("multi.jl")
