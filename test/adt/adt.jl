@@ -16,3 +16,7 @@ end
 @testset "eval" begin
     include("eval.jl")
 end
+
+@testset "print" begin
+    include("tree.jl")
+end

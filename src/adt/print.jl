@@ -149,3 +149,5 @@ function Base.show(io::IO, ::MIME"text/plain", info::EmitInfo)
     end
     return
 end
+
+include("print/tree.jl")

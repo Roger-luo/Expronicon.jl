@@ -158,19 +158,16 @@ end
 
 function rm_using(expr, options::Options)
     deps = map(Symbol, options.deps)
-    sub = Substitute() do expr
-        return Meta.isexpr(expr, (:using, :import))
-    end
-    return sub(expr) do imports
-        @match imports begin
-            Expr(:using, Expr(:(:), package, _...)) ||
-                Expr(:import, Expr(:(:), package, _...)) ||
-                Expr(:using, Expr(:(.), package, _...)) ||
-                Expr(:import, Expr(:(.), package, _...)) => package in deps ? nothing : expr
+    @match expr begin
+        Expr(:using, Expr(:(:), package, _...)) ||
+            Expr(:import, Expr(:(:), package, _...)) ||
+            Expr(:using, Expr(:(.), package, _...)) ||
+            Expr(:import, Expr(:(.), package, _...)) => package in deps ? nothing : expr
 
-            Expr(:using, packages...) => Expr(:using, filter(p->!(p in deps), packages))
-            Expr(:import, packages...) => Expr(:import, filter(p->!(p in deps), packages))
-        end
+        Expr(:using, packages...) => Expr(:using, filter(p->!(p in deps), packages))
+        Expr(:import, packages...) => Expr(:import, filter(p->!(p in deps), packages))
+        Expr(head, args...) => Expr(head, map(x->rm_using(x, options), args)...)
+        _ => expr
     end
 end
 
