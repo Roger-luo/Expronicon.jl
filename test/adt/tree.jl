@@ -108,7 +108,7 @@ function Multiline.children(t::Tensura)
     end
 end
 
-Multiline.print_child_annotation(io::IO, node::Tensura, child::Tensura, key) = printstyled(io, key; color = :red, bold=true)
+Multiline.print_annotation(io::IO, node::Tensura, annotation) = printstyled(io, annotation; color = :red, bold=true)
 
 function Multiline.print_node(io::IO, node::Tensura)
     @match node begin
@@ -215,19 +215,19 @@ function Inline.print_node(io::IO, node::FCSR)
         Literal(n) => printstyled(io, n; color = :green)
     end
 end
-function Inline.print_child_annotation_suffix(io::IO, node::FCSR, child::FCSR, annotation)
-    @match (node, child) begin
-        (Mul(d), _) => begin
-            annotation == 1 && return
+function Inline.print_annotation_suffix(io::IO, node::FCSR, annotation)
+    @match node begin
+        Mul(d) => begin
+            isone(annotation) && return
             print(io, superscriptnumber(annotation))
         end
         _ => return
     end
 end
-function Inline.print_child_annotation(io::IO, node::FCSR, child::FCSR, annotation)
-    @match (node, child) begin
-        (Add(d), _) => begin
-            annotation == 1 && return
+function Inline.print_annotation(io::IO, node::FCSR, annotation)
+    @match node begin
+        Add(d) => begin
+            isone(annotation) && return
             printstyled(io, annotation; color = :light_black)
         end
         _ => return
@@ -282,9 +282,9 @@ function Multiline.print_node(io::IO, node::FCSR)
         end
     end
 end
-function Multiline.print_child_annotation(io::IO, node::FCSR, child::FCSR, annotation)
-    @match (node, child) begin
-        (Add(d), _) || (Mul(d), _) => printstyled(io, annotation; color = :light_black)
+function Multiline.print_annotation(io::IO, node::FCSR, annotation)
+    @match node begin
+        Add(d) || Mul(d) => printstyled(io, annotation; color = :light_black)
         _ => return
     end
 end

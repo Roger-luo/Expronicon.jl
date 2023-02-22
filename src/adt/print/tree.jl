@@ -26,7 +26,6 @@ function CharSet(name::Symbol=:unicode)
 end
 
 Base.@kwdef struct Color
-    key::Symbol = :light_black
     annotation::Symbol = :light_black
 end
 
@@ -56,7 +55,7 @@ function (p::Printer)(node)
     print(xs...) = Base.print(p.io, xs...)
     println(xs...) = Base.println(p.io, xs...)
     printstyled(xs...; kw...) = Base.printstyled(p.io, xs...; kw...)
-    print_child_annotation(node, child, key) = Multiline.print_child_annotation(p.io, node, child, key)
+    print_annotation(node, annotation) = Multiline.print_annotation(p.io, node, annotation)
 
     children = Multiline.children(node)
     node_str = sprint(Multiline.print_node, node, context=IOContext(p.io))
@@ -81,10 +80,10 @@ function (p::Printer)(node)
     while !isempty(s)
         child_prefix = p.state.prefix
         if this_print_annotation
-            child, key = popfirst!(s)
+            child, annotation = popfirst!(s)
         else
             child = popfirst!(s)
-            key = nothing
+            annotation = nothing
         end
 
         print(p.state.prefix)
@@ -114,8 +113,8 @@ function (p::Printer)(node)
         print(p.charset.dash, ' ')
 
         if this_print_annotation
-            key_str = sprint(Multiline.print_child_annotation, node, child, key)
-            print_child_annotation(node, child, key)
+            key_str = sprint(Multiline.print_annotation, node, annotation)
+            print_annotation(node, annotation)
             print(p.charset.pair)
 
             child_prefix *= " " ^ (
@@ -141,8 +140,8 @@ end
 function print_node(io::IO, node)
     error("unimplemented print_node method for $(typeof(node))")
 end    
-function print_child_annotation(io::IO, node, child, annotation)
-    error("unimplemented print_child_annotation method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
+function print_annotation(io::IO, node, annotation)
+    error("unimplemented print_annotation method for ($(typeof(node)), $(typeof(annotation)))")
 end
 
 should_print_annotation(ch) = applicable(keys, ch)
@@ -181,16 +180,16 @@ function (p::Printer)(node)
     printstyled(xs...;kw...) = Base.printstyled(p.io, xs...; kw...)
     print_node(node) = Inline.print_node(p.io, node)
     print_node_suffix(node) = Inline.print_node_suffix(p.io, node)
-    print_child_annotation(node, child, annotation) = Inline.print_child_annotation(p.io, node, child, annotation)
-    print_child_annotation_suffix(node, child, annotation) = Inline.print_child_annotation_suffix(p.io, node, child, annotation)
+    print_annotation(node, annotation) = Inline.print_annotation(p.io, node, annotation)
+    print_annotation_suffix(node, annotation) = Inline.print_annotation_suffix(p.io, node, annotation)
 
     function join(xs, delimiter, should_print_annotation = false)
         for (i, x) in enumerate(xs)
             if should_print_annotation
                 child, annotation = x
-                print_child_annotation(node, child, annotation)
+                print_annotation(node, annotation)
                 p(child)
-                print_child_annotation_suffix(node, child, annotation)
+                print_annotation_suffix(node, annotation)
             else
                 p(x)
             end
@@ -234,8 +233,8 @@ children(node) = error("unimplemented children method for $(typeof(node))")
 print_node(io::IO, node) = error("unimplemented print_node method for $(typeof(node))")
 print_node_suffix(io::IO, node) = return
 
-print_child_annotation(io::IO, node, child, annotation) = error("unimplemented print_annotation method for ($(typeof(node)), $(typeof(child)), $(typeof(annotation)))")
-print_child_annotation_suffix(io::IO, node, child, annotation) = return
+print_annotation(io::IO, node, annotation) = error("unimplemented print_annotation method for ($(typeof(node)), $(typeof(annotation)))")
+print_annotation_suffix(io::IO, node, annotation) = return
 
 precedence(node) = 1
 delimiter(node) = ", "
