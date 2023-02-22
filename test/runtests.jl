@@ -26,8 +26,6 @@ end
     include("print/inline.jl")
     include("print/multi.jl")
     include("print/old.jl")
-    include("print/tree_multi.jl")
-    include("print/tree_inline.jl")
 
     @static if VERSION > v"1.8-"
         include("print/lts.jl")
