@@ -2,7 +2,7 @@ module TestMultiline
 
 using MLStyle
 using Expronicon.ADT: @adt
-using Expronicon.ADT.Tree.Multiline
+using Expronicon.ADT.Tree
 
 @adt public DeviceKind begin
     CPU
@@ -95,7 +95,7 @@ Base.convert(::Type{Size}, s::Int) = ConstSize(s)
     end
 end
 
-function Multiline.children(t::Tensura)
+function Tree.children(t::Tensura)
     @match t begin
         Tensor(_, _) => ()
         Reshape(tensor, _) => (tensor,)
@@ -108,9 +108,9 @@ function Multiline.children(t::Tensura)
     end
 end
 
-Multiline.print_annotation(io::IO, node::Tensura, annotation) = printstyled(io, annotation; color = :red, bold=true)
+Tree.print_annotation(io::IO, node::Tensura, annotation) = printstyled(io, annotation; color = :red, bold=true)
 
-function Multiline.print_node(io::IO, node::Tensura)
+function Tree.print_node(io::IO, node::Tensura)
     @match node begin
         Tensor(name, _) => print(io, name)
         Reshape(_...) => printstyled(io, "reshape", color=:cyan, bold=true)
@@ -127,7 +127,7 @@ A = Tensor("A", [2, 3, 2])
 R = Reshape(A, [6, 2])
 R2 = Reshape(R, [2, 3, 2])
 C = Contract(A, R2, [1, 2], [2, 3])
-p = Multiline.Printer(stdout)
+p = Tree.Printer(stdout)
 p(C)
 p(R)
 
@@ -138,7 +138,7 @@ module TestFreeCommutativeSemiring
 using MLStyle
 using Expronicon.ADT: @adt
 using Expronicon.ADT.Tree.Inline
-using Expronicon.ADT.Tree.Multiline
+using Expronicon.ADT.Tree
 
 # FCSR: free commutative semiring
 @adt public FCSR begin
@@ -264,14 +264,14 @@ function superscriptnumber(i::Int)
 end
 
 # define multiline printer for FCSR
-function Multiline.children(node::FCSR)
+function Tree.children(node::FCSR)
     @match node begin
         Add(d) => d
         Mul(d) => d
         _ => ()
     end
 end
-function Multiline.print_node(io::IO, node::FCSR)
+function Tree.print_node(io::IO, node::FCSR)
     @match node begin
         Add(d) => printstyled(io, "Add"; color = :cyan, bold = true)
         Mul(d) => printstyled(io, "Mul"; color = :cyan, bold = true)
@@ -282,7 +282,7 @@ function Multiline.print_node(io::IO, node::FCSR)
         end
     end
 end
-function Multiline.print_annotation(io::IO, node::FCSR, annotation)
+function Tree.print_annotation(io::IO, node::FCSR, annotation)
     @match node begin
         Add(d) || Mul(d) => printstyled(io, annotation; color = :light_black)
         _ => return
@@ -300,7 +300,7 @@ inline_printer(b)
 inline_printer(a+b)
 inline_printer(ex)
 
-multiline_printer = Multiline.Printer(stdout)
+multiline_printer = Tree.Printer(stdout)
 multiline_printer(a)
 multiline_printer(b)
 multiline_printer(a+b)
