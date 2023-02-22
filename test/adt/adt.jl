@@ -19,4 +19,5 @@ end
 
 @testset "print" begin
     include("tree.jl")
+    include("tree_inline.jl")
 end
