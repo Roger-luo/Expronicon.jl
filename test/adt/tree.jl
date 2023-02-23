@@ -129,7 +129,7 @@ p = Tree.Printer(stdout)
 p(C)
 p(R)
 
-@test_throws "unimplemented children method for Vector{Int64}" Tree.children([1, 2, 3])
-@test_throws "unimplemented print_node method for Vector{Int64}" Tree.print_node(stdout, [1, 2, 3])
-@test Tree.should_print_annotation([1, 2, 3]) == false
+@test_throws "unimplemented children method for Vector{Int64}" Tree.children(Int64[1, 2, 3])
+@test_throws "unimplemented print_node method for Vector{Int64}" Tree.print_node(stdout, Int64[1, 2, 3])
+@test Tree.should_print_annotation(Int64[1, 2, 3]) == false
 @test Tree.should_print_annotation(x for x in 1:3) == false

@@ -143,11 +143,11 @@ multiline_printer(a+b)
 multiline_printer(ex)
 multiline_printer(ex_deep)
 
-@test_throws "unimplemented children method for Vector{Int64}" Inline.children([1, 2, 3])
-@test_throws "unimplemented print_node method for Vector{Int64}" Inline.print_node(stdout, [1, 2, 3])
-@test_throws "unimplemented print_annotation method for (Vector{Int64}, Symbol)" Inline.print_annotation(stdout, [1, 2, 3], :x)
-@test isnothing(Inline.print_annotation_suffix(stdout, [1, 2, 3], :x))
-@test Inline.precedence([1, 2, 3]) == 1
-@test Inline.delimiter([1, 2, 3]) == ", "
-@test Inline.should_print_annotation([1, 2, 3]) == false
+@test_throws "unimplemented children method for Vector{Int64}" Inline.children(Int64[1, 2, 3])
+@test_throws "unimplemented print_node method for Vector{Int64}" Inline.print_node(stdout, Int64[1, 2, 3])
+@test_throws "unimplemented print_annotation method for (Vector{Int64}, Symbol)" Inline.print_annotation(stdout, Int64[1, 2, 3], :x)
+@test isnothing(Inline.print_annotation_suffix(stdout, Int64[1, 2, 3], :x))
+@test Inline.precedence(Int64[1, 2, 3]) == 1
+@test Inline.delimiter(Int64[1, 2, 3]) == ", "
+@test Inline.should_print_annotation(Int64[1, 2, 3]) == false
 @test Inline.should_print_annotation(x for x in 1:3) == false
