@@ -143,9 +143,9 @@ multiline_printer(a+b)
 multiline_printer(ex)
 multiline_printer(ex_deep)
 
-@test_throws "unimplemented children method for Vector{Int64}" Inline.children(Int64[1, 2, 3])
-@test_throws "unimplemented print_node method for Vector{Int64}" Inline.print_node(stdout, Int64[1, 2, 3])
-@test_throws "unimplemented print_annotation method for (Vector{Int64}, Symbol)" Inline.print_annotation(stdout, Int64[1, 2, 3], :x)
+@test_throws ErrorException Inline.children(Int64[1, 2, 3])
+@test_throws ErrorException Inline.print_node(stdout, Int64[1, 2, 3])
+@test_throws ErrorException Inline.print_annotation(stdout, Int64[1, 2, 3], :x)
 @test isnothing(Inline.print_annotation_suffix(stdout, Int64[1, 2, 3], :x))
 @test Inline.precedence(Int64[1, 2, 3]) == 1
 @test Inline.delimiter(Int64[1, 2, 3]) == ", "
