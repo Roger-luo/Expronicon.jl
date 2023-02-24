@@ -1,5 +1,4 @@
 using MLStyle
-using Expronicon
 using Expronicon.ADT: @adt
 using Expronicon.ADT.Tree
 
@@ -101,19 +100,13 @@ function Tree.children(t::Tensura)
         PermuteDims(tensor, _) => (tensor,)
         Conjugate(tensor) => (tensor,)
         Contract(tensor1, tensor2, indices1, indices2) =>
-            Dict(indices1=>tensor1, indices2=>tensor2)
-        Trace(tensor, i1, i2) => Dict([i1, i2]=>tensor,)
+            Dict(tensor1 => indices1, tensor2 => indices2)
+        Trace(tensor, i1, i2) => Dict(tensor => [i1, i2])
         Device(tensor, _) => (tensor,)
     end
 end
 
-function print_annotation(io, dims)
-    printstyled(io, " <", color=:light_black)
-    mapjoin(dims, "×") do x
-        printstyled(io, x, color=:light_black)
-    end
-    printstyled(io, ">", color=:light_black)
-end
+Tree.print_annotation(io::IO, node::Tensura, annotation) = printstyled(io, annotation; color = :red, bold=true)
 
 function Tree.print_node(io::IO, node::Tensura)
     @match node begin
@@ -125,10 +118,8 @@ function Tree.print_node(io::IO, node::Tensura)
         Trace(_...) => printstyled(io, "trace", color=:cyan, bold=true)
         Device(_, device) => printstyled(io, "device ", device, color=:cyan, bold=true)
     end
-    get(io, :shape, false) && Tree.print_annotation(io, size(node))
     return
 end
-
 
 A = Tensor("A", [2, 3, 2])
 R = Reshape(A, [6, 2])
@@ -136,3 +127,9 @@ R2 = Reshape(R, [2, 3, 2])
 C = Contract(A, R2, [1, 2], [2, 3])
 p = Tree.Printer(stdout)
 p(C)
+p(R)
+
+@test_throws ErrorException Tree.children(Int64[1, 2, 3])
+@test_throws ErrorException Tree.print_node(stdout, Int64[1, 2, 3])
+@test Tree.should_print_annotation(Int64[1, 2, 3]) == false
+@test Tree.should_print_annotation(x for x in 1:3) == false

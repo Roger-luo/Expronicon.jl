@@ -1,8 +1,5 @@
 module Tree
 
-using MLStyle: @match
-using ..Expronicon: mapjoin
-
 # this is adapted from AbstractTree since
 # we need the printing frequently but it kept
 # having issues with our case.
@@ -27,7 +24,6 @@ function CharSet(name::Symbol=:unicode)
 end
 
 Base.@kwdef struct Color
-    key::Symbol = :light_black
     annotation::Symbol = :light_black
 end
 
@@ -57,13 +53,13 @@ function (p::Printer)(node)
     print(xs...) = Base.print(p.io, xs...)
     println(xs...) = Base.println(p.io, xs...)
     printstyled(xs...; kw...) = Base.printstyled(p.io, xs...; kw...)
+    print_annotation(node, annotation) = Tree.print_annotation(p.io, node, annotation; color = p.color.annotation)
 
     children = Tree.children(node)
     node_str = sprint(Tree.print_node, node, context=IOContext(p.io))
     for (i, line) in enumerate(split(node_str, '\n'))
         i ≠ 1 && print(prefix)
         print(line)
-        # println()
         if !(p.state.last && isempty(children))
             println()
         end
@@ -74,18 +70,18 @@ function (p::Printer)(node)
         return
     end
 
-    this_printkeys = should_printkeys(children)
+    this_print_annotation = should_print_annotation(children)
 
     s = Iterators.Stateful(
-        this_printkeys ? pairs(children) : children
+        this_print_annotation ? pairs(children) : children
     )
     while !isempty(s)
         child_prefix = p.state.prefix
-        if this_printkeys
-            key, child = popfirst!(s)
+        if this_print_annotation
+            child, annotation = popfirst!(s)
         else
             child = popfirst!(s)
-            key = nothing
+            annotation = nothing
         end
 
         print(p.state.prefix)
@@ -114,9 +110,9 @@ function (p::Printer)(node)
 
         print(p.charset.dash, ' ')
 
-        if this_printkeys
-            key_str = sprint(print_child_key, key)
-            printstyled(key_str, color=p.color.key)
+        if this_print_annotation
+            key_str = sprint(Tree.print_annotation, node, annotation)
+            print_annotation(node, annotation)
             print(p.charset.pair)
 
             child_prefix *= " " ^ (
@@ -136,20 +132,21 @@ function (p::Printer)(node)
     end
 end
 
-function print_node(io::IO, node)
-    error("unimplemented print_node method for $(typeof(node))")
-end
-
 function children(node)
     error("unimplemented children method for $(typeof(node))")
 end
+function print_node(io::IO, node)
+    error("unimplemented print_node method for $(typeof(node))")
+end    
+function print_annotation(io::IO, node, annotation; kwargs...)
+    printstyled(io, annotation; kwargs...)
+end
 
-should_printkeys(ch) = applicable(keys, ch)
-should_printkeys(::AbstractVector) = false
-should_printkeys(::Tuple) = false
-should_printkeys(::Base.Generator) = false
+should_print_annotation(ch) = applicable(keys, ch)
+should_print_annotation(::AbstractVector) = false
+should_print_annotation(::Tuple) = false
+should_print_annotation(::Base.Generator) = false
 
-print_child_key(io::IO, key) = show(io, key)
-print_child_key(io::IO, key::CartesianIndex) = show(io, Tuple(key))
+include("tree_inline.jl")
 
 end # module Tree
