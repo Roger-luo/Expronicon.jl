@@ -1,7 +1,7 @@
 module TestEvalPulse
 
 using Test
-using Expronicon.ADT: @adt
+using Expronicon.ADT: @adt, @use
 
 @adt PulseLang begin
     struct Waveform
@@ -11,6 +11,8 @@ using Expronicon.ADT: @adt
         duration::Float64
     end
 end
+
+@use PulseLang.Waveform
 
 wf = Waveform([1.0, 2.0], trues(2), 1, 1.0)
 @testset "eval(PulseLang)" begin

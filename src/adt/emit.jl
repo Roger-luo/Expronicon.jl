@@ -183,7 +183,7 @@ function EmitInfo(def::ADTTypeDef)
 end
 
 """
-    @adt <public> name begin
+    @adt name begin
         variant1
         variant2(field1, field2)
 
@@ -197,7 +197,6 @@ Create an algebra data type (ADT).
 
 ### Arguments
 
-- `public`: optional, if present, the ADT and its variants will be exported.
 - `<name>`: the name of the ADT, can be just a name or name with supertype.
 - `<body>`: the body of the ADT, a list of variants in `begin ... end` block.
 
@@ -230,19 +229,13 @@ macro adt(head, body)
     return esc(emit(def))
 end
 
-macro adt(export_variants, head, body)
-    export_variants == :public || error("expect `public` after `@adt`")
-    def = ADTTypeDef(__module__, head, body; export_variants=true)
-    return esc(emit(def))
-end
-
 function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
     return quote
         primitive type $(info.typename) 32 end
-        $(emit_exports(def, info))
         $(emit_struct(def, info))
         $(emit_variant_cons(def, info))
         $(emit_variant_binding(def, info))
+        $(emit_variant_type_show(def, info))
         $(emit_reflection(def, info))
         $(emit_getproperty(def, info))
         $(emit_propertynames(def, info))
@@ -258,18 +251,47 @@ xvariant_type(x) = xcall(Core, :getfield, x, QuoteNode(Symbol("#type")))
 
 function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
     type_expr(idx) = xvariant_type(info, idx)
-    type_defs = expr_map(enumerate(def.variants)) do (idx, variant)
-        if variant.type === :singleton # instance is type
-            :(const $(variant.name) = $(def.name)($(type_expr(idx))))
+
+    body = JLIfElse()
+    for (idx, variant) in enumerate(def.variants)
+        body[:(name === $(QuoteNode(variant.name)))] = if variant.type === :singleton
+            quote # instance is type
+                $(def.name)($(type_expr(idx)))
+            end
         else
-            :(const $(variant.name) = $(type_expr(idx)))
+            quote
+                $(type_expr(idx))
+            end
+        end
+    end
+    body.otherwise = quote
+        if name in (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
+            $Base.getfield(Self, name)
+        else
+            throw(ArgumentError("invalid variant type"))
         end
     end
 
+    variant_names = map(def.variants) do variant
+        QuoteNode(variant.name)
+    end
+
+    return quote
+        function $Base.getproperty(::Type{Self}, name::Symbol) where {Self <:$(def.name)}
+            return $(codegen_ast(body))
+        end
+
+        function $Base.propertynames(::Type{Self}) where {Self <:$(def.name)}
+            return $(xtuple(variant_names...))
+        end
+    end
+end
+
+function emit_variant_type_show(def::ADTTypeDef, info::EmitInfo)
     show_body = JLIfElse()
     for (idx, variant) in enumerate(def.variants)
-        show_body[:(t == $(type_expr(idx)))] = quote
-            print(io, $(string(def.name)), "::", $(string(variant.name)))
+        show_body[:(t == $(xvariant_type(info, idx)))] = quote
+            print(io, $(string(def.name)), ".", $(string(variant.name)))
         end
     end
 
@@ -278,9 +300,7 @@ function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
     end
 
     return quote
-        $(type_defs)
-
-        function Base.show(io::IO, t::$(info.typename))
+        function $Base.show(io::IO, t::$(info.typename))
             $(codegen_ast(show_body))
             return
         end
@@ -364,14 +384,6 @@ function struct_cons(def::ADTTypeDef, info::EmitInfo)
     )
 end
 
-function emit_exports(def::ADTTypeDef, info::EmitInfo)
-    names = map(def.variants) do variant
-        return variant.name
-    end
-    push!(names, def.name)
-    return Expr(:export, names...)
-end
-
 function emit_struct(def::ADTTypeDef, info::EmitInfo)
     def = JLStruct(;
         def.name, def.typevars, info.ismutable,
@@ -394,7 +406,7 @@ function emit_variant_cons(def::ADTTypeDef, info::EmitInfo)
         nfields = length(variant.fieldtypes)
         assign_kwargs = expr_map(1:nfields,
             variant.fieldnames, variant.field_defaults) do idx, name, default
-            
+
             var = Symbol("#kw#", idx)
             msg = "missing keyword argument: $(name)"
             throw_ex = Expr(:block, variant.lineinfo, :(throw(ArgumentError($msg))))

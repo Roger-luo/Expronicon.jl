@@ -10,6 +10,7 @@ include("traits.jl")
 include("types.jl")
 include("emit.jl")
 include("match.jl")
+include("use.jl")
 include("print.jl")
 
 end # ADT

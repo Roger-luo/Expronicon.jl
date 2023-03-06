@@ -1,11 +1,11 @@
 
 using MLStyle
-using Expronicon.ADT: @adt
+using Expronicon.ADT: @adt, @use
 using Expronicon.ADT.Tree.Inline
 using Expronicon.ADT.Tree
 
 # FSR: free semiring
-@adt public FSR begin
+@adt FSR begin
     struct Add
         dict::Dict{FSR, Int} = Dict{FSR, Int}()
     end
@@ -16,6 +16,9 @@ using Expronicon.ADT.Tree
         name::Symbol
     end
 end
+
+@use FSR: *
+
 function Base.:(==)(lhs::FSR, rhs::FSR)
     @match (lhs, rhs) begin
         (Add(d1), Add(d2)) => d1 == d2

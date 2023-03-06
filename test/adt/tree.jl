@@ -1,11 +1,13 @@
 using MLStyle
-using Expronicon.ADT: @adt
+using Expronicon.ADT: @adt, @use
 using Expronicon.ADT.Tree
 
-@adt public DeviceKind begin
+@adt DeviceKind begin
     CPU
     GPU(::Int)
 end
+
+@use DeviceKind: *
 
 function Base.:(==)(lhs::DeviceKind, rhs::DeviceKind)
     @match (lhs, rhs) begin
@@ -22,10 +24,12 @@ function Base.hash(d::DeviceKind, h::UInt)
     end
 end
 
-@adt public Size begin
+@adt Size begin
     ConstSize(::Int)
     VarSize(::String)
 end
+
+@use Size: *
 
 function Base.:(==)(lhs::Size, rhs::Size)
     @match (lhs, rhs) begin
@@ -49,7 +53,7 @@ end
 Base.convert(::Type{Size}, s::String) = VarSize(s)
 Base.convert(::Type{Size}, s::Int) = ConstSize(s)
 
-@adt public Tensura begin
+@adt Tensura begin
     struct Tensor
         name::String
         dims::Vector{Size}
@@ -92,6 +96,8 @@ Base.convert(::Type{Size}, s::Int) = ConstSize(s)
         device::DeviceKind
     end
 end
+
+@use Tensura: *
 
 function Tree.children(t::Tensura)
     @match t begin

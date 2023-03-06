@@ -5,8 +5,6 @@
 Base.@kwdef struct Variant
     type::Symbol # singleton, struct, call
     name::Symbol
-    # export the variant to parent namespace
-    public::Bool = false
 
     # only for struct
     ismutable::Bool = false
@@ -17,7 +15,7 @@ Base.@kwdef struct Variant
 
     lineinfo::Maybe{LineNumberNode} = nothing
 
-    function Variant(type, name, public, ismutable, fieldnames, field_defaults, fieldtypes, lineinfo)
+    function Variant(type, name, ismutable, fieldnames, field_defaults, fieldtypes, lineinfo)
         if type == :struct
             if length(fieldnames) != length(fieldtypes)
                 throw(ArgumentError("length of fieldnames and fieldtypes must be equal"))
@@ -31,7 +29,7 @@ Base.@kwdef struct Variant
             isempty(fieldnames) || throw(ArgumentError("cannot have named field for call syntax variant"))
             isempty(field_defaults) || throw(ArgumentError("cannot have default value for call syntax variant"))
         end
-        new(type, name, public, ismutable, fieldnames, field_defaults, fieldtypes, lineinfo)
+        new(type, name, ismutable, fieldnames, field_defaults, fieldtypes, lineinfo)
     end
 end
 
@@ -41,7 +39,6 @@ Base.@kwdef struct ADTTypeDef
     name::Symbol
     typevars::Vector{Any} = Any[]
     supertype::Any = nothing
-    export_variants::Bool = false
 
     # enum of the type
     # <name>
@@ -50,24 +47,21 @@ Base.@kwdef struct ADTTypeDef
     variants::Vector{Variant}
 end
 
-function Variant(ex, lineinfo = nothing; public::Bool = false)
+function Variant(ex, lineinfo = nothing)
     @switch ex begin
-        @case Expr(:macrocall, &(Symbol("@public")), _, ex)
-            Variant(ex, lineinfo; public=true)
         @case ::Symbol
-            Variant(;type=:singleton, name=ex, public)
+            Variant(;type=:singleton, name=ex)
         @case :($name($(args...)))
             foreach(args) do arg
                 Meta.isexpr(arg, :(::)) && length(arg.args) == 1 ||
                     throw(ArgumentError("expect ::<type> in call syntax variant, got $arg"))
             end
-            Variant(;type=:call, name=name, fieldtypes=annotations_only.(args), public)
+            Variant(;type=:call, name=name, fieldtypes=annotations_only.(args))
         @case Expr(:struct, _...)
             def = JLKwStruct(ex)
             Variant(;
                 type=:struct,
                 name=def.name,
-                public,
                 ismutable=def.ismutable,
                 fieldnames=map(x->x.name, def.fields),
                 field_defaults=map(x->x.default, def.fields),
@@ -103,7 +97,7 @@ function adt_split_head(head)
     return name, typevars, supertype
 end
 
-function ADTTypeDef(m::Module, head, body::Expr; export_variants::Bool = false)
+function ADTTypeDef(m::Module, head, body::Expr)
     variants = Variant[]
     lineinfo = nothing
     for ex in body.args
@@ -114,11 +108,10 @@ function ADTTypeDef(m::Module, head, body::Expr; export_variants::Bool = false)
             lineinfo = nothing
         end
     end
-    return ADTTypeDef(m, adt_split_head(head)..., export_variants, variants)
+    return ADTTypeDef(m, adt_split_head(head)..., variants)
 end
 
 function Base.:(==)(a::Variant, b::Variant)
     a.type == b.type && a.name == b.name && a.ismutable == b.ismutable &&
-    a.public == b.public && a.fieldnames == b.fieldnames &&
-    a.fieldtypes == b.fieldtypes
+    a.fieldnames == b.fieldnames && a.fieldtypes == b.fieldtypes
 end

@@ -1,9 +1,9 @@
 module TestExport
 
 using Test
-using Expronicon.ADT: @adt
+using Expronicon.ADT: @adt, @export_use
 
-@adt public PulseLang begin
+@adt PulseLang begin
     struct Waveform
         coeff::Vector{Float64}
         mask::BitVector
@@ -11,6 +11,9 @@ using Expronicon.ADT: @adt
         duration::Float64
     end
 end
+
+export PulseLang
+@export_use PulseLang: *
 
 @testset "TestExport" begin
     @test :PulseLang in names(TestExport)

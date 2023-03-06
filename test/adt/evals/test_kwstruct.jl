@@ -17,12 +17,12 @@ using Expronicon.ADT: @adt
 end
 
 @testset "KwStruct" begin
-    a = A()
+    a = AT.A()
     @test a.common_field == 0
     @test a.a == true
     @test a.b == 10
 
-    b = B()
+    b = AT.B()
     @test b.a == 1
     @test b.foo == sin(1)
 end
