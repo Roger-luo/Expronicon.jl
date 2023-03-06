@@ -11,10 +11,10 @@ using Expronicon.ADT: @adt
 end
 
 @testset "singleton" begin
-    @match Apple begin
-        Apple => @test true
-        Orange => @test false
-        Banana => @test false
+    @match Food.Apple begin
+        &Food.Apple => @test true
+        &Food.Orange => @test false
+        &Food.Banana => @test false
     end
 end
 

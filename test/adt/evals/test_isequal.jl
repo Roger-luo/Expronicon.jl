@@ -2,7 +2,7 @@ module TestIsEqualEnum
 
 using Test
 using MLStyle
-using Expronicon.ADT: @adt, variant_type
+using Expronicon.ADT: @adt, @use, variant_type
 
 @adt Foo begin
     Bar
@@ -10,6 +10,8 @@ using Expronicon.ADT: @adt, variant_type
         args::Vector{Int}
     end
 end
+
+@use Foo: *
 
 function Base.:(==)(lhs::Foo, rhs::Foo)
     @match (lhs, rhs) begin

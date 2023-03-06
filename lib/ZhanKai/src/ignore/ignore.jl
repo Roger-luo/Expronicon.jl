@@ -3,7 +3,7 @@ module GitIgnore
 export IgnoreFile, parse, @pattern_str
 
 using MLStyle: @match, @switch, @case
-using Expronicon.ADT: ADT, @adt
+using Expronicon.ADT: ADT, @adt, @export_use
 using Glob: FilenameMatch
 
 include("types.jl")

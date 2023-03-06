@@ -20,10 +20,13 @@ function emit_reflection(def::ADTTypeDef, info::EmitInfo)
     end
 end
 
-function emit_variants(def::ADTTypeDef, ::EmitInfo)
+function emit_variants(def::ADTTypeDef, info::EmitInfo)
+    variant_types = map(enumerate(def.variants)) do (idx, _)
+        xvariant_type(info, idx)
+    end
     return quote
         function $ADT.variants(::Type{<:$(def.name)})
-            return $(xtuple(map(x->x.name, def.variants)...))
+            return $(xtuple(variant_types...))
         end
     end
 end

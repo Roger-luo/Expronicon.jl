@@ -1,4 +1,4 @@
-@adt public Pattern begin
+@adt Pattern begin
     Comment(::String)
     
     Root
@@ -17,6 +17,8 @@
         segments::Vector{Pattern}
     end
 end
+
+@export_use Pattern: *
 
 struct IgnoreFile
     path::String

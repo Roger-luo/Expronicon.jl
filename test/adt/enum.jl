@@ -2,7 +2,7 @@ module TestEnum
 
 using Test
 using MLStyle
-using Expronicon.ADT: ADT, @adt, ADTTypeDef, EmitInfo,
+using Expronicon.ADT: ADT, @adt, @use, ADTTypeDef, EmitInfo,
     emit_variant_cons, variant_fieldnames, variant_masks,
     variant_type, variants, variant_typename, adt_type
 
@@ -13,6 +13,8 @@ using Expronicon.ADT: ADT, @adt, ADTTypeDef, EmitInfo,
     InvalidChannelType(::Int, ::Char)
     ChannelTypeTooLong(::Int)
 end
+
+@use AddressMaskErr: *
 
 @testset "singleton enum match" begin
     e = BinLengthNotMatch(1, 2)

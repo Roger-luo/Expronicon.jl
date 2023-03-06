@@ -2,7 +2,7 @@ module TestMatch
 
 using Test
 using MLStyle
-using Expronicon.ADT: ADT, @adt, ADTTypeDef, EmitInfo,
+using Expronicon.ADT: ADT, @adt, @use, ADTTypeDef, EmitInfo,
     emit_variant_cons, variant_fieldnames, variant_masks,
     variant_type, variants, variant_typename, adt_type
 
@@ -18,6 +18,8 @@ using Expronicon.ADT: ADT, @adt, ADTTypeDef, EmitInfo,
 
     ChangeColor(::Int, ::Int, ::Int)
 end
+
+@use Message:*
 
 @testset "basic patterns" begin
     @test 3 == @match Move(1, 2) begin
@@ -97,11 +99,13 @@ end
     end
 end
 
+@use Muban: Loop, Id, InlineExpr, Template
+
 @testset "variant type match" begin
-    x = Loop([Id("i"), Id("j")], InlineExpr(1, [Id("a"), Id("b")]), Template([]))
+    x = Muban.Loop([Id("i"), Id("j")], InlineExpr(1, [Id("a"), Id("b")]), Template([]))
 
     @match x begin
-        Text(s) => @test s == "abc"
+        Muban.Text(s) => @test s == "abc"
         Loop(indices, iterator, body) => @test true
         _ => @test false
     end

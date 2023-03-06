@@ -1,7 +1,7 @@
 module ZhanKai
 
 using Expronicon: Substitute, print_expr, sprint_expr, rm_lineinfo, rm_nothing, rm_single_block, canonicalize_lambda_head
-using Expronicon.ADT: @adt
+using Expronicon.ADT: @adt, @use
 using Configurations: @option, Maybe
 using MLStyle: @match, @switch, @case
 using Glob: @glob_str, GlobMatch, glob
