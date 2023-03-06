@@ -264,8 +264,20 @@ function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
             end
         end
     end
+
+    @static VERSION < v"1.8-"
+        builtin_names = (
+            :name, :super, :parameters, :types, :names, :instance,
+            :layout, :size, :ninitialized, :hash, :abstract, :mutable, :hasfreetypevars,
+            :isconcretetype, :isdispatchtuple, :isbitstype, :zeroinit, :isinlinealloc,
+            :has_concrete_subtype, :cached_by_hash
+        )
+    else
+        builtin_names = (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
+    end
+
     body.otherwise = quote
-        if name in (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
+        if name in $builtin_names
             $Base.getfield(Self, name)
         else
             throw(ArgumentError("invalid variant type"))
