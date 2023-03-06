@@ -26,8 +26,8 @@ end
 the named fields can be matched using positional pattern matching:
 
 ```julia
-julia> @match Move(1, 2) begin
-           Move(x, y) => x + y
+julia> @match Message.Move(1, 2) begin
+           Message.Move(x, y) => x + y
            _ => false
        end
 3
@@ -36,8 +36,8 @@ julia> @match Move(1, 2) begin
 or using named pattern matching:
 
 ```julia
-julia> @match Move(1, 2) begin
-           Move(;x) => x
+julia> @match Message.Move(1, 2) begin
+           Message.Move(;x) => x
            _ => false
        end
 1
@@ -46,8 +46,8 @@ julia> @match Move(1, 2) begin
 the annoymous fields can only be matched using positional pattern matching:
 
 ```julia
-julia> @match Write("hello") begin
-           Write(s) => s
+julia> @match Message.Write("hello") begin
+           Message.Write(s) => s
            _ => false
        end
 "hello"
@@ -56,9 +56,12 @@ julia> @match Write("hello") begin
 the singleton variants can be matched directly by the variant name:
 
 ```julia
-julia> @match Quit begin
-        Quit => true
+julia> @match Message.Quit begin
+        &Message.Quit => true
         _ => false
     end
 true
 ```
+
+note that the `&` is required to match the singleton variant due to
+a current limitation of [MLStyle pattern matcher](https://github.com/thautwarm/MLStyle.jl/issues/156).

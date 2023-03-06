@@ -58,9 +58,9 @@ end
 and you can construct the corresponding variant with the following syntax:
 
 ```julia
-Info("hello")
-Warning("hello")
-Error("hello")
+Message.Info("hello")
+Message.Warning("hello")
+Message.Error("hello")
 ```
 
 ## Variants with named fields
@@ -85,13 +85,13 @@ end
 and you can construct the corresponding variant with the following syntax:
 
 ```julia
-Cat(; name="Tom", age=3)
-Dog(; name="Jack", age=5)
+Animal.Cat(; name="Tom", age=3)
+Animal.Dog(; name="Jack", age=5)
 ```
 
 Or you can also just construct normally:
 
 ```julia
-Cat("Tom", 3)
-Dog("Jack", 5)
+Animal.Cat("Tom", 3)
+Animal.Dog("Jack", 5)
 ```

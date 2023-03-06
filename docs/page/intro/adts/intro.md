@@ -94,10 +94,10 @@ julia> module ExproniconADT
        end # module
 Main.ExproniconADT
 
-julia> ExproniconADT.Request
-Message::Request
+julia> ExproniconADT.Message.Request
+Message.Request
 
-julia> ExproniconADT.Request|>typeof
+julia> ExproniconADT.Message.Request|>typeof
 Main.ExproniconADT.var"Message#Type"
 ```
 
