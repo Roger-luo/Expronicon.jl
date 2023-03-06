@@ -1,7 +1,15 @@
 name: CI
 on:
-  - push
-  - pull_request
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+  - cron: '00 01 * * *'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
