@@ -73,7 +73,7 @@ function name_only(@nospecialize(ex))
     ex isa Symbol && return ex
     ex isa QuoteNode && return ex.value
     ex isa Expr || error("unsupported expression $ex")
-    ex.head in [:call, :curly, :(<:), :(::), :where, :function, :kw, :(=), :(->)] && return name_only(ex.args[1])
+    ex.head::Symbol in [:call, :curly, :(<:), :(::), :where, :function, :kw, :(=), :(->)] && return name_only(ex.args[1])
     ex.head === :. && return name_only(ex.args[2])
     ex.head === :module && return name_only(ex.args[2])
     error("unsupported expression $ex")

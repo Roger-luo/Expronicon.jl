@@ -112,7 +112,7 @@ mutable struct JLFunction <: JLExpr
 end
 
 function JLFunction(;
-        head=:function, name=nothing,
+        head::Symbol=:function, name=nothing,
         args=[], kwargs=nothing,
         rettype=nothing,
         whereparams=nothing, body=Expr(:block),
@@ -162,7 +162,7 @@ mutable struct JLField <: JLExpr
     line::Maybe{LineNumberNode}
 end
 
-function JLField(;name, isconst=false, type=Any,
+function JLField(;name::Symbol, isconst=false, type=Any,
         doc=nothing, line=nothing)
     JLField(name, type, isconst, doc, line)
 end
