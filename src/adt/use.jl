@@ -41,8 +41,15 @@ function variant_names_to_bind(mod::Module, expr::Expr)
     end
 end
 
+function assert_defined(mod::Module, variants::Vector{Symbol})
+    for variant in variants
+        isdefined(mod, variant) && error("cannot import $variant: it already exists")
+    end
+end
+
 function use_m(mod::Module, expr::Expr)
     name, variants = variant_names_to_bind(mod, expr)
+    assert_defined(mod, variants)
     return expr_map(variants) do variant_name
         :(const $variant_name = $name.$variant_name)
     end
@@ -50,6 +57,7 @@ end
 
 function export_use_m(mod::Module, expr::Expr)
     name, variants = variant_names_to_bind(mod, expr)
+    assert_defined(mod, variants)
     return expr_map(variants) do variant_name
         quote
             export $variant_name
