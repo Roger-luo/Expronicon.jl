@@ -58,10 +58,14 @@ end
 function export_use_m(mod::Module, expr::Expr)
     name, variants = variant_names_to_bind(mod, expr)
     assert_defined(mod, variants)
-    return expr_map(variants) do variant_name
+    body = expr_map(variants) do variant_name
         quote
             export $variant_name
             const $variant_name = $name.$variant_name
         end
+    end
+    return quote
+        export $name
+        $body
     end
 end
