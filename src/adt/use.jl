@@ -41,7 +41,7 @@ function variant_names_to_bind(mod::Module, expr::Expr)
     end
 end
 
-function assert_defined(mod::Module, variants::Vector{Symbol})
+function assert_defined(mod::Module, variants)
     for variant in variants
         isdefined(mod, variant) && error("cannot import $variant: it already exists")
     end

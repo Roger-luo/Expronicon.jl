@@ -99,13 +99,13 @@ end
     end
 end
 
-@use Muban:*
+@use Muban: Loop, Id, InlineExpr, Template
 
 @testset "variant type match" begin
-    x = Loop([Id("i"), Id("j")], InlineExpr(1, [Id("a"), Id("b")]), Template([]))
+    x = Muban.Loop([Id("i"), Id("j")], InlineExpr(1, [Id("a"), Id("b")]), Template([]))
 
     @match x begin
-        Text(s) => @test s == "abc"
+        Muban.Text(s) => @test s == "abc"
         Loop(indices, iterator, body) => @test true
         _ => @test false
     end
