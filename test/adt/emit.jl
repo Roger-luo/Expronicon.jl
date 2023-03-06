@@ -32,14 +32,13 @@ body = quote
 
     Write(::String)
 
-    struct Aka
+    @public struct Aka
         x::Vector{Int64}
         y::Vector{Int64}
     end
 
     ChangeColor(::Int64, ::Int64, ::Int64)
 end
-
 
 @testset "EmitInfo(::ADTTypeDef)" begin
     def = ADTTypeDef(Main, :Message, body)

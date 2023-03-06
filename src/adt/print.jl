@@ -45,6 +45,10 @@ function Base.show(io::IO, ::MIME"text/plain", def::Variant)
     indent = get(io, :indent, 0)
     print(io, tab(indent))
 
+    if def.public
+        printstyled(io, "@public "; color=197)
+    end
+
     if def.type == :singleton
         print(io, def.name)
     elseif def.type == :call
