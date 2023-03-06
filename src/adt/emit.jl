@@ -265,7 +265,7 @@ function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
         end
     end
 
-    @static VERSION < v"1.8-"
+    @static if VERSION < v"1.8-"
         builtin_names = (
             :name, :super, :parameters, :types, :names, :instance,
             :layout, :size, :ninitialized, :hash, :abstract, :mutable, :hasfreetypevars,
