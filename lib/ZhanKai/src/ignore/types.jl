@@ -18,7 +18,7 @@
     end
 end
 
-@use Pattern: *
+@export_use Pattern: *
 
 struct IgnoreFile
     path::String
