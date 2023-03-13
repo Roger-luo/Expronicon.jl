@@ -232,6 +232,7 @@ end
 function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
     return quote
         primitive type $(info.typename) 32 end
+        $(emit_exports(def, info))
         $(emit_struct(def, info))
         $(emit_variant_cons(def, info))
         $(emit_variant_binding(def, info))
@@ -394,6 +395,14 @@ function struct_cons(def::ADTTypeDef, info::EmitInfo)
         args=[:(type::$(info.typename)), :(args...)],
         body=construct_body
     )
+end
+
+function emit_exports(def::ADTTypeDef, info::EmitInfo)
+    names = map(def.variants) do variant
+        return variant.name
+    end
+    push!(names, def.name)
+    return Expr(:export, names...)
 end
 
 function emit_struct(def::ADTTypeDef, info::EmitInfo)
