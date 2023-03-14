@@ -235,6 +235,7 @@ function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
         $(emit_exports(def, info))
         $(emit_struct(def, info))
         $(emit_variant_cons(def, info))
+        $(emit_variant_getproperty(def, info))
         $(emit_variant_binding(def, info))
         $(emit_variant_type_show(def, info))
         $(emit_reflection(def, info))
@@ -251,6 +252,19 @@ xvariant_type(info::EmitInfo, idx::Int) = :(Core.bitcast($(info.typename), $(UIn
 xvariant_type(x) = xcall(Core, :getfield, x, QuoteNode(Symbol("#type")))
 
 function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
+    def.export_variants || return :(nothing)
+
+    expr_map(enumerate(def.variants)) do idx, variant
+        type_enum = xvariant_type(info, idx)
+        if variant.type === :singleton
+            return :(const $(variant.name) = $(def.name)($type_enum))
+        else
+            return :(const $(variant.name) = $(type_enum))
+        end
+    end
+end
+
+function emit_variant_getproperty(def::ADTTypeDef, info::EmitInfo)
     type_expr(idx) = xvariant_type(info, idx)
 
     body = JLIfElse()
