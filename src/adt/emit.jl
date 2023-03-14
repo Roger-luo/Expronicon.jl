@@ -252,9 +252,9 @@ xvariant_type(info::EmitInfo, idx::Int) = :(Core.bitcast($(info.typename), $(UIn
 xvariant_type(x) = xcall(Core, :getfield, x, QuoteNode(Symbol("#type")))
 
 function emit_variant_binding(def::ADTTypeDef, info::EmitInfo)
-    def.export_variants || return :(nothing)
+    def.export_variants || return :($nothing)
 
-    expr_map(enumerate(def.variants)) do idx, variant
+    expr_map(enumerate(def.variants)) do (idx, variant)
         type_enum = xvariant_type(info, idx)
         if variant.type === :singleton
             return :(const $(variant.name) = $(def.name)($type_enum))
@@ -412,6 +412,8 @@ function struct_cons(def::ADTTypeDef, info::EmitInfo)
 end
 
 function emit_exports(def::ADTTypeDef, info::EmitInfo)
+    def.export_variants || return nothing
+
     names = map(def.variants) do variant
         return variant.name
     end

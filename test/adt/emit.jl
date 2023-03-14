@@ -1,8 +1,14 @@
 using Test
 using Expronicon
-using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use, emit_struct,
-    emit_show, emit_variant_cons, emit_reflection, emit_variant_binding,
-    emit_getproperty, emit_propertynames,
+using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use,
+    emit_exports,
+    emit_struct,
+    emit_show,
+    emit_variant_cons,
+    emit_reflection,
+    emit_variant_binding,
+    emit_getproperty,
+    emit_propertynames,
     # reflection
     emit_variants,
     emit_variant_type,
@@ -467,30 +473,19 @@ end
     end
 end
 
-# @test_expr emit_variant_binding(def, info) == quote
-#     const Quit = Message(Core.bitcast(var"Message#Type", 0x00000001))
-#     const Move = Core.bitcast(var"Message#Type", 0x00000002)
-#     const Write = Core.bitcast(var"Message#Type", 0x00000003)
-#     const Aka = Core.bitcast(var"Message#Type", 0x00000004)
-#     const ChangeColor = Core.bitcast(var"Message#Type", 0x00000005)
-#     function Base.show(io::IO, t::var"Message#Type")
-#         if t == Core.bitcast(var"Message#Type", 0x00000001)
-#             print(io, "Message", "::", "Quit")
-#         elseif t == Core.bitcast(var"Message#Type", 0x00000002)
-#             print(io, "Message", "::", "Move")
-#         elseif t == Core.bitcast(var"Message#Type", 0x00000003)
-#             print(io, "Message", "::", "Write")
-#         elseif t == Core.bitcast(var"Message#Type", 0x00000004)
-#             print(io, "Message", "::", "Aka")
-#         elseif t == Core.bitcast(var"Message#Type", 0x00000005)
-#             print(io, "Message", "::", "ChangeColor")
-#         else
-#             throw(ArgumentError("invalid variant type"))
-#         end
-#         return
-#     end
-# end
+@test_expr emit_variant_binding(def, info) == nothing
+@test_expr emit_exports(def, info) == nothing
 
+pub_def = ADTTypeDef(Main, :Message, body; export_variants=true)
+@test_expr emit_variant_binding(pub_def, info) == quote
+    const Quit = Message(Core.bitcast(var"Message#Type", 0x00000001))
+    const Move = Core.bitcast(var"Message#Type", 0x00000002)
+    const Write = Core.bitcast(var"Message#Type", 0x00000003)
+    const Aka = Core.bitcast(var"Message#Type", 0x00000004)
+    const ChangeColor = Core.bitcast(var"Message#Type", 0x00000005)
+end
+
+@test_expr emit_exports(pub_def, info) == :(export Quit, Move, Write, Aka, ChangeColor, Message)
 
 @adt MubanLang begin
     None
