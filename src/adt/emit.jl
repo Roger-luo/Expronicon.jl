@@ -229,6 +229,12 @@ macro adt(head, body)
     return esc(emit(def))
 end
 
+macro adt(export_variants, head, body)
+    export_variants == :public || error("expect `public` after `@adt`")
+    def = ADTTypeDef(__module__, head, body; export_variants=true)
+    return esc(emit(def))
+end
+
 function emit(def::ADTTypeDef, info::EmitInfo=EmitInfo(def))
     return quote
         primitive type $(info.typename) 32 end
