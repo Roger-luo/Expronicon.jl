@@ -430,6 +430,7 @@ end
 function emit_struct(def::ADTTypeDef, info::EmitInfo)
     def = JLStruct(;
         def.name, def.typevars, info.ismutable,
+        def.supertype,
         fields=map(info.fieldnames, info.fieldtypes) do name, type
             JLField(;name, type)
         end,
