@@ -10,25 +10,37 @@ function derive_m(mod::Module, line::LineNumberNode, ex::Expr)
     end
 
     expr_map((first, others...)) do rule
-        derive_rule(Rule(rule), mod, line, name)
+        isdefined(mod, rule) || error("$(rule) is not defined")
+        derive_rule(getfield(mod, rule), mod, line, name)
     end
 end
 
-struct Rule{name} end
-Rule(name::Symbol) = Rule{name}()
-
-function derive_rule(::Rule{name}, m::Module, line::LineNumberNode, Self::Symbol) where name
-    error("derive_rule for $(name) is not defined")
+function derive_rule(rule, m::Module, line::LineNumberNode, Self::Symbol)
+    error("derive_rule for $(rule) is not defined")
 end
 
 macro derive_rule(jlfn::Expr)
     jlfn = JLFunction(jlfn)
-    esc(derive_rule_m(jlfn))
+    esc(derive_rule_m(__module__, jlfn))
 end
 
-function derive_rule_m(jlfn::JLFunction)
+function derive_rule_m(mod::Module, jlfn::JLFunction)
     length(jlfn.args) == 3 || error("Invalid function signature")
-    pushfirst!(jlfn.args, :(::Rule{$(QuoteNode(jlfn.name))}))
+
+    fn_type = @match jlfn.name begin
+        Expr(:., path, name::QuoteNode) => begin
+            m = guess_module(mod, path)
+            isdefined(m, name.value) || error("$(jlfn.name) is not defined")
+            typeof(getfield(m, name.value))
+        end
+        name::Symbol => begin
+            isdefined(mod, name) || error("$(jlfn.name) is not defined")
+            typeof(getfield(mod, name))
+        end
+        _ => error("Invalid function name: $(jlfn.name)")
+    end
+
+    pushfirst!(jlfn.args, :(::$fn_type))
     jlfn.name = GlobalRef(@__MODULE__, :derive_rule)
     return codegen_ast(jlfn)
 end

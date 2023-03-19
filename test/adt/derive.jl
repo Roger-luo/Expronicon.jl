@@ -13,4 +13,3 @@ is_hash_equal(::Type{<:Union{}}) = false
 end
 
 @derive MyADT: hash, isequal, ==
-
