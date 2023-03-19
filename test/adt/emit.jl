@@ -1,6 +1,6 @@
 using Test
 using Expronicon
-using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use,
+using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use, @const_use,
     emit_exports,
     emit_struct,
     emit_show,
