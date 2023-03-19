@@ -504,7 +504,7 @@ end
     end
 end
 
-@use MubanLang:*
+@const_use MubanLang:*
 
 @testset "variant as field type" begin
     @test Reference(Id(:x), Id(:y), None).some == None
