@@ -4,6 +4,8 @@ end
 
 function derive_m(mod::Module, line::LineNumberNode, ex::Expr)
     @switch ex begin
+        @case :($name:$(first::Symbol))
+            others = ()
         @case Expr(:tuple, :($name:$(first::Symbol)), [e::Symbol for e in others]...)
         @case _
             error("Invalid expression")
