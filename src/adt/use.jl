@@ -8,9 +8,29 @@ Import the variant of a ADT into current namespace.
 ```julia
 @use Message: Write
 ```
+
+!!! tips
+    This macro does not create a constant binding so that you can
+    use it inside a function, if you wish to use this macro in the
+    global scope, use `@const_use` instead.
 """
 macro use(expr)
     esc(use_m(__module__, expr))
+end
+
+"""
+    @const_use <name>: <variant>
+    @const_use <name>: <variant>, <variant>, ...
+    @const_use <name>: *
+
+Import the variant of a ADT into current namespace.
+
+```julia
+@const_use Message: Write
+```
+"""
+macro const_use(expr)
+    esc(const_use_m(__module__, expr))
 end
 
 """
@@ -37,7 +57,7 @@ function variant_names_to_bind(mod::Module, expr::Expr)
         end
         :($(name::Symbol):$(variant::Symbol)) || :($(name::Symbol).$(variant::Symbol)) => (name, (variant, ))
         Expr(:tuple, :($(name::Symbol):$(variant::Symbol)), xs...) => (name, (variant, xs...))
-        _ => throw(ArgumentError("expect @use <name>: <variant> or @use <name>: *"))
+        _ => throw(ArgumentError("expect @const_use <name>: <variant> or @const_use <name>: *"))
     end
 end
 
@@ -48,6 +68,14 @@ function assert_defined(mod::Module, variants)
 end
 
 function use_m(mod::Module, expr::Expr)
+    name, variants = variant_names_to_bind(mod, expr)
+    assert_defined(mod, variants)
+    return expr_map(variants) do variant_name
+        :($variant_name = $name.$variant_name)
+    end
+end
+
+function const_use_m(mod::Module, expr::Expr)
     name, variants = variant_names_to_bind(mod, expr)
     assert_defined(mod, variants)
     return expr_map(variants) do variant_name
