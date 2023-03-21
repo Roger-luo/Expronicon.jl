@@ -36,29 +36,14 @@ function assign_type!(info::EmitInfo, def::ADTTypeDef)
     return info
 end
 
+# NOTE: we don't support using variant in the type field
+# because they cannot be checked efficiently/statically
+# one should check them manually at runtime
 function guess_type!(info::EmitInfo, def::ADTTypeDef)
-    function change_type(expr)
-        @switch expr begin
-            @case ::Symbol
-                expr in info.variant_names && return def.name
-                return expr
-            @case :(Union{$(types...)}) || :(&Union{$(types...)})
-                types = map(types) do type
-                    type in info.variant_names && return def.name
-                    return type
-                end
-                return Expr(:curly, :Union, types...)
-            @case ::Expr
-                return Expr(expr.head, map(change_type, expr.args)...)
-            @case _
-                return expr
-        end
-    end
-
     for variant in def.variants
         typeinfo = get!(VariantFieldTypes, info.typeinfo, variant)
         typeinfo.guess = map(variant.fieldtypes) do type
-            guess_type(def.m, change_type(type))
+            guess_type(def.m, type)
         end
         typeinfo.expr = variant.fieldtypes
     end
@@ -286,24 +271,13 @@ function emit_variant_getproperty(def::ADTTypeDef, info::EmitInfo)
         end
     end
 
-    @static if VERSION < v"1.8-"
-        builtin_names = (
-            :name, :super, :parameters, :types, :names, :instance,
-            :layout, :size, :ninitialized, :hash, :abstract, :mutable, :hasfreetypevars,
-            :isconcretetype, :isdispatchtuple, :isbitstype, :zeroinit, :isinlinealloc,
-            :has_concrete_subtype, :cached_by_hash
-        )
-    else
-        builtin_names = (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
-    end
-
-    body.otherwise = quote
-        if name in $builtin_names
-            $Base.getfield(Self, name)
-        else
-            throw(ArgumentError("invalid variant type"))
-        end
-    end
+    builtin_names = (
+        fieldnames(DataType)...,
+        fieldnames(Union)...,
+        fieldnames(UnionAll)...,
+    )
+    body[:(name in $builtin_names)] = :(@inline $Base.getfield(Self, name))
+    body.otherwise = :(throw(ArgumentError("invalid variant type")))
 
     variant_names = map(def.variants) do variant
         QuoteNode(variant.name)
@@ -316,6 +290,11 @@ function emit_variant_getproperty(def::ADTTypeDef, info::EmitInfo)
 
         function $Base.propertynames(::Type{Self}) where {Self <:$(def.name)}
             return $(xtuple(variant_names...))
+        end
+
+        function $Base.propertynames(::Type{Self}, private::Bool) where {Self <:$(def.name)}
+            private || return $Base.propertynames(Self)
+            return $(xtuple(variant_names..., builtin_names...))
         end
     end
 end
