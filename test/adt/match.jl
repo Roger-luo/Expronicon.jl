@@ -95,7 +95,7 @@ end
     struct Loop
         indices::Vector{Muban} # list of Id
         iterator::Muban # <inline expr>
-        body::Template # Template
+        body::Muban # Template
     end
 end
 

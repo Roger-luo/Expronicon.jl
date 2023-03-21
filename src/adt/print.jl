@@ -15,6 +15,7 @@ function Base.show(io::IO, mime::MIME"text/plain", def::ADTTypeDef)
         show(io, ADT)
         print(io, ".")
     end
+    printstyled(io, "@adt "; color=:cyan)
     def.export_variants && printstyled(io, "public "; color=197)
     def.m === Main || print(io, def.m, ".")
     print(io, def.name)

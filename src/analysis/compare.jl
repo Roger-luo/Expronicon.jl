@@ -239,7 +239,6 @@ end
 
 function compare_function(m::Module, lhs::Expr, rhs::Expr)
     lhs,rhs = canonicalize_lambda_head(lhs), canonicalize_lambda_head(rhs)
-    @show lhs
     compare_expr(m, lhs.args[1], rhs.args[1]) || return false
     length(lhs.args) == length(rhs.args) == 1 && return true
 
@@ -287,8 +286,6 @@ function compare_where(m::Module, lhs::Expr, rhs::Expr)
     return all(zip(lparams, rparams)) do (l, r)
         l isa Symbol && r isa Symbol && return true
         Meta.isexpr(l, :(<:)) && Meta.isexpr(r, :(<:)) || return false
-        @show l, r
-        @show compare_expr(m, l.args[2], r.args[2])
         return compare_expr(m, l.args[2], r.args[2])
     end
 end

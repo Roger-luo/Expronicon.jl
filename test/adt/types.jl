@@ -33,7 +33,7 @@ end
     io = IOBuffer()
     show(io, MIME"text/plain"(), def)
     @test String(take!(io)) == """
-    @adt Message begin
+    Expronicon.ADT.@adt Message begin
         Quit
 
         struct Move
@@ -50,7 +50,7 @@ end
     io = IOBuffer()
     show(io, MIME"text/plain"(), def)
     @test String(take!(io)) == """
-    @adt Message <: AbstractMessage begin
+    Expronicon.ADT.@adt Message <: AbstractMessage begin
         Quit
 
         struct Move
