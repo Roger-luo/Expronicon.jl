@@ -2,8 +2,6 @@ mutable struct VariantFieldTypes
     expr::Vector{Any}
     mask::Vector{Int}
     guess::Vector{Any}
-    variant_types::Vector{Vector{Any}}
-
     VariantFieldTypes() = new()
 end
 
@@ -48,38 +46,6 @@ function guess_type!(info::EmitInfo, def::ADTTypeDef)
         typeinfo.expr = variant.fieldtypes
     end
     return info
-end
-
-function scan_variant_types!(info::EmitInfo, def::ADTTypeDef)
-    for variant in def.variants
-        typeinfo = get!(VariantFieldTypes, info.typeinfo, variant)
-        typeinfo.variant_types = Vector{Vector{Any}}(undef, length(variant.fieldtypes))
-        for (idx, expr) in enumerate(variant.fieldtypes)
-            list = scan_field_variant_types!([], expr, info.variant_names)
-            typeinfo.variant_types[idx] = list
-        end
-    end
-    return info
-end
-
-# NOTE: we ignore Foo{VariantType} since we cannot actually check it
-function scan_field_variant_types!(list::Vector{Any}, expr, variant_names::Vector{Symbol})
-    @switch expr begin
-        @case ::Symbol
-            expr in variant_names && push!(list, expr)
-        @case :(Union{$(types...)}) || :(&Union{$(types...)})
-            for type in types
-                scan_field_variant_types!(list, type, variant_names)
-            end
-        # @case :($name{$(types...)}) # Foo{VariantType}
-        #     contains_variant_type(types, variant_names) && push!(list, expr)
-        # Foo{VariantType, A} where VariantType, just happen to have the same name
-        @case Expr(:where, type, params)
-            type = Expronicon.mark_typevars(type, name_only.(params))
-            scan_field_variant_types!(list, type, variant_names)
-        @case _
-    end
-    return list
 end
 
 function scan_fields!(info::EmitInfo, def::ADTTypeDef)
@@ -163,7 +129,6 @@ function EmitInfo(def::ADTTypeDef)
     assign_type!(info, def)
     guess_type!(info, def)
     scan_fields!(info, def)
-    scan_variant_types!(info, def)
     return info
 end
 
@@ -341,31 +306,10 @@ function struct_cons(def::ADTTypeDef, info::EmitInfo)
 
             argname = args[idx]
             arg_idx = findfirst(isequal(idx), typeinfo.mask)
-            vtypenames = typeinfo.variant_types[arg_idx]
             type_guess = typeinfo.guess[arg_idx]
             jl = JLIfElse()
-            if !isempty(vtypenames)
-                @gensym variant_type
-                msg = "expect $(join(vtypenames, " or "))"
-                vtypes = map(vtypenames) do t
-                    :(Core.bitcast($(info.typename), $(info.name_type_map[t])))
-                end
-                jl[:(args[$arg_idx] isa $(def.name))] = quote
-                    $argname = args[$arg_idx]
-                    $variant_type = $ADT.variant_type($argname)
-                    $variant_type in $(xtuple(vtypes...)) || throw(ArgumentError(
-                        "$($msg), got $($variant_type)"))
-                end
-
-                if type_guess !== def.name
-                    jl[:(args[$arg_idx] isa $type_guess)] = quote
-                        $argname = args[$arg_idx]
-                    end
-                end
-            else
-                jl[:(args[$arg_idx] isa $type_guess)] = quote
-                    $argname = args[$arg_idx]
-                end
+            jl[:(args[$arg_idx] isa $type_guess)] = quote
+                $argname = args[$arg_idx]
             end
 
             jl.otherwise = quote
