@@ -1,8 +1,9 @@
+module Derive
+
+using Test
 using MLStyle
 using Expronicon
 using Expronicon.ADT: ADT, @adt, @derive
-
-is_hash_equal(::Type{<:Union{}}) = false
 
 @adt MyADT begin
     Token
@@ -13,11 +14,27 @@ is_hash_equal(::Type{<:Union{}}) = false
 end
 
 @derive MyADT: hash, isequal, ==
-ex = @expr MyADT: isless
-
-@switch ex begin
-    @case :($name:$(first::Symbol))
-    @case Expr(:tuple, :($name:$(first::Symbol)), [e::Symbol for e in others]...)
-    @case _
-        error("Invalid expression")
+@test_throws ErrorException begin
+    @derive MyADT: isless
 end
+
+@testset "hash" begin
+    @test hash(MyADT.Token) == hash(ADT.variant_type(MyADT.Token))
+    msg = MyADT.Message(1, 2)
+    h = hash(ADT.variant_type(msg))
+    h = hash(1, h)
+    h = hash(2, h)
+    @test hash(msg) == h
+end
+
+@testset "isequal" begin
+    @test isequal(MyADT.Message(1, 2), MyADT.Message(1, 2))
+    @test !isequal(MyADT.Message(1, 2), MyADT.Message(1, 3))
+end
+
+@testset "==" begin
+    @test MyADT.Message(1, 2) == MyADT.Message(1, 2)
+    @test MyADT.Message(1, 2) != MyADT.Message(1, 3)
+end
+
+end # Derive

@@ -21,3 +21,7 @@ end
     include("tree.jl")
     include("tree_inline.jl")
 end
+
+@testset "derive" begin
+    include("derive.jl")
+end

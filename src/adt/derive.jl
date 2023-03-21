@@ -12,13 +12,15 @@ function derive_m(mod::Module, line::LineNumberNode, ex::Expr)
     end
 
     expr_map((first, others...)) do rule
-        isdefined(mod, rule) || error("$(rule) is not defined")
+        msg = "$(rule) is not defined"
+        isdefined(mod, rule) || :(error($msg))
         derive_rule(getfield(mod, rule), mod, line, name)
     end
 end
 
 function derive_rule(rule, m::Module, line::LineNumberNode, Self::Symbol)
-    error("derive_rule for $(rule) is not defined")
+    msg = "derive_rule for $(rule) is not defined"
+    return :(error($msg))
 end
 
 macro derive_rule(jlfn::Expr)
