@@ -10,11 +10,13 @@ function variant_show_inline_default(::IO, x)
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", def::ADTTypeDef)
-    from = get(io, :module, Base.active_module())
-    if from === nothing || !Base.isvisible(Symbol("@adt"), ADT, from)
-        show(io, ADT)
-        print(io, ".")
-    end
+    @static if VERSION > v"1.9-"
+        from = get(io, :module, Base.active_module())
+        if from === nothing || !Base.isvisible(Symbol("@adt"), ADT, from)
+            show(io, ADT)
+            print(io, ".")
+        end
+    end # @static
     printstyled(io, "@adt "; color=:cyan)
     def.export_variants && printstyled(io, "public "; color=197)
     def.m === Main || print(io, def.m, ".")
