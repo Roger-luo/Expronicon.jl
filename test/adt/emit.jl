@@ -1,6 +1,6 @@
 using Test
 using Expronicon
-using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use,
+using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use, @const_use,
     emit_exports,
     emit_struct,
     emit_show,
@@ -487,7 +487,7 @@ end
 
 @test_expr emit_exports(pub_def, info) == :(export Quit, Move, Write, Aka, ChangeColor, Message)
 
-@adt MubanLang begin
+body = quote
     None
     # reference to a Julia variable
     Id(::Symbol)
@@ -503,14 +503,8 @@ end
         stmts::Vector{MubanLang}
     end
 end
-
-@use MubanLang:*
-
-@testset "variant as field type" begin
-    @test Reference(Id(:x), Id(:y), None).some == None
-    @test Template([Id(:x), Id(:y), None]) isa MubanLang
-    @test_throws ArgumentError Reference(None, Id(:y), None)
-end
+def = ADTTypeDef(Main, :MubanLang, body)
+@test_throws ErrorException EmitInfo(def)
 
 @testset "Vector{Variant}" begin
     body = quote
