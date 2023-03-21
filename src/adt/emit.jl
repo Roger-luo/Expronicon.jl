@@ -255,7 +255,11 @@ function emit_variant_getproperty(def::ADTTypeDef, info::EmitInfo)
         fieldnames(Union)...,
         fieldnames(UnionAll)...,
     )
-    body[:(name in $builtin_names)] = :(@inline $Base.getfield(Self, name))
+    @static if VERSION < v"1.8-"
+        body[:(name in $builtin_names)] = :($Base.getfield(Self, name))
+    else
+        body[:(name in $builtin_names)] = :(@inline $Base.getfield(Self, name))
+    end
     body.otherwise = :(throw(ArgumentError("invalid variant type")))
 
     variant_names = map(def.variants) do variant
