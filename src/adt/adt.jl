@@ -11,6 +11,7 @@ include("types.jl")
 include("emit.jl")
 include("match.jl")
 include("use.jl")
+include("derive.jl")
 include("print.jl")
 
 end # ADT
