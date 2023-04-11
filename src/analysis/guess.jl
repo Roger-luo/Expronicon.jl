@@ -57,3 +57,23 @@ function guess_type(m::Module, ex)
             return ex
     end
 end
+
+function guess_value(m::Module, ex)
+    @match ex begin
+        ::Symbol => if isdefined(m, ex)
+            getfield(m, ex)
+        else
+            ex
+        end
+
+        :($name.$sub) => begin
+            mod = guess_module(m, name)
+            if mod isa Module
+                return guess_value(mod, sub)
+            else
+                return ex
+            end
+        end
+        _ => ex
+    end
+end
