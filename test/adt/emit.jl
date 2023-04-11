@@ -1,3 +1,5 @@
+module TestEmit
+
 using Test
 using Expronicon
 using Expronicon.ADT: ADT, EmitInfo, ADTTypeDef, @adt, @use, @const_use,
@@ -45,6 +47,9 @@ body = quote
 
     ChangeColor(::Int64, ::Int64, ::Int64)
 end
+
+def = ADTTypeDef(Main, :Message, body)
+info = EmitInfo(def)
 
 @testset "EmitInfo(::ADTTypeDef)" begin
     def = ADTTypeDef(Main, :Message, body)
@@ -567,3 +572,5 @@ info = EmitInfo(def)
             end
         end
 end
+
+end # module

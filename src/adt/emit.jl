@@ -56,7 +56,7 @@ function guess_type!(info::EmitInfo, def::ADTTypeDef)
     for variant in def.variants
         typeinfo = get!(VariantFieldTypes, info.typeinfo, variant)
         typeinfo.guess = map(variant.fieldtypes) do type
-            guess_type(def.m, type)
+            check_type(type)
         end
         typeinfo.expr = variant.fieldtypes
     end
