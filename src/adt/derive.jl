@@ -4,17 +4,18 @@ end
 
 function derive_m(mod::Module, line::LineNumberNode, ex::Expr)
     @switch ex begin
-        @case :($name:$(first::Symbol))
+        @case :($name:$first)
             others = ()
-        @case Expr(:tuple, :($name:$(first::Symbol)), [e::Symbol for e in others]...)
+        @case Expr(:tuple, :($name:$(first)), [e for e in others]...)
         @case _
             error("Invalid expression")
     end
 
     expr_map((first, others...)) do rule
         msg = "$(rule) is not defined"
-        isdefined(mod, rule) || :(error($msg))
-        derive_rule(getfield(mod, rule), mod, line, name)
+        fn = guess_value(mod, rule)
+        (fn isa Expr || fn isa Symbol) && return :(error($msg))
+        derive_rule(fn, mod, line, name)
     end
 end
 
@@ -49,42 +50,42 @@ function derive_rule_m(mod::Module, jlfn::JLFunction)
     return codegen_ast(jlfn)
 end
 
-@derive_rule function hash(m::Module, line::LineNumberNode, Self::Symbol)
+@derive_rule function Base.hash(m::Module, line::LineNumberNode, Self::Symbol)
     isdefined(m, Self) || error("$(Self) is not defined")
     quote
         function $Base.hash(x::$Self, h::UInt)
             type = $ADT.variant_type(x)
-            h = hash(type, h)
+            h = $Base.hash(type, h)
             for idx in $ADT.variant_masks(x)
-                h = hash($Base.getfield(x, idx), h)
+                h = $Base.hash($Base.getfield(x, idx), h)
             end
             return h
         end
     end
 end
 
-@derive_rule function isequal(m::Module, line::LineNumberNode, Self::Symbol)
+@derive_rule function Base.isequal(m::Module, line::LineNumberNode, Self::Symbol)
     isdefined(m, Self) || error("$(Self) is not defined")
     quote
         function $Base.isequal(lhs::$Self, rhs::$Self)
             $ADT.variant_type(lhs) == $ADT.variant_type(rhs) || return false
         
             for idx in $ADT.variant_masks(lhs) # mask is the same for both
-                isequal($Base.getfield(lhs, idx), $Base.getfield(rhs, idx)) || return false
+                $Base.isequal($Base.getfield(lhs, idx), $Base.getfield(rhs, idx)) || return false
             end
             return true
         end
     end
 end
 
-@derive_rule function ==(m::Module, line::LineNumberNode, Self::Symbol)
+@derive_rule function Base.:(==)(m::Module, line::LineNumberNode, Self::Symbol)
     isdefined(m, Self) || error("$(Self) is not defined")
     quote
         function $Base.:(==)(lhs::$Self, rhs::$Self)
-            $ADT.variant_type(lhs) == $ADT.variant_type(rhs) || return false
-        
+            Base.:(==)($ADT.variant_type(lhs), $ADT.variant_type(rhs)) || return false
+
             for idx in $ADT.variant_masks(lhs) # mask is the same for both
-                $Base.getfield(lhs, idx) == $Base.getfield(rhs, idx) || return false
+                Base.:(==)($Base.getfield(lhs, idx), $Base.getfield(rhs, idx)) || return false
             end
             return true
         end

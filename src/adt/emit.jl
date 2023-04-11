@@ -41,13 +41,15 @@ function guess_type!(info::EmitInfo, def::ADTTypeDef)
     function check_type(expr)
         @switch expr begin
             @case ::Symbol
+                type = guess_type(def.m, expr)
+                type isa Type && return type
                 expr in info.variant_names && error("cannot use variant in type field")
-                return
+                return expr
             @case Expr(:curly, name, types...)
                 map(check_type, types)
-                return
+                return guess_type(def.m, expr)
             @case _
-                return
+                return guess_type(def.m, expr)
         end
     end
 
@@ -55,7 +57,6 @@ function guess_type!(info::EmitInfo, def::ADTTypeDef)
         typeinfo = get!(VariantFieldTypes, info.typeinfo, variant)
         typeinfo.guess = map(variant.fieldtypes) do type
             check_type(type)
-            guess_type(def.m, type)
         end
         typeinfo.expr = variant.fieldtypes
     end

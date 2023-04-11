@@ -22,6 +22,7 @@ export
     has_plain_constructor,
     guess_type,
     guess_module,
+    guess_value,
     # transformations
     Substitute, no_default, prettify, rm_lineinfo, flatten_blocks, name_only,
     annotations_only, rm_annotations, rm_single_block, rm_nothing,

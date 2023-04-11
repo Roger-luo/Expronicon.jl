@@ -67,9 +67,10 @@ function assert_defined(mod::Module, variants)
     end
 end
 
+# NOTE: dont assert here because new variables are
+#       expected to shadow the previous definition
 function use_m(mod::Module, expr::Expr)
     name, variants = variant_names_to_bind(mod, expr)
-    assert_defined(mod, variants)
     return expr_map(variants) do variant_name
         :($variant_name = $name.$variant_name)
     end
