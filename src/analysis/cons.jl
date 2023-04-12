@@ -82,23 +82,23 @@ julia> JLKwStruct(:(struct Foo
 end
 ```
 """
-function JLKwStruct(ex::Expr, typealias=nothing)
+function JLKwStruct(ex::Expr, typealias=nothing; source=nothing)
     line, doc, expr = split_doc(ex)
-    ismutable, typename, typevars, supertype, body = split_struct(expr)
+    ismutable, typename, typevars, supertype, body = split_struct(expr; source)
 
     fields, constructors, misc = JLKwField[], JLFunction[], []
-    field_doc, field_line = nothing, nothing
+    field_doc, field_source = nothing, source
     body = flatten_blocks(body)
     for each in body.args
-        m = split_field_if_match(typename, each, true)
+        m = split_field_if_match(typename, each, true, field_source)
         if m isa String
             field_doc = m
         elseif m isa LineNumberNode
-            field_line = m
+            field_source = m
         elseif m isa NamedTuple
-            field = JLKwField(;m..., doc=field_doc, line=field_line)
+            field = JLKwField(;m..., doc=field_doc, line=field_source)
             push!(fields, field)
-            field_doc, field_line = nothing, nothing
+            field_doc, field_source = nothing, nothing
         elseif m isa JLFunction
             push!(constructors, m)
         else
@@ -156,8 +156,10 @@ else
 end
 ```
 """
-function JLIfElse(ex::Expr)
-    ex.head === :if || error("expect an if ... elseif ... else ... end expression")
+function JLIfElse(ex::Expr; source=nothing)
+    ex.head === :if || throw(SyntaxError(
+        "expect an if ... elseif ... else ... end expression", source
+    ))
     conds, stmts, otherwise = split_ifelse(ex)
     return JLIfElse(conds, stmts, otherwise)
 end

@@ -10,7 +10,7 @@ export
     JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     # analysis
     @expr, @test_expr, compare_expr,
-    AnalysisError, is_function, is_kw_function, is_struct, is_tuple, is_splat,
+    AnalysisError, SyntaxError, is_function, is_kw_function, is_struct, is_tuple, is_splat,
     is_ifelse, is_for, is_field, is_field_default, is_datatype_expr,
     is_matrix_expr,
     split_function, split_function_head, split_struct,

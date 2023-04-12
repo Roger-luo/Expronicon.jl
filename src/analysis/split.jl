@@ -66,13 +66,13 @@ end
 Split the name, type parameters and supertype definition from `struct`
 declaration head.
 """
-function split_struct_name(@nospecialize(ex))
+function split_struct_name(@nospecialize(ex); source = nothing)
     return @match ex begin
         :($name{$(typevars...)}) => (name, typevars, nothing)
         :($name{$(typevars...)} <: $type) => (name, typevars, type)
         ::Symbol => (ex, [], nothing)
         :($name <: $type) => (name, [], type)
-        _ => anlys_error("struct", ex)
+        _ => throw(SyntaxError("expect struct got $ex", source))
     end
 end
 
@@ -81,9 +81,9 @@ end
 
 Split struct definition head and body.
 """
-function split_struct(ex::Expr)
-    ex.head === :struct || error("expect a struct expr, got $ex")
-    name, typevars, supertype = split_struct_name(ex.args[2])
+function split_struct(ex::Expr; source = nothing)
+    ex.head === :struct || throw(SyntaxError("expect a struct expr, got $ex", source))
+    name, typevars, supertype = split_struct_name(ex.args[2]; source)
     body = ex.args[3]
     return ex.args[1], name, typevars, supertype, body
 end
@@ -165,20 +165,20 @@ Split the field definition if it matches the given type name.
 Returns `NamedTuple` with `name`, `type`, `default` and `isconst` fields
 if it matches, otherwise return `nothing`.
 """
-function split_field_if_match(typename::Symbol, expr, default::Bool=false)
+function split_field_if_match(typename::Symbol, expr, default::Bool=false, source = nothing)
     @switch expr begin
         @case Expr(:const, :($(name::Symbol)::$type = $value))
             default && return (;name, type, isconst=true, default=value)
-            throw(ArgumentError("default value syntax is not allowed"))
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case Expr(:const, :($(name::Symbol) = $value))
             default && return (;name, type=Any, isconst=true, default=value)
-            throw(ArgumentError("default value syntax is not allowed"))
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case :($(name::Symbol)::$type = $value)
             default && return (;name, type, isconst=false, default=value)
-            throw(ArgumentError("default value syntax is not allowed"))
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case :($(name::Symbol) = $value)
             default && return (;name, type=Any, isconst=false, default=value)
-            throw(ArgumentError("default value syntax is not allowed"))
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case Expr(:const, :($(name::Symbol)::$type))
             default && return (;name, type, isconst=true, default=no_default)
             return (;name, type, isconst=true)

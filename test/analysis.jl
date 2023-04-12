@@ -209,7 +209,7 @@ end
     @test is_function(ast.args[4].args[end].args[end-1])
     println(jlstruct)
 
-    @test_throws AnalysisError split_struct_name(:(function Foo end))
+    @test_throws SyntaxError split_struct_name(:(function Foo end))
 end
 
 @testset "JLKwStruct" begin
