@@ -26,12 +26,12 @@ end
 
 Split function head declaration with function body.
 """
-function split_function(ex::Expr)
+function split_function(ex::Expr; source = nothing)
     @match ex begin
         Expr(:function, call, body) => (:function, call, body)
         Expr(:(=), call, body) => (:(=), call, body)
         Expr(:(->), call, body) => (:(->), call, body)
-        _ => anlys_error("function", ex)
+        _ => throw(SyntaxError("expect a function expr, got $ex", source))
     end
 end
 
@@ -40,7 +40,7 @@ end
 
 Split function head to name, arguments, keyword arguments and where parameters.
 """
-function split_function_head(ex::Expr)
+function split_function_head(ex::Expr; source = nothing)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing, nothing)
@@ -56,7 +56,7 @@ function split_function_head(ex::Expr)
             name, args, kw, _, rettype = split_function_head(call)
             (name, args, kw, whereparams, rettype)
         end
-        _ => anlys_error("function head expr", ex)
+        _ => throw(SyntaxError("expect a function head, got $ex", source))
     end
 end
 
@@ -165,7 +165,7 @@ Split the field definition if it matches the given type name.
 Returns `NamedTuple` with `name`, `type`, `default` and `isconst` fields
 if it matches, otherwise return `nothing`.
 """
-function split_field_if_match(typename::Symbol, expr, default::Bool=false, source = nothing)
+function split_field_if_match(typename::Symbol, expr, default::Bool=false; source = nothing)
     @switch expr begin
         @case Expr(:const, :($(name::Symbol)::$type = $value))
             default && return (;name, type, isconst=true, default=value)

@@ -13,10 +13,14 @@ f(x) = begin
 end
 ```
 """
-function JLFunction(ex::Expr)
+function JLFunction(ex::Expr; source = nothing)
     line, doc, expr = split_doc(ex)
-    head, call, body = split_function(expr)
-    name, args, kw, whereparams, rettype = split_function_head(call)
+    if !isnothing(doc)
+        source = line
+    end
+        
+    head, call, body = split_function(expr; source)
+    name, args, kw, whereparams, rettype = split_function_head(call; source)
     JLFunction(head, name, args, kw, rettype, whereparams, body, line, doc)
 end
 
@@ -37,24 +41,27 @@ struct Foo
 end
 ```
 """
-function JLStruct(ex::Expr)
+function JLStruct(ex::Expr; source=nothing)
     line, doc, expr = split_doc(ex)
-    ismutable, typename, typevars, supertype, body = split_struct(expr)
+    if !isnothing(doc)
+        source = line
+    end
+    ismutable, typename, typevars, supertype, body = split_struct(expr; source)
 
     fields, constructors, misc = JLField[], JLFunction[], []
-    field_doc, field_line = nothing, nothing
+    field_doc, field_source = nothing, source
 
     body = flatten_blocks(body)
 
     for each in body.args
-        m = split_field_if_match(typename, each)
+        m = split_field_if_match(typename, each; source=field_source)
         if m isa String
             field_doc = m
         elseif m isa LineNumberNode
-            field_line = m
+            field_source = m
         elseif m isa NamedTuple
-            push!(fields, JLField(;m..., doc=field_doc, line=field_line))
-            field_doc, field_line = nothing, nothing
+            push!(fields, JLField(;m..., doc=field_doc, line=field_source))
+            field_doc, field_source = nothing, nothing
         elseif m isa JLFunction
             push!(constructors, m)
         else
@@ -84,13 +91,16 @@ end
 """
 function JLKwStruct(ex::Expr, typealias=nothing; source=nothing)
     line, doc, expr = split_doc(ex)
+    if !isnothing(doc)
+        source = line
+    end
     ismutable, typename, typevars, supertype, body = split_struct(expr; source)
 
     fields, constructors, misc = JLKwField[], JLFunction[], []
     field_doc, field_source = nothing, source
     body = flatten_blocks(body)
     for each in body.args
-        m = split_field_if_match(typename, each, true, field_source)
+        m = split_field_if_match(typename, each, true; source=field_source)
         if m isa String
             field_doc = m
         elseif m isa LineNumberNode

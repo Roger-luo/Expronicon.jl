@@ -131,9 +131,9 @@ end
     @test_expr JLFunction function (x::Int; kw=1) end
 
     ex = :(struct Foo end)
-    @test_throws AnalysisError JLFunction(ex)
+    @test_throws SyntaxError JLFunction(ex)
     ex = :(@foo(2, 3))
-    @test_throws AnalysisError split_function_head(ex)
+    @test_throws SyntaxError split_function_head(ex)
 
     ex = :(Foo(; a = 1) = new(a))
     @test JLFunction(ex).kwargs[1] == Expr(:kw, :a, 1)
