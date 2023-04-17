@@ -49,6 +49,7 @@ is `name`, the rest are all optional.
 - `kwargs`: optional, function keyword arguments, a list of `Expr(:kw, name, default)`.
 - `rettype`: optional, the explicit return type of a function,
     can be a `Type`, `Symbol`, `Expr` or just `nothing`, default is `nothing`.
+- `generated`: optional, if this is a generated function.
 - `whereparams`: optional, type variables, can be a list of `Type`,
     `Expr` or `nothing`, default is `nothing`.
 - `body`: optional, function body, an `Expr`, default is `Expr(:block)`.
@@ -105,6 +106,7 @@ mutable struct JLFunction <: JLExpr
     args::Vector{Any}
     kwargs::Maybe{Vector{Any}}
     rettype::Any
+    generated::Bool
     whereparams::Maybe{Vector{Any}} 
     body::Any
     line::Maybe{LineNumberNode}
@@ -115,6 +117,7 @@ function JLFunction(;
         head=:function, name=nothing,
         args=[], kwargs=nothing,
         rettype=nothing,
+        generated=false,
         whereparams=nothing, body=Expr(:block),
         line=nothing, doc=nothing
     )
@@ -133,7 +136,7 @@ function JLFunction(;
     !isnothing(kwargs) && any(x->!isa(x, Union{Symbol, Expr}), kwargs) &&
         throw(ArgumentError("function kwargs can only be a list of `Expr(:kw, name, default)` or `Symbol`, got a $(typeof(kwargs))."))
 
-    JLFunction(head, name, args, kwargs, rettype, whereparams, body, line, doc)
+    JLFunction(head, name, args, kwargs, rettype, generated, whereparams, body, line, doc)
 end
 
 """

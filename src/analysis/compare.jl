@@ -221,6 +221,8 @@ function compare_expr_object(m::Module, lhs::Expr, rhs::Expr)
             return compare_where(m, lhs, rhs)
         @case (Expr(:curly, _...), Expr(:curly, _...))
             return compare_curly(m, lhs, rhs)
+        @case (Expr(:macrocall, _...), Expr(:macrocall, _...))
+            return compare_macrocall(m, lhs, rhs)
         @case (Expr(:function, _...), Expr(:function, _...))
             return compare_function(m, lhs, rhs)
 
@@ -235,6 +237,15 @@ function compare_expr_object(m::Module, lhs::Expr, rhs::Expr)
         @case _ # well none of the cases above, fallback to ==
             return lhs == rhs
     end
+end
+
+function compare_macrocall(m::Module, lhs::Expr, rhs::Expr)
+    length(lhs.args) == length(rhs.args) || return false # check #args
+    compare_expr(lhs.args[1], rhs.args[1]) || return false # compare name
+    for (a, b) in zip(lhs.args[3:end], rhs.args[3:end])
+        compare_expr(m, a, b) || return false
+    end
+    return true
 end
 
 function compare_function(m::Module, lhs::Expr, rhs::Expr)

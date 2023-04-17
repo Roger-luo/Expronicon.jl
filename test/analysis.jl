@@ -473,3 +473,7 @@ end
 @testset "compare" begin
     include("analysis/compare.jl")
 end
+
+@testset "generated" begin
+    include("analysis/generated.jl")
+end

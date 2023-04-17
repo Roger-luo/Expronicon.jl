@@ -89,6 +89,7 @@ function codegen_ast(fn::JLFunction)
     end
 
     fn_def = Expr(fn.head, call, maybe_wrap_block(codegen_ast(fn.body)))
+    fn_def = codegen_ast_generated(fn, fn_def)
     return codegen_ast_docstring(fn, fn_def)
 end
 
@@ -318,6 +319,11 @@ end
 function codegen_ast_docstring(def, body)
     def.doc === nothing && return body
     Expr(:macrocall, GlobalRef(Core, Symbol("@doc")), def.line, def.doc, body)
+end
+
+function codegen_ast_generated(def::JLFunction, body)
+    def.generated || return body
+    return Expr(:macrocall, Expr(:., Base, QuoteNode(Symbol("@generated"))), def.line, body)
 end
 
 """
