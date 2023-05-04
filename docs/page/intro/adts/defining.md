@@ -20,7 +20,7 @@ take a supertype as `<name> <: <supertype>`. `<variant>` is one of the following
 
 ```julia
 <name> # variant with no field
-<name>(<field1>, <field2>, ...) # variant with annoymous fields
+<name>(<field1>, <field2>, ...) # variant with anonymous fields
 struct <name>
     <field1>
     <field2>
@@ -41,11 +41,11 @@ and no fields. For example:
 end
 ```
 
-## Variants with annoymous fields
+## Variants with anonymous fields
 
-It is sometimes useful to define a variant with annoymous fields.
-So you can save a few minites for figuring out a good name for the fields.
-To declare a variant with annoymous fields, you can use the following syntax:
+It is sometimes useful to define a variant with anonymous fields.
+So you can save a few minutes for figuring out a good name for the fields.
+To declare a variant with anonymous fields, you can use the following syntax:
 
 ```julia
 @adt Message begin
