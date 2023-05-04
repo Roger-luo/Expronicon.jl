@@ -578,7 +578,7 @@ Evaluate the literal values and insert them back to the expression. The literal 
 expr_map(f, c...)
 ```
 
-Similar to `Base.map`, but expects `f` to return an expression, and will concanate these expression as a `Expr(:block, ...)` expression.
+Similar to `Base.map`, but expects `f` to return an expression, and will concatenate these expression as a `Expr(:block, ...)` expression.
 
 **Example**
 
@@ -612,7 +612,7 @@ end
 flatten_blocks(ex)
 ```
 
-Remove hierachical expression blocks.
+Remove hierarchical expression blocks.
 
 
 <a target='_blank' href='https://github.com/Roger-luo/Expronicon.jl/blob/a5382945571811e3fab9f4bf7a7bdf09c2101602/src/transform.jl#L171-L175' class='documenter-source'>source</a><br>
