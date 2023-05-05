@@ -43,7 +43,7 @@ julia> @match Message.Move(1, 2) begin
 1
 ```
 
-the annoymous fields can only be matched using positional pattern matching:
+the anonymous fields can only be matched using positional pattern matching:
 
 ```julia
 julia> @match Message.Write("hello") begin

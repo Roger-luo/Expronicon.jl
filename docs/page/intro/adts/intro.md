@@ -40,7 +40,7 @@ MLStyle.
 ## What's happening under the hood
 
 The `@adt` macro will generate a new type and a set of constructors for the
-type. It will wrap mulitple variants in the same Julia struct, and use a tag field
+type. It will wrap multiple variants in the same Julia struct, and use a tag field
 to distinguish the variants. This is why it is type stable.
 
 The `@adt` macro will also generate a set of functions for pattern matching too, which
@@ -49,7 +49,7 @@ is why all `MLStyle` pattern matching works.
 The `@adt` macro will also generate a set of reflection functions, so that you can
 inspect the algebra data type easily.
 
-## Comparision with other implementations
+## Comparison with other implementations
 
 There has been a few implementations of algebra data type in Julia, we will
 discuss the differences between them here.
