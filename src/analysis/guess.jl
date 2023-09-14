@@ -43,7 +43,7 @@ function guess_type(m::Module, ex)
             type = guess_type(m, name)
             typevars = map(typevars) do typevar
                 guess_type(m, typevar)
-            end
+            end::Union{Vector{Type}, Vector{Expr}, Vector{Union{Type, Expr}}}
 
             if type === Union
                 all(x->isa(x,Type), typevars) || return ex

@@ -230,7 +230,7 @@ function (p::Printer)(ex)
     function print_multi_lines(s::AbstractString)
         buf = IOBuffer(s); line_buf = IOBuffer()
         while !eof(buf)
-            ch = read(buf, Char)
+            ch = read(buf, Char)::Char
             if ch == '\n'
                 printstyled(String(take!(line_buf)), color=c.string)
                 println(); tab()

@@ -63,7 +63,7 @@ end
 function codegen_ast(fn::JLFunction)
     # handle anonymous syntax: function (x; kw=value) end
     if fn.head === :function && fn.name === nothing && fn.kwargs !== nothing &&
-        isone(length(fn.args)) && isone(length(fn.kwargs))
+        isone(length(fn.args)) && isone(length(fn.kwargs::Vector{Any}))
         kw = fn.kwargs[1].args[1]
         va = fn.kwargs[1].args[2]
         call = Expr(:block, fn.args[1], :($kw = $va))
