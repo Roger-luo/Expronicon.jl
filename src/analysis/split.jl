@@ -48,10 +48,11 @@ function split_function_head(ex::Expr; source = nothing)
         Expr(:call, name, args...) => (name, args, nothing, nothing, nothing)
         Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing, nothing)
         Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing, nothing)
-        Expr(:(::), call, rettype) => begin
+        Expr(:(::), call::Expr, rettype) => begin
             name, args, kw, whereparams, _ = split_function_head(call)
             (name, args, kw, whereparams, rettype)
         end
+        Expr(:(::), arg::Symbol, argtype) || Expr(:(::), argtype) => (nothing, Any[ex], nothing, nothing, nothing)
         Expr(:where, call, whereparams...) => begin
             name, args, kw, _, rettype = split_function_head(call)
             (name, args, kw, whereparams, rettype)
@@ -59,6 +60,7 @@ function split_function_head(ex::Expr; source = nothing)
         _ => throw(SyntaxError("expect a function head, got $ex", source))
     end
 end
+split_function_head(s::Symbol; source = nothing) = (nothing, Any[s], nothing, nothing, nothing)
 
 """
     split_struct_name(ex::Expr) -> name, typevars, supertype

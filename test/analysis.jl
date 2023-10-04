@@ -143,6 +143,15 @@ end
     end
 
     @test_expr JLFunction f(x::Int)::Int = x
+
+    ex = :(x->2x)
+    @test JLFunction(ex).args == Any[:x]
+
+    ex = :(x::Int->2x)
+    @test JLFunction(ex).args == Any[:(x::Int)]
+
+    ex = :(::Int -> 0)
+    @test JLFunction(ex).args == Any[:(::Int)]
 end
 
 @testset "JLStruct(ex)" begin
