@@ -455,6 +455,10 @@ function (p::Printer)(ex)
             leading_tab()
             keyword("return "); p(code)
 
+        @case Expr(:toplevel, code)
+            leading_tab()
+            printstyled("#= meta: toplevel =#", color=c.comment); println()
+            p(code)
         @case _
             inline(ex)
     end
