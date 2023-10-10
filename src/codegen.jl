@@ -60,14 +60,41 @@ function codegen_ast(def::JLIfElse)
     return ex
 end
 
-function codegen_ast(fn::JLFunction)
-    # handle anonymous syntax: function (x; kw=value) end
-    if fn.head === :function && fn.name === nothing && fn.kwargs !== nothing &&
-        isone(length(fn.args)) && isone(length(fn.kwargs))
-        kw = fn.kwargs[1].args[1]
-        va = fn.kwargs[1].args[2]
-        call = Expr(:block, fn.args[1], :($kw = $va))
-    else
+@static if VERSION < v"1.10-"
+    function codegen_ast(fn::JLFunction)
+        # handle anonymous syntax: function (x; kw=value) end
+        if fn.head === :function && fn.name === nothing && fn.kwargs !== nothing &&
+            isone(length(fn.args)) && isone(length(fn.kwargs))
+            kw = fn.kwargs[1].args[1]
+            va = fn.kwargs[1].args[2]
+            call = Expr(:block, fn.args[1], :($kw = $va))
+        else
+            if fn.name === nothing
+                call = Expr(:tuple)
+            else
+                call = Expr(:call, fn.name)
+            end
+
+            if fn.kwargs !== nothing
+                push!(call.args, Expr(:parameters, fn.kwargs...))
+            end
+            append!(call.args, fn.args)
+        end
+
+        if fn.rettype !== nothing
+            call = Expr(:(::), call, fn.rettype)
+        end
+
+        if fn.whereparams !== nothing
+            call = Expr(:where, call, fn.whereparams...)
+        end
+
+        fn_def = Expr(fn.head, call, maybe_wrap_block(codegen_ast(fn.body)))
+        fn_def = codegen_ast_generated(fn, fn_def)
+        return codegen_ast_docstring(fn, fn_def)
+    end
+else # VERSION >= v"1.10-", no need to handle anonymous syntax
+    function codegen_ast(fn::JLFunction)
         if fn.name === nothing
             call = Expr(:tuple)
         else
@@ -78,20 +105,21 @@ function codegen_ast(fn::JLFunction)
             push!(call.args, Expr(:parameters, fn.kwargs...))
         end
         append!(call.args, fn.args)
+    
+        if fn.rettype !== nothing
+            call = Expr(:(::), call, fn.rettype)
+        end
+    
+        if fn.whereparams !== nothing
+            call = Expr(:where, call, fn.whereparams...)
+        end
+    
+        fn_def = Expr(fn.head, call, maybe_wrap_block(codegen_ast(fn.body)))
+        fn_def = codegen_ast_generated(fn, fn_def)
+        return codegen_ast_docstring(fn, fn_def)
     end
 
-    if fn.rettype !== nothing
-        call = Expr(:(::), call, fn.rettype)
-    end
-
-    if fn.whereparams !== nothing
-        call = Expr(:where, call, fn.whereparams...)
-    end
-
-    fn_def = Expr(fn.head, call, maybe_wrap_block(codegen_ast(fn.body)))
-    fn_def = codegen_ast_generated(fn, fn_def)
-    return codegen_ast_docstring(fn, fn_def)
-end
+end # VERSION < v"1.10-"
 
 function codegen_ast(def::JLStruct)
     return codegen_ast_struct(def)
