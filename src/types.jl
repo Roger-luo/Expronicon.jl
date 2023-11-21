@@ -107,7 +107,7 @@ mutable struct JLFunction <: JLExpr
     kwargs::Maybe{Vector{Any}}
     rettype::Any
     generated::Bool
-    whereparams::Maybe{Vector{Any}} 
+    whereparams::Maybe{Vector{Any}}
     body::Any
     line::Maybe{LineNumberNode}
     doc::Maybe{String}
@@ -118,8 +118,10 @@ function JLFunction(;
         args=[], kwargs=nothing,
         rettype=nothing,
         generated=false,
-        whereparams=nothing, body=Expr(:block),
-        line=nothing, doc=nothing
+        whereparams=nothing,
+        body=Expr(:block),
+        line=nothing,
+        doc=nothing
     )
     head in [:function, :(=), :(->)] ||
         throw(ArgumentError("function head can only take `:function`, `:(=)` or `:(->)`"))

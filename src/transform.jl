@@ -75,6 +75,7 @@ function name_only(@nospecialize(ex))
     ex isa Expr || error("unsupported expression $ex")
     ex.head in [:call, :curly, :(<:), :(::), :where, :function, :kw, :(=), :(->)] && return name_only(ex.args[1])
     ex.head === :. && return name_only(ex.args[2])
+    ex.head === :... && return name_only(ex.args[1])
     ex.head === :module && return name_only(ex.args[2])
     error("unsupported expression $ex")
 end
@@ -87,6 +88,7 @@ Return type annotations only. See also [`name_only`](@ref).
 function annotations_only(@nospecialize(ex))
     ex isa Symbol && return :()
     ex isa Expr || error("unsupported expression $ex")
+    Meta.isexpr(ex, :...) && return annotations_only(ex.args[1])
     Meta.isexpr(ex, :(::)) && return ex.args[end]
     error("unsupported expression $ex")
 end
