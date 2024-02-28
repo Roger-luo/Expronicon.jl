@@ -4,7 +4,7 @@ using MLStyle
 using MLStyle.MatchImpl
 using MLStyle.AbstractPatterns
 
-export 
+export
     # types
     NoDefault, JLExpr, JLFor, JLIfElse,
     JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
@@ -13,7 +13,7 @@ export
     AnalysisError, SyntaxError, is_function, is_kw_function, is_struct, is_tuple, is_splat,
     is_ifelse, is_for, is_field, is_field_default, is_datatype_expr,
     is_matrix_expr,
-    split_function, split_function_head, split_struct,
+    split_function, split_function_head, split_anonymous_function_head, split_struct,
     split_struct_name, split_ifelse,
     uninferrable_typevars, has_symbol,
     is_literal, is_gensym,

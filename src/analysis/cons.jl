@@ -13,7 +13,7 @@ f(x) = begin
 end
 ```
 """
-function JLFunction(ex::Expr; source = nothing)
+function JLFunction(ex::Expr; source=nothing)
     line, doc, expr = split_doc(ex)
     if !isnothing(doc)
         source = line
@@ -21,13 +21,16 @@ function JLFunction(ex::Expr; source = nothing)
 
     (generated, expr) = @match expr begin
         Expr(:macrocall, &(GlobalRef(Base, Symbol("@generated"))), line, expr) ||
-        Expr(:macrocall, &(Symbol("@generated")), line, expr) ||
-        Expr(:macrocall, Expr(:., :Base, &(QuoteNode(Symbol("@generated")))), line, expr) => (true, expr)
+            Expr(:macrocall, &(Symbol("@generated")), line, expr) ||
+            Expr(:macrocall, Expr(:., :Base, &(QuoteNode(Symbol("@generated")))), line, expr) => (true, expr)
         _ => (false, expr)
     end
 
     head, call, body = split_function(expr; source)
-    name, args, kw, whereparams, rettype = split_function_head(call; source)
+    name, args, kw, whereparams, rettype = @match head begin
+        :(->) => split_anonymous_function_head(call; source)
+        h => split_function_head(call; source)
+    end
     JLFunction(head, name, args, kw, rettype, generated, whereparams, body, line, doc)
 end
 
@@ -67,7 +70,7 @@ function JLStruct(ex::Expr; source=nothing)
         elseif m isa LineNumberNode
             field_source = m
         elseif m isa NamedTuple
-            push!(fields, JLField(;m..., doc=field_doc, line=field_source))
+            push!(fields, JLField(; m..., doc=field_doc, line=field_source))
             field_doc, field_source = nothing, nothing
         elseif m isa JLFunction
             push!(constructors, m)
@@ -113,7 +116,7 @@ function JLKwStruct(ex::Expr, typealias=nothing; source=nothing)
         elseif m isa LineNumberNode
             field_source = m
         elseif m isa NamedTuple
-            field = JLKwField(;m..., doc=field_doc, line=field_source)
+            field = JLKwField(; m..., doc=field_doc, line=field_source)
             push!(fields, field)
             field_doc, field_source = nothing, nothing
         elseif m isa JLFunction

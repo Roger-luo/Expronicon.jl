@@ -14,6 +14,7 @@ The following are the list of all the split functions:
 ```julia
 split_function
 split_function_head
+split_anonymous_function_head
 split_struct
 split_struct_name
 split_ifelse
