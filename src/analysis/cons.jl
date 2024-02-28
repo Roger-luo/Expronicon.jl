@@ -70,7 +70,7 @@ function JLStruct(ex::Expr; source=nothing)
         elseif m isa LineNumberNode
             field_source = m
         elseif m isa NamedTuple
-            push!(fields, JLField(; m..., doc=field_doc, line=field_source))
+            push!(fields, JLField(;m..., doc=field_doc, line=field_source))
             field_doc, field_source = nothing, nothing
         elseif m isa JLFunction
             push!(constructors, m)
@@ -116,7 +116,7 @@ function JLKwStruct(ex::Expr, typealias=nothing; source=nothing)
         elseif m isa LineNumberNode
             field_source = m
         elseif m isa NamedTuple
-            field = JLKwField(; m..., doc=field_doc, line=field_source)
+            field = JLKwField(;m..., doc=field_doc, line=field_source)
             push!(fields, field)
             field_doc, field_source = nothing, nothing
         elseif m isa JLFunction

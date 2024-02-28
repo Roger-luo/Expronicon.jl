@@ -6,18 +6,18 @@ Split doc string from given expression.
 function split_doc(ex::Expr)
     @switch ex begin
         @case Expr(:macrocall, &(GlobalRef(Core, Symbol("@doc"))), line, doc, expr) ||
-              Expr(:macrocall, &(Symbol("@doc")), line, doc, expr) ||
-              Expr(:macrocall, Expr(:., :Core, &(QuoteNode(Symbol("@doc")))), line, doc, expr)
-        return line, doc, expr
+                Expr(:macrocall, &(Symbol("@doc")), line, doc, expr) ||
+                Expr(:macrocall, Expr(:., :Core, &(QuoteNode(Symbol("@doc")))), line, doc, expr)
+            return line, doc, expr
 
         # quote
         #     @doc "" struct <name> end
         # end
         @case Expr(:block, ::LineNumberNode, stmt)
-        line, doc, expr = split_doc(stmt)
-        return line, doc, expr
+            line, doc, expr = split_doc(stmt)
+            return line, doc, expr
         @case _
-        return nothing, nothing, ex
+            return nothing, nothing, ex
     end
 end
 
@@ -26,7 +26,7 @@ end
 
 Split function head declaration with function body.
 """
-function split_function(ex::Expr; source=nothing)
+function split_function(ex::Expr; source = nothing)
     @match ex begin
         Expr(:function, call, body) => (:function, call, body)
         Expr(:(=), call, body) => (:(=), call, body)
@@ -86,14 +86,13 @@ function split_anonymous_function_head(ex::Expr; source=nothing)
 end
 split_anonymous_function_head(s::Symbol; source=nothing) = (nothing, Any[s], nothing, nothing, nothing)
 
-
 """
     split_struct_name(ex::Expr) -> name, typevars, supertype
 
 Split the name, type parameters and supertype definition from `struct`
 declaration head.
 """
-function split_struct_name(@nospecialize(ex); source=nothing)
+function split_struct_name(@nospecialize(ex); source = nothing)
     return @match ex begin
         :($name{$(typevars...)}) => (name, typevars, nothing)
         :($name{$(typevars...)} <: $type) => (name, typevars, type)
@@ -108,7 +107,7 @@ end
 
 Split struct definition head and body.
 """
-function split_struct(ex::Expr; source=nothing)
+function split_struct(ex::Expr; source = nothing)
     ex.head === :struct || throw(SyntaxError("expect a struct expr, got $ex", source))
     name, typevars, supertype = split_struct_name(ex.args[2]; source)
     body = ex.args[3]
@@ -165,13 +164,13 @@ end
 
 Return the type variables that are not inferrable in given struct definition.
 """
-function uninferrable_typevars(def::Union{JLStruct,JLKwStruct}; leading_inferable::Bool=true)
+function uninferrable_typevars(def::Union{JLStruct, JLKwStruct}; leading_inferable::Bool=true)
     typevars = name_only.(def.typevars)
     field_types = [field.type for field in def.fields]
 
     if leading_inferable
         idx = findfirst(typevars) do t
-            !any(map(f -> has_symbol(f, t), field_types))
+            !any(map(f->has_symbol(f, t), field_types))
         end
         idx === nothing && return []
     else
@@ -180,7 +179,7 @@ function uninferrable_typevars(def::Union{JLStruct,JLKwStruct}; leading_inferabl
     uninferrable = typevars[1:idx]
 
     for T in typevars[idx+1:end]
-        any(map(f -> has_symbol(f, T), field_types)) || push!(uninferrable, T)
+        any(map(f->has_symbol(f, T), field_types)) || push!(uninferrable, T)
     end
     return uninferrable
 end
@@ -192,42 +191,41 @@ Split the field definition if it matches the given type name.
 Returns `NamedTuple` with `name`, `type`, `default` and `isconst` fields
 if it matches, otherwise return `nothing`.
 """
-function split_field_if_match(typename::Symbol, expr, default::Bool=false; source=nothing)
+function split_field_if_match(typename::Symbol, expr, default::Bool=false; source = nothing)
     @switch expr begin
         @case Expr(:const, :($(name::Symbol)::$type = $value))
-        default && return (; name, type, isconst=true, default=value)
-        throw(SyntaxError("default value syntax is not allowed", source))
+            default && return (;name, type, isconst=true, default=value)
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case Expr(:const, :($(name::Symbol) = $value))
-        default && return (; name, type=Any, isconst=true, default=value)
-        throw(SyntaxError("default value syntax is not allowed", source))
+            default && return (;name, type=Any, isconst=true, default=value)
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case :($(name::Symbol)::$type = $value)
-        default && return (; name, type, isconst=false, default=value)
-        throw(SyntaxError("default value syntax is not allowed", source))
+            default && return (;name, type, isconst=false, default=value)
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case :($(name::Symbol) = $value)
-        default && return (; name, type=Any, isconst=false, default=value)
-        throw(SyntaxError("default value syntax is not allowed", source))
+            default && return (;name, type=Any, isconst=false, default=value)
+            throw(SyntaxError("default value syntax is not allowed", source))
         @case Expr(:const, :($(name::Symbol)::$type))
-        default && return (; name, type, isconst=true, default=no_default)
-        return (; name, type, isconst=true)
+            default && return (;name, type, isconst=true, default=no_default)
+            return (;name, type, isconst=true)
         @case Expr(:const, name::Symbol)
-        default && return (; name, type=Any, isconst=true, default=no_default)
-        return (; name, type=Any, isconst=true)
+            default && return (;name, type=Any, isconst=true, default=no_default)
+            return (;name, type=Any, isconst=true)
         @case :($(name::Symbol)::$type)
-        default && return (; name, type, isconst=false, default=no_default)
-        return (; name, type, isconst=false)
+            default && return (;name, type, isconst=false, default=no_default)
+            return (;name, type, isconst=false)
         @case name::Symbol
-        default && return (; name, type=Any, isconst=false, default=no_default)
-        return (; name, type=Any, isconst=false)
+            default && return (;name, type=Any, isconst=false, default=no_default)
+            return (;name, type=Any, isconst=false)
         @case ::String || ::LineNumberNode
-        return expr
-        @case if is_function(expr)
-        end
-        if name_only(expr) === typename
-            return JLFunction(expr)
-        else
             return expr
-        end
+        @case if is_function(expr) end
+            if name_only(expr) === typename
+                return JLFunction(expr)
+            else
+                return expr
+            end
         @case _
-        return expr
+            return expr
     end
 end

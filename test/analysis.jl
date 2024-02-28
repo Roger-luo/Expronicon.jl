@@ -14,36 +14,36 @@ end
     @test is_datatype_expr(:(Main.Reflected.OptionA))
     @test is_datatype_expr(Expr(:curly, :(Main.Reflected.OptionC), :(Core.Int64)))
     @test is_datatype_expr(:(struct Foo end)) == false
-    @test is_datatype_expr(:(Foo{T} where {T})) == false
+    @test is_datatype_expr(:(Foo{T} where T)) == false
 end
 
 @testset "uninferrable_typevars" begin
     def = @expr JLKwStruct struct Inferable1{T}
-        x::Constaint{T,<(2)}
+        x::Constaint{T, <(2)}
     end
-
+    
     @test uninferrable_typevars(def) == []
-
+    
     def = @expr JLKwStruct struct Inferable2{T}
-        x::Constaint{Float64,<(2)}
+        x::Constaint{Float64, <(2)}
     end
 
     @test uninferrable_typevars(def) == [:T]
 
-    def = @expr JLKwStruct struct Inferable3{T,N}
+    def = @expr JLKwStruct struct Inferable3{T, N}
         x::Int
         y::N
     end
     @test uninferrable_typevars(def) == [:T]
 
 
-    def = @expr JLKwStruct struct Inferable4{T,N}
+    def = @expr JLKwStruct struct Inferable4{T, N}
         x::T
         y::N
     end
     @test uninferrable_typevars(def) == []
 
-    def = @expr JLKwStruct struct Inferable5{T,N}
+    def = @expr JLKwStruct struct Inferable5{T, N}
         x::T
         y::Float64
     end
@@ -53,34 +53,34 @@ end
 end
 
 @testset "has_plain_constructor" begin
-    def = @expr JLKwStruct struct Foo1{T,N}
+    def = @expr JLKwStruct struct Foo1{T, N}
         x::Int
         y::N
-        Foo1{T,N}(x, y) where {T,N} = new{T,N}(x, y)
+        Foo1{T, N}(x, y) where {T, N} = new{T, N}(x, y)
     end
 
     @test has_plain_constructor(def) == true
 
-    def = @expr JLKwStruct struct Foo2{T,N}
+    def = @expr JLKwStruct struct Foo2{T, N}
         x::T
         y::N
-        Foo2(x, y) = new{typeof(x),typeof(y)}(x, y)
+        Foo2(x, y) = new{typeof(x), typeof(y)}(x, y)
     end
 
     @test has_plain_constructor(def) == false
 
-    def = @expr JLKwStruct struct Foo3{T,N}
+    def = @expr JLKwStruct struct Foo3{T, N}
         x::Int
         y::N
-        Foo3{T}(x, y) where {T} = new{T,typeof(y)}(x, y)
+        Foo3{T}(x, y) where T = new{T, typeof(y)}(x, y)
     end
 
     @test has_plain_constructor(def) == false
 
-    def = @expr JLKwStruct struct Foo4{T,N}
+    def = @expr JLKwStruct struct Foo4{T, N}
         x::T
         y::N
-        Foo4{T,N}(x::T, y::N) where {T,N} = new{T,N}(x, y)
+        Foo4{T, N}(x::T, y::N) where {T, N} = new{T, N}(x, y)
     end
 
     @test has_plain_constructor(def) == false
@@ -92,7 +92,7 @@ end
         end
     ))
 
-    ex = :(function (x::Int; kw = 1) end)
+    ex = :(function (x::Int; kw=1) end)
     @test is_kw_function(ex)
     @test !is_kw_function(true)
 
@@ -161,9 +161,9 @@ end
 end
 
 @testset "JLStruct(ex)" begin
-    @test JLField(; name=:x).name === :x
-    @test JLField(; name=:x).type === Any
-    @test JLStruct(; name=:Foo).name === :Foo
+    @test JLField(;name=:x).name === :x
+    @test JLField(;name=:x).type === Any
+    @test JLStruct(;name=:Foo).name === :Foo
 
     ex = :(struct Foo
         x::Int
@@ -179,7 +179,7 @@ end
     @test jlstruct.fields[1].line isa LineNumberNode
     @test codegen_ast(jlstruct) == ex
 
-    ex = :(mutable struct Foo{T,S<:Real} <: AbstractArray
+    ex = :(mutable struct Foo{T, S <: Real} <: AbstractArray
         a::Float64
 
         function foo(x, y, z)
@@ -233,44 +233,44 @@ end
         nothing
     end
 
-    @test JLKwField(; name=:x).name === :x
-    @test JLKwField(; name=:x).type === Any
-    @test JLKwStruct(; name=:Foo).name === :Foo
+    @test JLKwField(;name=:x).name === :x
+    @test JLKwField(;name=:x).type === Any
+    @test JLKwStruct(;name=:Foo).name === :Foo
 
     def = @expr JLKwStruct struct ConvertOption
-        include_defaults::Bool = false
-        exclude_nothing::Bool = false
+        include_defaults::Bool=false
+        exclude_nothing::Bool=false
     end
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{S}; include_defaults=false, exclude_nothing=false) where {S<:ConvertOption}
+        function create(::Type{S}; include_defaults = false, exclude_nothing = false) where S <: ConvertOption
             ConvertOption(include_defaults, exclude_nothing)
         end
         nothing
     end
 
-    def = @expr JLKwStruct struct Foo1{N,T}
+    def = @expr JLKwStruct struct Foo1{N, T}
         x::T = 1
     end
     println(def)
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{S}; x=1) where {N,T,S<:Foo1{N,T}}
-            Foo1{N,T}(x)
+        function create(::Type{S}; x = 1) where {N, T, S <: Foo1{N, T}}
+            Foo1{N, T}(x)
         end
-        function create(::Type{S}; x=1) where {N,S<:Foo1{N}}
+        function create(::Type{S}; x = 1) where {N, S <: Foo1{N}}
             Foo1{N}(x)
         end
     end
 
     @test_expr codegen_ast(def) == quote
-        struct Foo1{N,T}
+        struct Foo1{N, T}
             x::T
         end
-        function Foo1{N,T}(; x=1) where {N,T}
-            Foo1{N,T}(x)
+        function Foo1{N, T}(; x = 1) where {N, T}
+            Foo1{N, T}(x)
         end
-        function Foo1{N}(; x=1) where {N}
+        function Foo1{N}(; x = 1) where N
             Foo1{N}(x)
         end
         nothing
@@ -286,7 +286,7 @@ end
             x
             y::Int
         end
-        function Foo2(; x=1, y)
+        function Foo2(; x = 1, y)
             Foo2(x, y)
         end
         nothing
@@ -316,25 +316,25 @@ end
 
     def = @expr JLKwStruct struct Foo3
         a::Int = 1
-        Foo3(; a=1) = new(a)
+        Foo3(;a = 1) = new(a)
     end
 
     @test_expr codegen_ast(def) == quote
         struct Foo3
             a::Int
-            Foo3(; a=1) = new(a)
+            Foo3(; a = 1) = new(a)
         end
         nothing
     end
 
     def = @expr JLKwStruct struct Potts{Q}
         L::Int
-        beta::Float64 = 1.0
+        beta::Float64=1.0
         neighbors::Neighbors = square_lattice_neighbors(L)
     end
 
     @test_expr codegen_ast_kwfn(def, :create) == quote
-        function create(::Type{S}; L, beta=1.0, neighbors=square_lattice_neighbors(L)) where {Q,S<:Potts{Q}}
+        function create(::Type{S}; L, beta = 1.0, neighbors = square_lattice_neighbors(L)) where {Q, S <: Potts{Q}}
             Potts{Q}(L, beta, neighbors)
         end
         nothing
@@ -368,28 +368,23 @@ end
 end
 
 @testset "JLFor" begin
-    ex = :(
-        for i in 1:10, j in 1:20,
+    ex = :(for i in 1:10, j in 1:20,
             k in 1:10
-
-            1 + 1
-        end
-    )
+        1 + 1
+    end)
     jl = JLFor(ex)
     println(jl)
     @test codegen_ast(jl) == ex
 
-    jl = JLFor(; vars=[:x], iterators=[:itr], kernel=:(x + 1))
+    jl = JLFor(;vars=[:x], iterators=[:itr], kernel=:(x + 1))
     ex = codegen_ast(jl)
     @test ex.head === :for
     @test ex.args[1].args[1] == :(x = itr)
-    @test ex.args[2] == :(x + 1)
+    @test ex.args[2] == :(x+1)
 
-    ex = :(
-        for i in 1:10
-            1 + 1
-        end
-    )
+    ex = :(for i in 1:10
+        1 + 1
+    end)
     jl = JLFor(ex)
     println(jl)
     @test jl.vars == [:i]
@@ -397,31 +392,31 @@ end
 end
 
 @testset "is_matrix_expr" begin
-    ex = @expr [1 2; 3 4]
+    ex = @expr [1 2;3 4]
     @test is_matrix_expr(ex) == true
     ex = @expr [1 2 3 4]
     @test is_matrix_expr(ex) == true
 
-    ex = @expr Float64[1 2; 3 4]
+    ex = @expr Float64[1 2;3 4]
     @test is_matrix_expr(ex) == true
     ex = @expr [1 2 3 4]
     @test is_matrix_expr(ex) == true
 
     # false case
     for ex in [
-        @expr([1, 2, 3, 4]),
-        @expr([1, 2, 3, 4]),
-        @expr(Float64[1, 2, 3, 4]),
+        @expr([1,2,3,4]),
+        @expr([1,2,3,4]),
+        @expr(Float64[1,2,3,4]),
     ]
         @test is_matrix_expr(ex) == false
     end
 
     for ex in [
-        @expr([1 2;;; 3 4;;; 4 5]),
-        @expr(Float64[1 2;;; 3 4;;; 4 5]),
+        @expr([1 2 ;;; 3 4 ;;; 4 5]),
+        @expr(Float64[1 2 ;;; 3 4 ;;; 4 5]),
     ]
         @static if VERSION > v"1.7-"
-            @test is_matrix_expr(ex) == false
+            @test is_matrix_expr(ex) == false 
         else
             @test is_matrix_expr(ex) == true
         end
@@ -443,7 +438,7 @@ end
     end
 
     @test_throws ExprNotEqual assert_equal_expr(Main, lhs, rhs)
-
+    
     @test sprint(showerror, ExprNotEqual(Int64, :Int)) == """
     expression not equal due to:
       lhs: Int64::DataType
@@ -461,23 +456,23 @@ end
     @test compare_expr(:(Vector{Int}), Vector{Int})
     @test compare_expr(:(Vector{Int}), :(Vector{$(nameof(Int))}))
     @test compare_expr(:(NotDefined{Int}), :(NotDefined{$(nameof(Int))}))
-    @test compare_expr(:(NotDefined{Int,Float64}), :(NotDefined{$(nameof(Int)),Float64}))
+    @test compare_expr(:(NotDefined{Int, Float64}), :(NotDefined{$(nameof(Int)), Float64}))
     @test compare_expr(LineNumberNode(1, :foo), LineNumberNode(1, :foo))
 end
 
 @testset "guess_module" begin
     @test guess_module(Main, Base) === Base
     @test guess_module(Main, :Base) === Base
-    @test guess_module(Main, :(1 + 1)) == :(1 + 1)
+    @test guess_module(Main, :(1+1)) == :(1+1)
 end
 
 @testset "guess_type" begin
     @test guess_type(Main, Int) === Int
     @test guess_type(Main, :Int) === Int
     @test guess_type(Main, :Foo) === :Foo
-    @test guess_type(Main, :(Array{Int,1})) === Array{Int,1}
+    @test guess_type(Main, :(Array{Int, 1})) === Array{Int, 1}
     # only head is guessed, returns a curly expr
-    @test guess_type(Main, :(Array{<:Real,1})) == :(Array{<:Real,1})
+    @test guess_type(Main, :(Array{<:Real, 1})) == :(Array{<:Real, 1})
 end
 
 @static if VERSION > v"1.8-"
