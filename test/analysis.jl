@@ -158,6 +158,17 @@ end
 
     ex = :(::Int -> 0)
     @test JLFunction(ex).args == Any[:(::Int)]
+
+    ex = :((x, y)::T -> x)
+    jlf = JLFunction(ex)
+    @test jlf.args == Any[:x, :y]
+    @test jlf.rettype == :T
+
+    ex = :(((x::T, y) where {T})::T -> x)
+    jlf = JLFunction(ex)
+    @test jlf.whereparams == Any[:T]
+    @test jlf.args == Any[:(x::T), :y]
+    @test jlf.rettype == :T
 end
 
 @testset "JLStruct(ex)" begin
