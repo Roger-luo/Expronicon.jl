@@ -111,7 +111,7 @@ end
     jlfn = JLFunction()
     @test jlfn.name === nothing
 
-    @test_expr JLFunction function foo(x::Int, y::Type{T}) where {T <: Real}
+    @test_expr JLFunction function foo(x::Int, y::Type{T}) where {T<:Real}
         return x
     end
 
@@ -125,33 +125,50 @@ end
     end
     @test is_kw_function(def) == true
 
-    @test_expr JLFunction (x, y)->sin(x)
+    @test_expr JLFunction (x, y) -> sin(x)
 
     # canonicalize head when it's a block
-    @test_expr JLFunction function (x::Int; kw=1) end
+    @test_expr JLFunction function (x::Int; kw = 1) end
 
     ex = :(struct Foo end)
     @test_throws SyntaxError JLFunction(ex)
     ex = :(@foo(2, 3))
     @test_throws SyntaxError split_function_head(ex)
 
-    ex = :(Foo(; a = 1) = new(a))
+    ex = :(foo(bar) -> bar)
+    @test_throws SyntaxError JLFunction(ex)
+
+    ex = :(Foo(; a=1) = new(a))
     @test JLFunction(ex).kwargs[1] == Expr(:kw, :a, 1)
 
-    @test_expr JLFunction function f(x::T; a=10)::Int where T
+    @test_expr JLFunction function f(x::T; a=10)::Int where {T}
         return x
     end
 
     @test_expr JLFunction f(x::Int)::Int = x
 
-    ex = :(x->2x)
+    ex = :(x -> x)
     @test JLFunction(ex).args == Any[:x]
 
-    ex = :(x::Int->2x)
+    ex = :(x -> 2x)
+    @test JLFunction(ex).args == Any[:x]
+
+    ex = :(x::Int -> 2x)
     @test JLFunction(ex).args == Any[:(x::Int)]
 
     ex = :(::Int -> 0)
     @test JLFunction(ex).args == Any[:(::Int)]
+
+    ex = :((x, y)::T -> x)
+    jlf = JLFunction(ex)
+    @test jlf.args == Any[:x, :y]
+    @test jlf.rettype == :T
+
+    ex = :(((x::T, y) where {T})::T -> x)
+    jlf = JLFunction(ex)
+    @test jlf.whereparams == Any[:T]
+    @test jlf.args == Any[:(x::T), :y]
+    @test jlf.rettype == :T
 end
 
 @testset "JLStruct(ex)" begin
