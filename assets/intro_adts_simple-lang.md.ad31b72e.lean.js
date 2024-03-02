@@ -1,0 +1,1 @@
+import{_ as t,c as e,o as a}from"./app.cc0f2ea8.js";const m=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"intro/adts/simple-lang.md","lastUpdated":1670998942000}'),s={name:"intro/adts/simple-lang.md"};function n(r,o,c,p,i,d){return a(),e("div")}const _=t(s,[["render",n]]);export{m as __pageData,_ as default};
