@@ -145,9 +145,22 @@ Check if given object is a function expression.
 function is_function(@nospecialize(def))
     @match def begin
         ::JLFunction => true
-        Expr(:function, _, _) => true
-        Expr(:(=), _, _) => true
-        Expr(:(->), _, _) => true
+        ::Expr => begin
+            line, doc, expr = split_doc(def)
+            if !isnothing(doc)
+                source = line
+            end
+            # TODO: generated expressions 
+            head, call, body = _split_function_nothrow(expr)
+            split_head_tuple = @match head begin
+                :(->) => _split_anonymous_function_head_nothrow(call)
+                h => _split_function_head_nothrow(call; source)
+            end
+            isnothing(split_head_tuple) && return false 
+            name, args, kw, whereparams, rettype = split_head_tuple
+
+            true 
+        end
         _ => false
     end
 end

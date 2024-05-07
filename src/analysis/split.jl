@@ -27,13 +27,20 @@ end
 Split function head declaration with function body.
 """
 function split_function(ex::Expr; source = nothing)
+    ret = _split_function_nothrow(ex)
+    isnothing(ret) && throw(SyntaxError("expect a function expr, got $ex", source))
+    ret
+end
+
+function _split_function_nothrow(ex::Expr)
     @match ex begin
         Expr(:function, call, body) => (:function, call, body)
         Expr(:(=), call, body) => (:(=), call, body)
         Expr(:(->), call, body) => (:(->), call, body)
-        _ => throw(SyntaxError("expect a function expr, got $ex", source))
+        _ => nothing
     end
 end
+
 
 """
     split_function_head(ex::Expr) -> name, args, kw, whereparams, rettype
@@ -41,6 +48,12 @@ end
 Split function head to name, arguments, keyword arguments and where parameters.
 """
 function split_function_head(ex::Expr; source=nothing)
+    split_head_tuple = _split_function_nothrow(ex)
+    isnothing(split_head_tuple) && throw(SyntaxError("expect a function head, got $ex", source))
+    split_head_tuple
+end
+
+function _split_function_head_nothrow(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing, nothing)
@@ -49,17 +62,21 @@ function split_function_head(ex::Expr; source=nothing)
         Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing, nothing)
         Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing, nothing)
         Expr(:(::), call::Expr, rettype) => begin
-            name, args, kw, whereparams, _ = split_function_head(call)
+            sub_tuple = _split_function_head_nothrow(call)
+            isnothing(sub_tuple) && return nothing
+            name, args, kw, whereparams, _ = _split_function_head_nothrow(call)
             (name, args, kw, whereparams, rettype)
         end
         Expr(:where, call, whereparams...) => begin
-            name, args, kw, _, rettype = split_function_head(call)
+            sub_tuple = _split_function_head_nothrow(call)
+            isnothing(sub_tuple) && return nothing
+            name, args, kw, _, rettype = sub_tuple
             (name, args, kw, whereparams, rettype)
         end
-        _ => throw(SyntaxError("expect a function head, got $ex", source))
+        _ => nothing
     end
 end
-split_function_head(s::Symbol; source=nothing) = (nothing, Any[s], nothing, nothing, nothing)
+_split_function_head_nothrow(s::Symbol) = (nothing, Any[s], nothing, nothing, nothing)
 
 """
     split_anonymous_function_head(ex::Expr) -> nothing, args, kw, whereparams, rettype
@@ -67,24 +84,35 @@ split_function_head(s::Symbol; source=nothing) = (nothing, Any[s], nothing, noth
 Split anonymous function head to arguments, keyword arguments and where parameters.
 """
 function split_anonymous_function_head(ex::Expr; source=nothing)
+    split_head_tuple = _split_function_head_nothrow(ex)
+    isnothing(split_head_tuple) && throw(SyntaxError("expect an anonymous function head, got $ex", source))
+    split_head_tuple
+end
+
+function _split_anonymous_function_head_nothrow(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing, nothing)
         Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing, nothing)
         Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing, nothing)
         Expr(:(::), fh::Expr, rettype) => begin
-            name, args, kw, whereparams, _ = split_anonymous_function_head(fh)
+            sub_tuple = _split_anonymous_function_head_nothrow(fh)
+            isnothing(sub_tuple) && return nothing
+            name, args, kw, whereparams, _ = sub_tuple
             (name, args, kw, whereparams, rettype)
         end
         Expr(:(::), arg::Symbol, argtype) || Expr(:(::), argtype) => (nothing, Any[ex], nothing, nothing, nothing)
         Expr(:where, call, whereparams...) => begin
-            name, args, kw, _, rettype = split_anonymous_function_head(call)
+            sub_tuple = _split_anonymous_function_head_nothrow(call)
+            isnothing(sub_tuple) && return nothing
+            name, args, kw, _, rettype = sub_tuple
             (name, args, kw, whereparams, rettype)
         end
-        _ => throw(SyntaxError("expect an anonymous function head, got $ex", source))
+        _ => nothing
     end
 end
-split_anonymous_function_head(s::Symbol; source=nothing) = (nothing, Any[s], nothing, nothing, nothing)
+_split_anonymous_function_head_nothrow(s::Symbol) = (nothing, Any[s], nothing, nothing, nothing)
+
 
 """
     split_struct_name(ex::Expr) -> name, typevars, supertype
