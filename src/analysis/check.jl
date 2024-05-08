@@ -151,10 +151,12 @@ function is_function(@nospecialize(def))
                 source = line
             end
             # TODO: generated expressions 
-            head, call, body = _split_function_nothrow(expr)
+            split_function_tuple =  split_function_nothrow(expr)
+            isnothing(split_function_tuple) && return false
+            head, call, body = split_function_tuple
             split_head_tuple = @match head begin
-                :(->) => _split_anonymous_function_head_nothrow(call)
-                h => _split_function_head_nothrow(call; source)
+                :(->) => split_anonymous_function_head_nothrow(call)
+                h => split_function_head_nothrow(call)
             end
             isnothing(split_head_tuple) && return false 
             name, args, kw, whereparams, rettype = split_head_tuple
