@@ -89,7 +89,7 @@ function split_anonymous_function_head(ex::Expr; source=nothing)
     split_head_tuple
 end
 
-split_anonymous_function_head(ex::Expr; source=nothing) = 
+split_anonymous_function_head(ex::Symbol; source=nothing) = 
     split_anonymous_function_head_nothrow(ex)
 
 function split_anonymous_function_head_nothrow(ex::Expr)
