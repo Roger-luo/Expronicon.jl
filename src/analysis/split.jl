@@ -35,7 +35,16 @@ end
 function split_function_nothrow(ex::Expr)
     @match ex begin
         Expr(:function, call, body) => (:function, call, body)
-        Expr(:(=), call, body) => (:(=), call, body)
+        Expr(:function, call, body) => (:function, call, body)
+        Expr(:(=), call, body) => begin
+            @match call begin
+                Expr(:call, f, args...) || Expr(:(::), Expr(:call, f, args...), rettype) ||
+                    Expr(:where, Expr(:call, f, args...), params...) ||
+                    Expr(:where, Expr(:(::), Expr(:call, f, args...), rettype), params...) => true
+                _ => return nothing
+            end
+            (:(=), call, body)
+        end
         Expr(:(->), call, body) => (:(->), call, body)
         _ => nothing
     end
