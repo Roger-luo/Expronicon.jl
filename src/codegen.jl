@@ -85,7 +85,7 @@ end
             call = Expr(:(::), call, fn.rettype)
         end
 
-        if fn.whereparams !== nothing
+        if fn.whereparams !== nothing && !isempty(fn.whereparams)
             call = Expr(:where, call, fn.whereparams...)
         end
 
@@ -110,7 +110,7 @@ else # VERSION >= v"1.10-", no need to handle anonymous syntax
             call = Expr(:(::), call, fn.rettype)
         end
     
-        if fn.whereparams !== nothing
+        if fn.whereparams !== nothing && !isempty(fn.whereparams)
             call = Expr(:where, call, fn.whereparams...)
         end
     
