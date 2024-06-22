@@ -366,11 +366,13 @@ function renumber_gensym!(d::Dict{Symbol, Symbol}, count::Dict{Symbol, Int}, ex)
 end
 
 """
-    expr_map(f, c...)
+    expr_map(f, c...; skip_nothing::Bool=false)
 
 Similar to `Base.map`, but expects `f` to return an expression,
 and will concanate these expression as a `Expr(:block, ...)`
 expression.
+
+Skip `nothing` if `skip_nothing` is `true`.
 
 # Example
 
@@ -392,10 +394,12 @@ quote
 end
 ```
 """
-function expr_map(f, c...)
+function expr_map(f, c...; skip_nothing::Bool=false)
     ex = Expr(:block)
     for args in zip(c...)
-        push!(ex.args, f(args...))
+        ret = f(args...)
+        skip_nothing && isnothing(ret) && continue
+        push!(ex.args, ret)
     end
     return ex
 end
