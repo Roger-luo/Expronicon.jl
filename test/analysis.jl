@@ -169,6 +169,14 @@ end
     @test jlf.whereparams == Any[:T]
     @test jlf.args == Any[:(x::T), :y]
     @test jlf.rettype == :T
+
+    ex = quote
+        "foo $bar" 
+        f(x) = x+1
+    end
+
+    jlf = JLFunction(ex)
+    @test jlf.doc == Expr(:string, "foo ", bar)
 end
 
 @testset "JLStruct(ex)" begin
