@@ -110,7 +110,7 @@ mutable struct JLFunction <: JLExpr
     whereparams::Maybe{Vector{Any}}
     body::Any
     line::Maybe{LineNumberNode}
-    doc::Maybe{String}
+    doc::Maybe{Union{String, Expr}}
 end
 
 function JLFunction(;
@@ -163,7 +163,7 @@ mutable struct JLField <: JLExpr
     name::Symbol
     type::Any
     isconst::Bool # v1.8
-    doc::Maybe{String}
+    doc::Maybe{Union{String, Expr}}
     line::Maybe{LineNumberNode}
 end
 
@@ -198,7 +198,7 @@ mutable struct JLKwField <: JLExpr
     name::Symbol
     type::Any
     isconst::Bool # v1.8
-    doc::Maybe{String}
+    doc::Maybe{Union{String, Expr}}
     line::Maybe{LineNumberNode}
     default::Any
 end
@@ -281,7 +281,7 @@ mutable struct JLStruct <: JLExpr
     fields::Vector{JLField}
     constructors::Vector{JLFunction}
     line::Maybe{LineNumberNode}
-    doc::Maybe{String}
+    doc::Maybe{Union{String, Expr}}
     misc::Any
 end
 
@@ -329,7 +329,7 @@ mutable struct JLKwStruct <: JLExpr
     fields::Vector{JLKwField}
     constructors::Vector{JLFunction}
     line::Maybe{LineNumberNode}
-    doc::Maybe{String}
+    doc::Maybe{Union{String, Expr}}
     misc::Any
 end
 
