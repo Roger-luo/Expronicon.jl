@@ -285,7 +285,7 @@ function arg2type(arg)
         ::Symbol => Any
         :(::$type) || :($_::$type) => type
         :($_::$type...) => :($Base.Vararg{$type})
-        :($_...) => Vararg{Any}
+        :($_...) => $($Base.Vararg{$Any})
         _ => error("invalid argument type: $arg")
     end
 end
