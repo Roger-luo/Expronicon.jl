@@ -495,6 +495,13 @@ end
     @test guess_type(Main, :(Array{<:Real, 1})) == :(Array{<:Real, 1})
 end
 
+@testset "split_signature" begin
+    @test_expr split_signature(:(foo(x::Int, y::Float64))) == :($Base.Tuple{$Base.typeof(foo), Int, Float64})
+    @test_expr split_signature(:(foo(x::Int, y::Float64...))) == :($Base.Tuple{$Base.typeof(foo), Int, $Base.Vararg{Float64}})
+    @test_expr split_signature(:(foo(x::Int, y...))) == :($Base.Tuple{$Base.typeof(foo), Int, $Base.Vararg{$Any}})
+    @test_expr split_signature(:(foo(x::Int, y::T...) where T)) == :($Base.Tuple{$Base.typeof(foo), Int, $Base.Vararg{T}} where T)
+end
+
 @static if VERSION > v"1.8-"
     @testset "const <field> = <value>" begin
         include("analysis/const.jl")

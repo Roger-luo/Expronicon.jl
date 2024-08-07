@@ -14,7 +14,7 @@ export
     is_ifelse, is_for, is_field, is_field_default, is_datatype_expr,
     is_matrix_expr,
     split_function, split_function_head, split_anonymous_function_head, split_struct,
-    split_struct_name, split_ifelse,
+    split_struct_name, split_ifelse, split_signature, arg2type,
     uninferrable_typevars, has_symbol,
     is_literal, is_gensym,
     alias_gensym,
