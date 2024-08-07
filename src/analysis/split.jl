@@ -269,3 +269,23 @@ function split_field_if_match(typename::Symbol, expr, default::Bool=false; sourc
             return expr
     end
 end
+
+function split_signature(call::Expr)
+    if Meta.isexpr(call, :where)
+        Expr(:where, split_signature(call.args[1]), call.args[2:end]...)
+    elseif Meta.isexpr(call, :call)
+        :($Base.Tuple{$Base.typeof($(call.args[1])), $(arg2type.(call.args[2:end])...)})
+    else
+        error("invalid signature: $call")
+    end
+end
+
+function arg2type(arg)
+    @match arg begin
+        ::Symbol => Any
+        :(::$type) || :($_::$type) => type
+        :($_::$type...) => :($Base.Vararg{$type})
+        :($_...) => Vararg{Any}
+        _ => error("invalid argument type: $arg")
+    end
+end
