@@ -3,7 +3,7 @@
 
 Split doc string from given expression.
 """
-function split_doc(ex::Expr)
+function split_doc(ex)
     @switch ex begin
         @case Expr(:macrocall, &(GlobalRef(Core, Symbol("@doc"))), line, doc, expr) ||
                 Expr(:macrocall, &(Symbol("@doc")), line, doc, expr) ||
@@ -26,13 +26,13 @@ end
 
 Split function head declaration with function body.
 """
-function split_function(ex::Expr; source = nothing)
+function split_function(ex; source = nothing)
     ret = split_function_nothrow(ex)
     isnothing(ret) && throw(SyntaxError("expect a function expr, got $ex", source))
     ret
 end
 
-function split_function_nothrow(ex::Expr)
+function split_function_nothrow(ex)
     @match ex begin
         Expr(:function, call, body) => (:function, call, body)
         Expr(:function, call, body) => (:function, call, body)
