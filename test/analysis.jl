@@ -500,6 +500,7 @@ end
     @test_expr split_signature(:(foo(x::Int, y::Float64...))) == :($Base.Tuple{$Base.typeof(foo), Int, $Base.Vararg{Float64}})
     @test_expr split_signature(:(foo(x::Int, y...))) == :($Base.Tuple{$Base.typeof(foo), Int, $Base.Vararg{$Any}})
     @test_expr split_signature(:(foo(x::Int, y::T...) where T)) == :($Base.Tuple{$Base.typeof(foo), Int, $Base.Vararg{T}} where T)
+    @test_expr split_signature(:(foo(x::Int, y::T = 2) where T)) == :($Base.Tuple{$Base.typeof(foo), Int, T} where T)
 end
 
 @static if VERSION > v"1.8-"

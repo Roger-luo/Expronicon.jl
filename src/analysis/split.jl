@@ -275,6 +275,8 @@ function split_signature(call::Expr)
         Expr(:where, split_signature(call.args[1]), call.args[2:end]...)
     elseif Meta.isexpr(call, :call)
         :($Base.Tuple{$Base.typeof($(call.args[1])), $(arg2type.(call.args[2:end])...)})
+    elseif Meta.isexpr(call, :(::))
+        return split_signature(call.args[1])
     else
         error("invalid signature: $call")
     end
@@ -286,6 +288,7 @@ function arg2type(arg)
         :(::$type) || :($_::$type) => type
         :($_::$type...) => :($Base.Vararg{$type})
         :($_...) => :($Base.Vararg{$Any})
+        Expr(:kw, arg, value) => arg2type(arg)
         _ => error("invalid argument type: $arg")
     end
 end
