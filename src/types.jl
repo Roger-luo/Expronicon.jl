@@ -32,6 +32,30 @@ Abstract type for Julia syntax type.
 abstract type JLExpr end
 
 """
+    JLCall(func, args::Vector, kwargs::Maybe{Vector})
+    JLCall(; func, args=[], kwargs=nothing)
+
+Represents a Julia function call expression.
+
+# Fields and Keyword Arguments
+
+$__DEFAULT_KWARG_DOC__
+- `func`: the function being called
+- `args`: optional, function arguments, a list of `Expr` or `Symbol`.
+- `kwargs`: optional, function keyword arguments, a list of `Expr(:kw, name, default)`.
+"""
+mutable struct JLCall <: JLExpr
+    func
+    args::Vector
+    kwargs::Maybe{Vector}
+end
+
+function JLCall(; func, args=[], kwargs=nothing)
+    JLCall(func, args, kwargs)
+end
+
+
+"""
     mutable struct JLFunction <: JLExpr
     JLFunction(;kw...)
 
@@ -114,15 +138,15 @@ mutable struct JLFunction <: JLExpr
 end
 
 function JLFunction(;
-        head=:function, name=nothing,
-        args=[], kwargs=nothing,
-        rettype=nothing,
-        generated=false,
-        whereparams=nothing,
-        body=Expr(:block),
-        line=nothing,
-        doc=nothing
-    )
+    head=:function, name=nothing,
+    args=[], kwargs=nothing,
+    rettype=nothing,
+    generated=false,
+    whereparams=nothing,
+    body=Expr(:block),
+    line=nothing,
+    doc=nothing
+)
     head in [:function, :(=), :(->)] ||
         throw(ArgumentError("function head can only take `:function`, `:(=)` or `:(->)`"))
     name isa Union{Nothing, Symbol, Expr} ||
@@ -168,7 +192,7 @@ mutable struct JLField <: JLExpr
 end
 
 function JLField(;name, isconst=false, type=Any,
-        doc=nothing, line=nothing)
+    doc=nothing, line=nothing)
     JLField(name, type, isconst, doc, line)
 end
 
@@ -204,7 +228,7 @@ mutable struct JLKwField <: JLExpr
 end
 
 function JLKwField(;name, isconst=false, type=Any,
-        doc=nothing, line=nothing, default=no_default)
+    doc=nothing, line=nothing, default=no_default)
     JLKwField(name, type, isconst, doc, line, default)
 end
 

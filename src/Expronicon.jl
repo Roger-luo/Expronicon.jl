@@ -6,7 +6,7 @@ using MLStyle.AbstractPatterns
 
 export
     # types
-    NoDefault, JLExpr, JLFor, JLIfElse,
+    NoDefault, JLCall, JLExpr, JLFor, JLIfElse,
     JLFunction, JLField, JLKwField, JLStruct, JLKwStruct,
     # analysis
     @expr, @test_expr, compare_expr,

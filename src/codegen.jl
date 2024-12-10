@@ -36,6 +36,13 @@ end
 """
 codegen_ast(ex) = ex
 
+function codegen_ast(def::JLCall)
+    call = Expr(:call, def.func)
+    isnothing(def.kwargs) || push!(call.args, Expr(:parameters, def.kwargs...))
+    append!(call.args, def.args)
+    return call
+end
+
 function codegen_ast(def::JLFor)
     lhead = Expr(:block)
     for (var, itr) in zip(def.vars, def.iterators)
@@ -64,7 +71,7 @@ end
     function codegen_ast(fn::JLFunction)
         # handle anonymous syntax: function (x; kw=value) end
         if fn.head === :function && fn.name === nothing && fn.kwargs !== nothing &&
-            isone(length(fn.args)) && isone(length(fn.kwargs))
+           isone(length(fn.args)) && isone(length(fn.kwargs))
             kw = fn.kwargs[1].args[1]
             va = fn.kwargs[1].args[2]
             call = Expr(:block, fn.args[1], :($kw = $va))
@@ -105,15 +112,15 @@ else # VERSION >= v"1.10-", no need to handle anonymous syntax
             push!(call.args, Expr(:parameters, fn.kwargs...))
         end
         append!(call.args, fn.args)
-    
+
         if fn.rettype !== nothing
             call = Expr(:(::), call, fn.rettype)
         end
-    
+
         if fn.whereparams !== nothing && !isempty(fn.whereparams)
             call = Expr(:where, call, fn.whereparams...)
         end
-    
+
         fn_def = Expr(fn.head, call, maybe_wrap_block(codegen_ast(fn.body)))
         fn_def = codegen_ast_generated(fn, fn_def)
         return codegen_ast_docstring(fn, fn_def)
