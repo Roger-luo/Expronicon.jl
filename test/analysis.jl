@@ -21,9 +21,9 @@ end
     def = @expr JLKwStruct struct Inferable1{T}
         x::Constaint{T, <(2)}
     end
-    
+
     @test uninferrable_typevars(def) == []
-    
+
     def = @expr JLKwStruct struct Inferable2{T}
         x::Constaint{Float64, <(2)}
     end
@@ -107,6 +107,11 @@ end
     ))
 end
 
+@testset "JLCall(ex)" begin
+    def = @expr JLCall +(1, 1)
+    @test_expr codegen_ast(def) == :((1 + 1))
+end
+
 @testset "JLFunction(ex)" begin
     jlfn = JLFunction()
     @test jlfn.name === nothing
@@ -172,7 +177,7 @@ end
 
     # Support interpolating docstrings
     ex = quote
-        "foo $bar" 
+        "foo $bar"
         f(x) = x+1
     end
 
@@ -390,7 +395,7 @@ end
 @testset "JLFor" begin
     ex = :(for i in 1:10, j in 1:20,
             k in 1:10
-        1 + 1
+            1 + 1
     end)
     jl = JLFor(ex)
     println(jl)
@@ -403,7 +408,7 @@ end
     @test ex.args[2] == :(x+1)
 
     ex = :(for i in 1:10
-        1 + 1
+            1 + 1
     end)
     jl = JLFor(ex)
     println(jl)
@@ -436,7 +441,7 @@ end
         @expr(Float64[1 2 ;;; 3 4 ;;; 4 5]),
     ]
         @static if VERSION > v"1.7-"
-            @test is_matrix_expr(ex) == false 
+            @test is_matrix_expr(ex) == false
         else
             @test is_matrix_expr(ex) == true
         end
@@ -458,7 +463,7 @@ end
     end
 
     @test_throws ExprNotEqual assert_equal_expr(Main, lhs, rhs)
-    
+
     @test sprint(showerror, ExprNotEqual(Int64, :Int)) == """
     expression not equal due to:
       lhs: Int64::DataType
