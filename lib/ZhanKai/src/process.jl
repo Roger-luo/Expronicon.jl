@@ -138,6 +138,9 @@ function object_to_expr(m::Module, ex)
         ::Union{Symbol, Int, Bool, Float64, String, Char, LineNumberNode} => ex
         ::QuoteNode => QuoteNode(object_to_expr(m, ex.value))
         ::VersionNumber => Expr(:macrocall, Symbol("@v_str"), nothing, string(ex))
+        # Julia 1.14+ stores the syntax version as the first argument of a module
+        Expr(:module, version::VersionNumber, args...) =>
+            Expr(:module, version, map(x->object_to_expr(m, x), args)...)
         Expr(head, args...) => Expr(head, map(x->object_to_expr(m, x), args)...)
         _ => begin
             s = sprint(print, ex; context=:module=>m)
@@ -215,6 +218,9 @@ function insert_toplevel(ex, code)
         @case Expr(:module, bare, name, Expr(:block, stmts...))
             stmts = map(x->insert_toplevel(x, code), stmts)
             return Expr(:module, bare, name, Expr(:block, code, stmts...))
+        @case Expr(:module, version::VersionNumber, bare, name, Expr(:block, stmts...))
+            stmts = map(x->insert_toplevel(x, code), stmts)
+            return Expr(:module, version, bare, name, Expr(:block, code, stmts...))
         @case Expr(head, args...)
             args = map(x->insert_toplevel(x, code), args)
             return Expr(head, args...)

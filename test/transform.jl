@@ -7,6 +7,7 @@ using Expronicon
     @test name_only(:(Foo{T} where T)) == :Foo
     @test name_only(:(Foo{T})) == :Foo
     @test name_only(:(module Foo end)) == :Foo
+    @test name_only(Expr(:module, v"1.14.0", true, :Foo, Expr(:block))) == :Foo
     @test name_only(:(x::Int...)) == :x
     @test name_only(:(x...)) == :x
     @test_throws ErrorException name_only(Expr(:fake))
