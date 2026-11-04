@@ -99,10 +99,16 @@ function edit_test_deps!(project_toml::Dict, options::Options)
     isdir(test_dir) || mkpath(test_dir)
     target_test_project = build_dir(options, relpath(test_project, options.project))
     open(target_test_project, "w+") do io
-        TOML.print(io, test_d; sorted=true, by=key -> (Pkg.Types.project_key_order(key), key))
+        TOML.print(io, test_d; sorted=true, by=key -> (project_key_order(key), key))
     end
     return project_toml
 end
+
+# the key order Aqua checks Project.toml against, newer versions of Pkg
+# put `version` before `authors` which fails Aqua's formatting test
+const PROJECT_KEY_ORDER = ["name", "uuid", "keywords", "license", "desc", "deps", "compat"]
+project_key_order(key::String) =
+    something(findfirst(==(key), PROJECT_KEY_ORDER), length(PROJECT_KEY_ORDER) + 1)
 
 function edit_project_deps(options::Options)
     project_toml = project_dir(options, options.project_toml)
@@ -122,7 +128,7 @@ function edit_project_deps(options::Options)
 
     target_project_toml = build_dir(options, relpath(project_toml, options.project))
     open(target_project_toml, "w+") do io
-        TOML.print(io, d; sorted=true, by=key -> (Pkg.Types.project_key_order(key), key))
+        TOML.print(io, d; sorted=true, by=key -> (project_key_order(key), key))
     end
     return
 end
@@ -131,6 +137,7 @@ function object_to_expr(m::Module, ex)
     @match ex begin
         ::Union{Symbol, Int, Bool, Float64, String, Char, LineNumberNode} => ex
         ::QuoteNode => QuoteNode(object_to_expr(m, ex.value))
+        ::VersionNumber => Expr(:macrocall, Symbol("@v_str"), nothing, string(ex))
         Expr(head, args...) => Expr(head, map(x->object_to_expr(m, x), args)...)
         _ => begin
             s = sprint(print, ex; context=:module=>m)
