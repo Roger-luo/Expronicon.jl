@@ -5,3 +5,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # Maintain the documentation site's node dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
