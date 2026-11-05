@@ -8,6 +8,7 @@ in Julia meta programming.
 
 ```@docs
 JLFunction
+JLCall
 JLStruct
 JLKwStruct
 JLIfElse
@@ -26,7 +27,15 @@ Functions for analysing a given Julia `Expr`, e.g splitting Julia function/struc
 
 ```@autodocs
 Modules = [Expronicon]
-Pages = ["analysis/analysis.jl"]
+Pages = [
+    "analysis/check.jl",
+    "analysis/compare.jl",
+    "analysis/cons.jl",
+    "analysis/exception.jl",
+    "analysis/guess.jl",
+    "analysis/reflection.jl",
+    "analysis/split.jl",
+]
 ```
 
 ## Transform
@@ -47,13 +56,24 @@ Modules = [Expronicon]
 Pages = ["codegen.jl"]
 ```
 
+```@docs
+codegen_match
+@syntax_pattern
+```
+
 ## Printings
 
 Pretty printing functions.
 
 ```@autodocs
 Modules = [Expronicon]
-Pages = ["printing.jl"]
+Pages = [
+    "print/colors.jl",
+    "print/inline.jl",
+    "print/multi.jl",
+    "print/print.jl",
+    "print/utils.jl",
+]
 ```
 
 ## Algebra Data Type
@@ -62,5 +82,16 @@ Algebra data type
 
 ```@autodocs
 Modules = [Expronicon.ADT]
-Pages = ["adt/adt.jl"]
+Pages = [
+    "adt/adt.jl",
+    "adt/derive.jl",
+    "adt/emit.jl",
+    "adt/match.jl",
+    "adt/print.jl",
+    "adt/reflection.jl",
+    "adt/traits.jl",
+    "adt/types.jl",
+    "adt/use.jl",
+    "adt/utils.jl",
+]
 ```

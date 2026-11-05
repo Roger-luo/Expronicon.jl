@@ -5,10 +5,13 @@ export default defineConfig({
     title: 'Expronicon',
     description: 'Collective tools for metaprogramming in Julia.',
     lastUpdated: true,
-    cleanUrls: 'with-subfolders',
+    cleanUrls: true,
 
     themeConfig: {
         // siteTitle: 'My Custom Title'
+        search: {
+            provider: 'local',
+        },
         nav: nav(),
         sidebar: {
             '/intro/': sidebarIntro(),

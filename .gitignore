@@ -18,3 +18,4 @@ docs/src/assets/indigo.css
 # VitePress ignores
 node_modules
 docs/page/.vitepress/dist
+docs/page/.vitepress/cache
