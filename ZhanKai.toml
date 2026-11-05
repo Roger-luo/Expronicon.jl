@@ -1,6 +1,5 @@
 macronames = ["match", "switch"]
 deps = ["MLStyle"]
-project = "/Users/roger/Code/Julia/Expronicon"
 project_toml = "Project.toml"
 project_name = "Expronicon"
 postfix = "Lite"
