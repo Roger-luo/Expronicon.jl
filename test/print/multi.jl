@@ -232,6 +232,7 @@ ex = @expr module ABC
 end
 
 print_expr(ex)
+print_expr(Expr(:module, v"1.14.0", true, :ABC, Expr(:block, :(1 + 1))))
 
 ex = @expr const X = if a == 1
     1 + 1
