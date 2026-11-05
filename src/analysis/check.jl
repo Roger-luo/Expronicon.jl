@@ -183,7 +183,7 @@ function is_kw_function(@nospecialize(def))
     @match call begin
         Expr(:tuple, Expr(:parameters, _...), _...) => true
         Expr(:call, _, Expr(:parameters, _...), _...) => true
-        Expr(:block, _, ::LineNumberNode, _) => true
+        Expr(:block, _...) => !isnothing(split_kw_block_nothrow(call))
         _ => false
     end
 end
