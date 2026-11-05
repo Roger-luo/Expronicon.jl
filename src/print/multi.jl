@@ -435,7 +435,7 @@ function (p::Printer)(ex)
             end
             print_finally(finally_body)
             println(); tab(); keyword("end")
-        @case Expr(:module, notbare, name, body)
+        @case Expr(:module, notbare, name, body) || Expr(:module, ::VersionNumber, notbare, name, body)
             leading_tab()
             keyword(notbare ? "module " : "baremodule "); inline(name); println()
             stmts = split_body(body)

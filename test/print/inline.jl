@@ -8,6 +8,7 @@ print_inline(:((2 * 2)-(1 * 1)))
 print_inline(:(var"##step_1_l#259" = 1 << (var"##plain_locs#258"[1] - 1)))
 
 print_inline(:(module A end))
+print_inline(Expr(:module, v"1.14.0", true, :A, Expr(:block)))
 print_inline(:(using A, B))
 print_inline(:(using A: a, b))
 print_inline(:(import A, B))
