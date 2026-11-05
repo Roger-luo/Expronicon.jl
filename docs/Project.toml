@@ -1,4 +1,11 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-DocumenterMarkdown = "997ab1e6-3595-5248-9280-8efb232c3433"
+DocumenterVitepress = "4710194d-e776-4893-9690-8d956a29c365"
 Expronicon = "6b7a57c9-7cc1-4fdf-b7f5-e857abae3636"
+
+[sources]
+Expronicon = {path = ".."}
+
+[compat]
+Documenter = "1"
+DocumenterVitepress = "0.3"
