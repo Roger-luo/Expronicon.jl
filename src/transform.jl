@@ -76,7 +76,8 @@ function name_only(@nospecialize(ex))
     ex.head in [:call, :curly, :(<:), :(::), :where, :function, :kw, :(=), :(->)] && return name_only(ex.args[1])
     ex.head === :. && return name_only(ex.args[2])
     ex.head === :... && return name_only(ex.args[1])
-    ex.head === :module && return name_only(ex.args[2])
+    # Julia 1.14+ may store the syntax version as the first argument of a module
+    ex.head === :module && return name_only(ex.args[ex.args[1] isa VersionNumber ? 3 : 2])
     error("unsupported expression $ex")
 end
 

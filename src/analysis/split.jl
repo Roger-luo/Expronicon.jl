@@ -62,14 +62,29 @@ function split_function_head(ex::Expr; source=nothing)
     split_head_tuple
 end
 
+"""
+    split_kw_block_nothrow(ex::Expr) -> nothing, args, kw, nothing, nothing
+
+Split the argument list of `(x; kw) -> body`, which Julia parses as a block holding `x` and `kw`.
+The block also holds `LineNumberNode`s, which are ignored so that a block whose line numbers were
+removed is split too. Return `nothing` when `ex` is no such block.
+"""
+function split_kw_block_nothrow(ex::Expr)
+    Meta.isexpr(ex, :block) || return nothing
+    args = filter(x -> !(x isa LineNumberNode), ex.args)
+    length(args) == 2 || return nothing
+    x, kw = args
+    kw = Meta.isexpr(kw, :(=), 2) ? Expr(:kw, kw.args...) : kw
+    return (nothing, Any[x], Any[kw], nothing, nothing)
+end
+
 function split_function_head_nothrow(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing, nothing)
         Expr(:call, name, Expr(:parameters, kw...), args...) => (name, args, kw, nothing, nothing)
         Expr(:call, name, args...) => (name, args, nothing, nothing, nothing)
-        Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing, nothing)
-        Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing, nothing)
+        Expr(:block, _...) => split_kw_block_nothrow(ex)
         Expr(:(::), call::Expr, rettype) => begin
             sub_tuple = split_function_head_nothrow(call)
             isnothing(sub_tuple) && return nothing
@@ -105,8 +120,7 @@ function split_anonymous_function_head_nothrow(ex::Expr)
     @match ex begin
         Expr(:tuple, Expr(:parameters, kw...), args...) => (nothing, args, kw, nothing, nothing)
         Expr(:tuple, args...) => (nothing, args, nothing, nothing, nothing)
-        Expr(:block, x, ::LineNumberNode, Expr(:(=), kw, value)) => (nothing, Any[x], Any[Expr(:kw, kw, value)], nothing, nothing)
-        Expr(:block, x, ::LineNumberNode, kw) => (nothing, Any[x], Any[kw], nothing, nothing)
+        Expr(:block, _...) => split_kw_block_nothrow(ex)
         Expr(:(::), fh::Expr, rettype) => begin
             sub_tuple = split_anonymous_function_head_nothrow(fh)
             isnothing(sub_tuple) && return nothing

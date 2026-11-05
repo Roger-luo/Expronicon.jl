@@ -107,6 +107,26 @@ end
     ))
 end
 
+@testset "anonymous function with one argument and keywords" begin
+    @test is_function(:((x; kw) -> x))
+    @test is_kw_function(:((x; kw) -> x))
+
+    line = LineNumberNode(1, :none)
+    for block_args in (Any[:x, line, :kw], Any[line, :x, line, :kw], Any[:x, :kw])
+        ex = Expr(:->, Expr(:block, block_args...), :x)
+        @test is_function(ex)
+        @test is_kw_function(ex)
+        jlf = JLFunction(ex)
+        @test jlf.args == Any[:x]
+        @test jlf.kwargs == Any[:kw]
+    end
+
+    ex = Expr(:->, Expr(:block, line, :x, line, Expr(:(=), :kw, 1)), :x)
+    @test JLFunction(ex).kwargs == Any[Expr(:kw, :kw, 1)]
+
+    @test !is_function(Expr(:->, Expr(:block, :x, :y, :z), :x))
+end
+
 @testset "JLCall(ex)" begin
     def = @expr JLCall +(1, 1)
     @test_expr codegen_ast(def) == :((1 + 1))
