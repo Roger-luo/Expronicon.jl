@@ -30,15 +30,30 @@ jobs:
           - x86
           - x64
         exclude:
-          # 32-bit Julia binaries are not available on macOS
+          # macOS runners are Apple Silicon, so they get aarch64 below instead
           - os: macOS-latest
             arch: x86
+          - os: macOS-latest
+            arch: x64
+        include:
+          - version: '1'
+            os: macOS-latest
+            arch: aarch64
+          - version: 'nightly'
+            os: macOS-latest
+            arch: aarch64
+          # Julia 1.6 has no aarch64 macOS build, so run x64 under Rosetta
+          - version: '1.6'
+            os: macOS-latest
+            arch: x64
+            force-arch: true
     steps:
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+          force-arch: ${{ matrix.force-arch == true }}
       - uses: actions/cache@v5
         env:
           cache-name: cache-artifacts
