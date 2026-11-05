@@ -7,8 +7,10 @@ version = "0.10.16"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 
 [compat]
-Aqua = "0.5"
+Aqua = "0.8"
+Documenter = "1"
 MLStyle = "0.4.17"
+Test = "1"
 julia = "1.6"
 
 [extras]

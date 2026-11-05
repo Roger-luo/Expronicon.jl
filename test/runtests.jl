@@ -2,7 +2,9 @@ using Expronicon
 using Documenter
 using Test
 using Aqua
-Aqua.test_all(Expronicon)
+# the `@active` patterns in src/patches.jl extend MLStyle for these Base types,
+# which Aqua reports as piracy
+Aqua.test_all(Expronicon; piracies=(; treat_as_own=[GlobalRef, Symbol, LineNumberNode]))
 
 @test_expr quote
     x + 1

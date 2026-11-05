@@ -70,8 +70,10 @@ function copy_dont_touch(info::ExpandInfo, options::Options)
 end
 
 # NOTE: put deps to extras or test/Project.toml if it is in Project.toml
+# returns whether the packages stay in `project_toml` as test extras, in which
+# case their compat entries must be kept
 function edit_test_deps!(project_toml::Dict, options::Options)
-    haskey(project_toml, "deps") || return # no deps
+    haskey(project_toml, "deps") || return false # no deps
     if haskey(project_toml, "extras")
         extras = project_toml["extras"]
         target = get!(project_toml, "targets", Dict("test"=>[]))
@@ -82,7 +84,7 @@ function edit_test_deps!(project_toml::Dict, options::Options)
             extras[package] = project_toml["deps"][package]
             push!(test_target, package)
         end
-        return project_toml
+        return true
     end
 
     test_project = project_dir(options, "test", "Project.toml")
@@ -101,7 +103,7 @@ function edit_test_deps!(project_toml::Dict, options::Options)
     open(target_test_project, "w+") do io
         TOML.print(io, test_d; sorted=true, by=key -> (project_key_order(key), key))
     end
-    return project_toml
+    return false
 end
 
 # the key order Aqua checks Project.toml against, newer versions of Pkg
@@ -119,11 +121,13 @@ function edit_project_deps(options::Options)
     d["uuid"] = options.uuid
 
     haskey(d, "deps") || return
-    edit_test_deps!(d, options)
+    kept_as_extras = edit_test_deps!(d, options)
 
     for package in options.deps
         delete!(d["deps"], package)
-        haskey(d, "compat") && delete!(d["compat"], package)
+        if !kept_as_extras && haskey(d, "compat")
+            delete!(d["compat"], package)
+        end
     end
 
     target_project_toml = build_dir(options, relpath(project_toml, options.project))
